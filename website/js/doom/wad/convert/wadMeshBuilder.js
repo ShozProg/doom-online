@@ -1,0 +1,481 @@
+/**
+ * Mesh construction helpers (transposition of add_wall_quad / add_flat_quad of
+ * convert_wad.py) + texture index remapping and conversion to engine data.
+ *
+ * A mesh is {points: [[x,y,z]…], faces: […]} — same face format as the
+ * .obj.json files (pts 1-based, color, texture GLOBAL 1-based bank index,
+ * map, clampV, passableUser, passableEnemy, textures {ids, duration}).
+ */
+class WadMeshBuilder {
+    static newMesh() {
+        return {points: [], faces: []};
+    }
+
+    // USE-action radius of an instance mesh: half its XZ bounding diagonal
+    // plus the action margin (DOOR_ACTION_RADIUS).
+    static xzActionRadius(mesh) {
+        const xs = mesh.points.map((p) => p[0]);
+        const zs = mesh.points.map((p) => p[2]);
+        const dx = Math.max(...xs) - Math.min(...xs);
+        const dz = Math.max(...zs) - Math.min(...zs);
+
+        return Math.sqrt(dx * dx + dz * dz) / 2.0 + WadConstants.DOOR_ACTION_RADIUS;
+    }
+
+    // Planar pre-filter disc of a USE target, centred like Object3d.getCenter
+    // (mean of the points): its farthest point plus the USE reach.
+    static xzUseRadius(mesh) {
+        const count = mesh.points.length;
+        const cx    = mesh.points.reduce((sum, p) => (sum + p[0]), 0) / count;
+        const cz    = mesh.points.reduce((sum, p) => (sum + p[2]), 0) / count;
+        let farthest = 0;
+        for (const p of mesh.points) {
+            farthest = Math.max(farthest, Math.hypot(p[0] - cx, p[2] - cz));
+        }
+
+        return farthest + WadConstants.USE_REACH;
+    }
+
+    // Invisible trigger zone on a linedef: a one-point mesh at the line middle,
+    // player-centre height, radius spanning the line + margin. The segment is
+    // returned for the zones firing on a crossing (WadLineCrossing).
+    static buildLineZone(level, ld, margin) {
+        const {vertexes, sidedefs, sectors} = level;
+        const SCALE = WadConstants.SCALE;
+
+        const [dx1, dy1] = vertexes[ld.v1];
+        const [dx2, dy2] = vertexes[ld.v2];
+        const fh = ((ld.right >= 0) ? sectors[sidedefs[ld.right].sector].fh : 0);
+        const [wx1, wz1] = WadGeometry.doomToWorld(dx1, dy1);
+        const [wx2, wz2] = WadGeometry.doomToWorld(dx2, dy2);
+        const [cwx, cwz] = WadGeometry.doomToWorld((dx1 + dx2) / 2, (dy1 + dy2) / 2);
+        const cwy = fh * SCALE + (WadConstants.PLAYER_HEIGHT / 2);
+        const lenWorld = WadGeometry.wallLengthDoom(vertexes, ld.v1, ld.v2) * SCALE;
+
+        const mesh = WadMeshBuilder.newMesh();
+        mesh.points.push([cwx, cwy, cwz]);
+
+        return {
+            mesh:    mesh,
+            radius:  (lenWorld / 2) + margin,
+            segment: [wx1, wz1, wx2, wz2]
+        };
+    }
+
+    // Moving top flat of a sector (floor surface at origFh, normal up).
+    static addSectorTopFlat(mesh, level, bank, analysis, si, origFh, light) {
+        const ft = bank.ensureFlatTex(level.sectors[si].ft);
+        if (ft < 0) {
+            return;
+        }
+        WadMeshBuilder.addSectorFlat(mesh, level, ft, si, origFh, true, light,
+            WadMeshBuilder.floorFlatOptions(level, bank, analysis, si));
+    }
+
+    // Shared by every builder of a floor flat, static map and movers alike.
+    static floorFlatOptions(level, bank, analysis, si) {
+        const sec = level.sectors[si];
+
+        return {
+            lightGroup: WadMapAnalyzer.lightGroupOf(analysis, si),
+            uScroll:    WadMeshBuilder._flatScrollOf(sec),
+            noDecal:    bank.isLiquidFlat(sec.ft)
+        };
+    }
+
+    // Heretic eastward flat scroll: map units per tic → UV per second
+    // (64 units per tile); the negative sign makes it flow east.
+    static _flatScrollOf(sector) {
+        const speed = (WadConstants.SECTOR_FLAT_SCROLL_BY_SPECIAL[sector.special] ?? 0);
+
+        return ((speed !== 0) ? (-speed / WadConstants.SECONDS_PER_TIC / 64) : 0);
+    }
+
+    // Floor or ceiling flat from the linedef chains and their holes; only an
+    // unclosed sector takes the BSP subsector fans, since two carved neighbours
+    // can disagree on their shared boundary (E1M2 sector 142).
+    static addSectorFlat(mesh, level, texIdx, si, yHeight, isFloor, light, options = {}) {
+        const flatOptions = {...options, light: light};
+        const {vertexes, linedefs, sidedefs} = level;
+
+        const chainPolys = WadSectorPolygons.closedOutersWithHoles(si, linedefs, sidedefs, vertexes);
+        if (chainPolys !== null) {
+            for (const poly of chainPolys) {
+                WadMeshBuilder.addFlatPolygon(mesh, texIdx, poly.outer, yHeight, isFloor, {...flatOptions, holes: poly.holes});
+            }
+            return;
+        }
+        const bspTree  = (level.bspTree ?? null);
+        const bspPolys = ((bspTree !== null) ? bspTree.polysOfSector(si) : []);
+        if (bspPolys.length > 0) {
+            for (const poly of bspPolys) {
+                WadMeshBuilder.addConvexFlat(mesh, texIdx, poly, yHeight, isFloor, flatOptions);
+            }
+            return;
+        }
+        // Neither closes nor carves: the open chains are all this sector has.
+        for (const poly of WadSectorPolygons.outersWithHoles(si, linedefs, sidedefs, vertexes)) {
+            WadMeshBuilder.addFlatPolygon(mesh, texIdx, poly.outer, yHeight, isFloor, {...flatOptions, holes: poly.holes});
+        }
+    }
+
+    // Convex flat fanned from its first vertex (GZDoom hw_vertexbuilder).
+    static addConvexFlat(mesh, texIdx, convexPolyDoom, yHeight, isFloor, options = {}) {
+        if (convexPolyDoom.length < 3) {
+            return;
+        }
+        const oriented = WadMeshBuilder._orientFlat(
+            convexPolyDoom.map((v) => WadGeometry.doomToWorld(v[0], v[1])), convexPolyDoom);
+        const tris = [];
+        for (let i = 1; i < oriented.xz.length - 1; i++) {
+            tris.push([0, i, i + 1]);
+        }
+        WadMeshBuilder._emitFlatFaces(mesh, texIdx, oriented.xz, oriented.poly, tris, yHeight, isFloor, options);
+    }
+
+    // Flat winding convention (triangulate() and the fans expect it): reverse
+    // a counter-clockwise world-XZ polygon, keeping the Doom-coord twin in step.
+    static _orientFlat(xz, polyDoom) {
+        if (WadGeometry.polygonAreaSign(xz) <= 0) {
+            return {xz: xz, poly: polyDoom};
+        }
+
+        return {xz: [...xz].reverse(), poly: [...polyDoom].reverse()};
+    }
+
+    /**
+     * UV of a wall standing on a sector floor: ML_DONTPEGBOTTOM pegs the
+     * texture to the LIVE floor (r_segs.c) — the rest floor of the sector's
+     * mover when it has one, the face then riding the mover through its
+     * uvAnchor — else the texture hangs from the wall top.
+     *
+     * @param {object} ld          linedef (flags)
+     * @param {object} sd          sidedef drawn (yo)
+     * @param {object} sec         sector the wall stands in (fh)
+     * @param {number} yTopDu      top of the wall, Doom units
+     * @param {Map}    floorMovers sector → {code, restFh} (WadMapAnalyzer)
+     * @param {int}    texH
+     * @returns {{yOff: number, uvAnchor: object|null}}
+     */
+    static floorPeggedWallUv(ld, sd, sec, yTopDu, floorMovers, texH) {
+        if ((ld.flags & WadConstants.ML_DONTPEGBOTTOM) === 0) {
+            return {yOff: sd.yo, uvAnchor: null};
+        }
+        const mover = (floorMovers.get(sd.sector) ?? null);
+        const pegFh = ((mover !== null) ? mover.restFh : sec.fh);
+
+        return {
+            yOff:     sd.yo + (texH - (yTopDu - pegFh)),
+            uvAnchor: ((mover !== null) ? WadConstants.wallTextureAnchor(mover.code, texH, true) : null)
+        };
+    }
+
+    /**
+     * UV of a mover's riser (the skirt below its moving top, from the source
+     * sidedef of the edge): a lower-unpegged riser stays pinned to the world
+     * while the top rides away from it, a pegged one hangs from the top.
+     *
+     * @returns {{yOff: number, uvAnchor: object|null}}
+     */
+    static moverRiserUv(ld, sd, sec, origFh, moverCode, texH) {
+        if ((ld.flags & WadConstants.ML_DONTPEGBOTTOM) === 0) {
+            return {yOff: sd.yo, uvAnchor: null};
+        }
+
+        return {yOff: sd.yo + (sec.ch - origFh), uvAnchor: WadConstants.wallTextureAnchor(moverCode, texH, false)};
+    }
+
+    /**
+     * Append a textured wall quad (two triangles) to the mesh.
+     * flip=false → front face (normal on the right-hand side of v1→v2).
+     * flip=true  → back face. yOff is the pixel offset from the top of the texture.
+     *
+     * @param {object} mesh
+     * @param {int}    texIdx      - GLOBAL 0-based bank index, or -1 (face without texture)
+     * @param {number} x1, z1      - world position of the line's first vertex
+     * @param {number} x2, z2      - world position of the line's second vertex
+     * @param {number} yBot, yTop  - world heights of the quad
+     * @param {number} wallLenDoom - line length in map units, the U span of the texture
+     * @param {int}    texW, texH  - texture size in texels
+     * @param {object} options     - {xOff, yOff, flip, light, alpha, clampV, passableUser, passableEnemy, collisionOnly, passableShot, shotOnly, noDecal, uScrollTexelsPerSec, lightGroup, uvAnchor}
+     */
+    static addWallQuad(mesh, texIdx, x1, z1, x2, z2, yBot, yTop, wallLenDoom, texW, texH, options) {
+        options = options ?? {};
+        const xOff          = options.xOff ?? 0;
+        const yOff          = options.yOff ?? 0;
+        const flip          = (options.flip === true);
+        const uScrollTexels = options.uScrollTexelsPerSec ?? 0;
+        const lightGroup    = options.lightGroup ?? null;
+        const uvAnchor      = options.uvAnchor ?? null;
+
+        if (yBot >= yTop) {
+            return;
+        }
+        if ((texW <= 0) || (texH <= 0)) {
+            return;
+        }
+
+        const u0 = xOff / texW;
+        const u1 = (xOff + wallLenDoom) / texW;
+        const hDoom = (yTop - yBot) / WadConstants.SCALE;
+        const vt = 1.0 - yOff / texH;
+        const vb = 1.0 - (yOff + hDoom) / texH;
+
+        // 4 vertices: bottom-left, bottom-right, top-right, top-left
+        const i = mesh.points.length;
+        mesh.points.push([x1, yBot, z1]);
+        mesh.points.push([x2, yBot, z2]);
+        mesh.points.push([x2, yTop, z2]);
+        mesh.points.push([x1, yTop, z1]);
+
+        const buildFace = (ptsList, mapList) => {
+            const face = WadMeshBuilder._newFace(ptsList, options);
+            if (texIdx >= 0) {
+                face.texture = texIdx + 1;
+                face.map     = mapList;
+            }
+            if ((uScrollTexels !== 0) && (texIdx >= 0)) {
+                face.uvScroll = {u: uScrollTexels / texW, v: 0};
+            }
+            if (lightGroup !== null) {
+                face.lightGroup = lightGroup;
+            }
+            if ((uvAnchor !== null) && (texIdx >= 0)) {
+                face.uvAnchor = uvAnchor;
+            }
+
+            return face;
+        };
+
+        if (!flip) {
+            // flip=false: viewer on left of v1→v2, so v1 is to viewer's right → u reversed
+            mesh.faces.push(buildFace([i + 1, i + 2, i + 3], [[u1, vb], [u0, vb], [u0, vt]]));
+            mesh.faces.push(buildFace([i + 1, i + 3, i + 4], [[u1, vb], [u0, vt], [u1, vt]]));
+        } else {
+            mesh.faces.push(buildFace([i + 1, i + 3, i + 2], [[u0, vb], [u1, vt], [u1, vb]]));
+            mesh.faces.push(buildFace([i + 1, i + 4, i + 3], [[u0, vb], [u0, vt], [u1, vt]]));
+        }
+    }
+
+    /**
+     * Triangulate and append a floor or ceiling polygon to the mesh.
+     * polyVerts2d: [[doomX, doomY]…]. Flat UV tiles every 64 Doom units.
+     *
+     * @param {object}     mesh
+     * @param {int}        texIdx - GLOBAL 0-based bank index
+     * @param {number[][]} polyVerts2d
+     * @param {number}     yHeight - in Doom units
+     * @param {boolean}    isFloor
+     * @param {object}     options - {light, holes, lightGroup, uScroll (UV drift of
+     *                     the flat per second — scrolling lava/conveyor floors, 0 =
+     *                     static), collisionOnly (solid but never drawn — sky floors,
+     *                     the sky shows through), noDecal (takes no impact decal —
+     *                     liquids)}
+     */
+    static addFlatPolygon(mesh, texIdx, polyVerts2d, yHeight, isFloor, options = {}) {
+        if (polyVerts2d.length < 3) {
+            return;
+        }
+        const holes      = (options.holes ?? null);
+        const targetArea = WadMeshBuilder._flatArea(polyVerts2d, holes);
+        const flat = (((holes !== null) && (holes.length > 0))
+            ? WadMeshBuilder._triangulateWithHoles(polyVerts2d, holes, targetArea)
+            : WadMeshBuilder._triangulateSimple(polyVerts2d, targetArea));
+        if (!WadMeshBuilder._triangulationFits(flat.xz, flat.tris, targetArea)) {
+            console.warn('WadMeshBuilder - inexact flat triangulation (' + polyVerts2d.length + ' vertices, '
+                + ((holes !== null) ? holes.length : 0) + ' holes)');
+        }
+
+        WadMeshBuilder._emitFlatFaces(mesh, texIdx, flat.xz, flat.poly, flat.tris, yHeight, isFloor, options);
+    }
+
+    // The bridge-cut ear-clipping is kept when it covers the flat exactly, else
+    // earcut takes the holes as separate rings (it copes with touching holes).
+    // Returns {xz (world), poly (Doom twin), tris}.
+    static _triangulateWithHoles(outerDoom, holes, targetArea) {
+        const merged   = WadTriangulator.mergeHolesIntoPolygon([...outerDoom], holes);
+        const oriented = WadMeshBuilder._orientFlat(WadMeshBuilder._toWorld(merged), merged);
+        const earClip  = WadTriangulator.triangulate(oriented.xz);
+        if (WadMeshBuilder._triangulationFits(oriented.xz, earClip, targetArea)) {
+            return {xz: oriented.xz, poly: oriented.poly, tris: earClip};
+        }
+        const earcut = WadTriangulator.triangulateWithHoles(
+            WadMeshBuilder._toWorld(outerDoom), holes.map((h) => WadMeshBuilder._toWorld(h)));
+
+        return {xz: earcut.vertices, poly: [...outerDoom, ...holes.flat()], tris: earcut.tris};
+    }
+
+    // Same choice for a simple polygon.
+    static _triangulateSimple(polyDoom, targetArea) {
+        const oriented = WadMeshBuilder._orientFlat(WadMeshBuilder._toWorld(polyDoom), polyDoom);
+        const earClip  = WadTriangulator.triangulate(oriented.xz);
+        if (WadMeshBuilder._triangulationFits(oriented.xz, earClip, targetArea)) {
+            return {xz: oriented.xz, poly: oriented.poly, tris: earClip};
+        }
+        const earcut = WadTriangulator.triangulateWithHoles(oriented.xz, null);
+
+        return {xz: earcut.vertices, poly: oriented.poly, tris: earcut.tris};
+    }
+
+    static _toWorld(polyDoom) {
+        return polyDoom.map((v) => WadGeometry.doomToWorld(v[0], v[1]));
+    }
+
+    // Area of a flat in world units: its outer minus its holes.
+    static _flatArea(outerDoom, holes) {
+        const worldArea = (poly) => Math.abs(WadGeometry.polygonAreaSign(WadMeshBuilder._toWorld(poly))) / 2;
+        let area = worldArea(outerDoom);
+        for (const hole of (holes ?? [])) {
+            area -= worldArea(hole);
+        }
+
+        return area;
+    }
+
+    // A triangulation covers its flat exactly when its triangles all wind the
+    // same way (a flat one has no side) and their areas add up to the flat's:
+    // an ear-clipping that tangled its bridge cuts fails one or the other.
+    static _triangulationFits(xz, tris, targetArea) {
+        let sum      = 0;
+        let positive = 0;
+        let negative = 0;
+        for (const [a, b, c] of tris) {
+            const area2 = WadGeometry.cross2d(xz[a], xz[b], xz[c]);
+            sum += Math.abs(area2) / 2;
+            if (area2 > 0) {
+                positive++;
+            } else if (area2 < 0) {
+                negative++;
+            }
+        }
+        if ((positive > 0) && (negative > 0)) {
+            return false;
+        }
+
+        return (Math.abs(sum - targetArea) <= WadMeshBuilder.FLAT_AREA_EPSILON);
+    }
+
+    static _emitFlatFaces(mesh, texIdx, xz, polyDoom, tris, yHeight, isFloor, options) {
+        const lightGroup = (options.lightGroup ?? null);
+        const uScroll    = (options.uScroll ?? 0);
+        const base       = mesh.points.length;
+        for (const [x, z] of xz) {
+            mesh.points.push([x, yHeight * WadConstants.SCALE, z]);
+        }
+
+        // Vanilla maps flats as v = -y/64 (R_MapPlane); Object3d.fcAdd flips V
+        // (1 - v) at load, so the vanilla minus is authored as +y here.
+        const flatUv = (idx) => [polyDoom[idx][0] / 64.0, polyDoom[idx][1] / 64.0];
+
+        for (const [a, b, c] of tris) {
+            // Floors swap the winding for an upward normal.
+            const order = ((isFloor) ? [a, c, b] : [a, b, c]);
+            const face  = WadMeshBuilder._newFace(order.map((idx) => (base + idx + 1)), options);
+            if (texIdx >= 0) {
+                face.texture = texIdx + 1;
+                face.map     = order.map(flatUv);
+            }
+            if (lightGroup !== null) {
+                face.lightGroup = lightGroup;
+            }
+            if (uScroll !== 0) {
+                face.uvScroll = {u: uScroll, v: 0};
+            }
+            mesh.faces.push(face);
+        }
+    }
+
+    // Shade, opacity and the boolean flags any flat or wall face may carry.
+    // One color array per face: fcAdd normalizes it in place.
+    static _newFace(pts, options) {
+        const shade = Math.trunc(options.light ?? 128);
+        const alpha = (options.alpha ?? 1);
+        const face  = {pts: pts, color: ((alpha < 1) ? [shade, shade, shade, alpha] : [shade, shade, shade])};
+        for (const flag of WadMeshBuilder.FACE_FLAGS) {
+            if (options[flag] === true) {
+                face[flag] = true;
+            }
+        }
+
+        return face;
+    }
+
+    /**
+     * Remap the GLOBAL 1-based texture indices of the faces to LOCAL 1-based
+     * indices, in place. Extra global indices (1-based) can be appended to the
+     * local list without being referenced by any face (switch SW2 textures).
+     *
+     * @param {object[]} faces
+     * @param {int[]}    extraGlobalOneBased
+     * @returns {int[]} local texture list as GLOBAL 0-based bank indices
+     */
+    static remapLocalTextures(faces, extraGlobalOneBased = []) {
+        const usedGlobal = new Set();
+        for (const face of faces) {
+            if (face.texture !== undefined) {
+                usedGlobal.add(face.texture);
+            }
+        }
+        for (const g of extraGlobalOneBased) {
+            usedGlobal.add(g);
+        }
+
+        const sortedGlobal = [...usedGlobal].sort((a, b) => a - b);
+        const gToLocal = {};
+        for (let i = 0; i < sortedGlobal.length; i++) {
+            gToLocal[sortedGlobal[i]] = i + 1;
+        }
+
+        for (const face of faces) {
+            if (face.texture !== undefined) {
+                face.texture = gToLocal[face.texture];
+            }
+        }
+
+        return sortedGlobal.map((g) => g - 1);
+    }
+
+    // Replace static 'texture' by animated 'textures' on the faces matching the
+    // animation map (local 1-based indices), in place.
+    static applyAnimMap(faces, animMap) {
+        for (const face of faces) {
+            const idx = face.texture;
+            if ((idx !== undefined) && (animMap[idx] !== undefined)) {
+                face.textures = animMap[idx];
+                delete face.texture;
+            }
+        }
+    }
+
+    /**
+     * Convert a mesh + local texture list (bank indices) into the data format
+     * of Object3dLoader.loadFromData (textures as engine loader ids).
+     *
+     * @param {int[]}          localIndices - GLOBAL 0-based bank indices
+     * @param {object}         mesh
+     * @param {WadTextureBank} bank
+     */
+    static toLoaderData(localIndices, mesh, bank) {
+        WadMeshBuilder._refuseDecalsOnLiquidWalls(localIndices, mesh.faces, bank);
+
+        return {
+            textures: localIndices.map((bankIndex) => bank.getLoaderId(bankIndex)),
+            points:   mesh.points,
+            faces:    mesh.faces
+        };
+    }
+
+    // Every exported face passes here, whatever builder made it, animated
+    // ones included (their frames share the liquid nature of the first).
+    static _refuseDecalsOnLiquidWalls(localIndices, faces, bank) {
+        for (const face of faces) {
+            const local = (face.texture ?? face.textures?.ids[0] ?? null);
+            if ((local !== null) && bank.isLiquidWall(localIndices[local - 1])) {
+                face.noDecal = true;
+            }
+        }
+    }
+}
+
+WadMeshBuilder.FLAT_AREA_EPSILON = 1e-9;
+WadMeshBuilder.FACE_FLAGS        = ['clampV', 'passableUser', 'passableEnemy', 'collisionOnly', 'passableShot', 'shotOnly', 'noDecal'];

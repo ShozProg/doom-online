@@ -1,0 +1,205 @@
+/**
+ * Capture and restore of a running level as pure JSON-safe data. The level
+ * itself is never serialized: loading replays the deterministic level build
+ * (same WAD + level + skill → same instance codes), then this service patches
+ * the dynamic state on top — player, movers, pickups, interactions, gun
+ * triggers, monsters and the RNG index.
+ *
+ * Assumed exclusions (transient or cosmetic, like most of what vanilla also
+ * skips): sprite effects, decals, sector light phases, sector sound targets,
+ * the fine psprite state (the active weapon replays its raise) and the
+ * monsters' render smoothing.
+ *
+ * The context is assembled by DoomSimulation (_snapshotContext): explicit
+ * dependencies, no reach into its private fields.
+ */
+class DoomGameSnapshot {
+    /**
+     * @param {object} context - {wadId, levelCode, skill, user, rng, collision,
+     *                            monsters, projectiles, gunTriggers, sectorSurfaces,
+     *                            automap, stats}
+     * @returns {object} JSON-safe snapshot
+     */
+    capture(context) {
+        const user = context.user;
+
+        return {
+            formatVersion: DoomSaveStore.FORMAT_VERSION,
+            wadId:         context.wadId,
+            levelCode:     context.levelCode,
+            skill:         context.skill,
+            savedAt:       Date.now(),
+            player: {
+                state: user.exportState(),
+                x:     user.x,
+                y:     user.y,
+                z:     user.z,
+                yaw:   user.yaw,
+                pitch: user.pitch,
+            },
+            stats: {
+                secretsFound: context.stats.getSecretsFound(),
+                killsCount:   context.stats.getKillsCount(),
+                itemsFound:   context.stats.getItemsFound(),
+                levelTimeMs:  context.stats.getLevelTimeMs(),
+            },
+            rng:          context.rng.getIndex(),
+            instances:    this._captureInstances(),
+            interactions: this._captureInteractions(),
+            gunTriggers:  ((context.gunTriggers !== null) ? context.gunTriggers.exportState() : null),
+            sectorSurfaces: ((context.sectorSurfaces !== null) ? context.sectorSurfaces.exportState() : null),
+            automap:      ((context.automap !== null) ? context.automap.exportState() : null),
+            monsters:     context.monsters.exportState(),
+            projectiles:  context.projectiles.exportState(),
+        };
+    }
+
+    /**
+     * A save that only keeps its level, skill and the player's equipment: it
+     * loads as an entry into the level, the level in its initial state.
+     *
+     * @param {object} snapshot
+     * @returns {object}
+     */
+    static levelStartOf(snapshot) {
+        return {
+            formatVersion: snapshot.formatVersion,
+            wadId:         snapshot.wadId,
+            levelCode:     snapshot.levelCode,
+            skill:         snapshot.skill,
+            savedAt:       snapshot.savedAt,
+            levelStart:    true,
+            player:        {state: snapshot.player.state}
+        };
+    }
+
+    static isLevelStart(snapshot) {
+        return ((snapshot !== null) && (snapshot.levelStart === true));
+    }
+
+    // Runs once the rebuilt level is wired, before the first frame. The player
+    // equipment is restored earlier by DoomSimulation, in place of the level loadout.
+    apply(context, snapshot) {
+        if (DoomGameSnapshot.isLevelStart(snapshot)) {
+            return;
+        }
+        // itemsFound and levelTimeMs postdate FORMAT_VERSION 2; the version is
+        // compared strictly, so bumping it would discard every existing save.
+        context.stats.restoreProgress(snapshot.stats.secretsFound, snapshot.stats.killsCount,
+            (snapshot.stats.itemsFound ?? 0), (snapshot.stats.levelTimeMs ?? 0));
+        // Surfaces first: the mover hooks replayed by the instance import read
+        // their source sector's live flat, which must already be the saved one.
+        if ((context.sectorSurfaces !== null) && (snapshot.sectorSurfaces !== undefined) && (snapshot.sectorSurfaces !== null)) {
+            context.sectorSurfaces.importState(snapshot.sectorSurfaces);
+        }
+        this._applyInstances(snapshot.instances, context.collision);
+        this._applyInteractions(snapshot.interactions);
+        if ((context.gunTriggers !== null) && (snapshot.gunTriggers !== null)) {
+            context.gunTriggers.importState(snapshot.gunTriggers);
+        }
+        // A save with no map state restarts blank, like the counters above.
+        if (context.automap !== null) {
+            context.automap.importState(snapshot.automap ?? null);
+        }
+        context.monsters.importState(snapshot.monsters);
+        // Missiles last: owners and homing locks resolve against the monsters
+        // restored just above. Older saves carry no missiles.
+        context.projectiles.importState(snapshot.projectiles ?? null);
+        loader.instances().flushRemovals();
+
+        // The player position is re-applied AFTER the movers: the spawn
+        // override snapped him onto the STATIC floor, while the saved spot may
+        // sit on a mover restored mid-travel (a lift half-way up).
+        const user = context.user;
+        user.x = snapshot.player.x;
+        user.y = snapshot.player.y;
+        user.z = snapshot.player.z;
+        user.syncPositionTracking();
+
+        context.rng.setIndex(snapshot.rng);
+    }
+
+    // Every coded instance except the monsters' bodies (owned by the monster
+    // system, restored through its own records). forEach skips the holes a
+    // consumed pickup leaves in the loader's entity array.
+    _captureInstances() {
+        const states = {};
+        loader.instances().getAll().forEach((instance) => {
+            const code = instance.getCode();
+            if ((code === null) || code.startsWith(WadWorldBuilder.MONSTER_CODE_PREFIX)) {
+                return;
+            }
+            states[code] = instance.exportAnimState();
+        });
+
+        return states;
+    }
+
+    // A pickup absent from the snapshot was consumed before the save and is
+    // removed again; any other absent instance keeps its rebuilt state.
+    _applyInstances(states, collision) {
+        loader.instances().getAll().forEach((instance) => {
+            const code = instance.getCode();
+            if ((code === null) || code.startsWith(WadWorldBuilder.MONSTER_CODE_PREFIX)) {
+                return;
+            }
+            const state = states[code];
+            if (state === undefined) {
+                if (code.startsWith(WadWorldBuilder.PICKUP_CODE_PREFIX)) {
+                    loader.instances().scheduleRemoval(instance);
+                }
+                return;
+            }
+            const rideOn = ((state.rideOnCode !== null) ? loader.instances().getByCode(state.rideOnCode) : null);
+            instance.importAnimState(state, rideOn);
+            if (instance.isCollidable()) {
+                collision.syncBoxFor(instance);
+            }
+        });
+    }
+
+    _captureInteractions() {
+        const states = {};
+        loader.interactions().getAll().forEach((entity) => {
+            const state = entity.getInteraction().exportState();
+            if (state !== null) {
+                states[entity.getCode()] = state;
+            }
+        });
+
+        return states;
+    }
+
+    /**
+     * Where the rebuilt level first puts the player (see SPAWN_Y_MARGIN).
+     *
+     * @param {object} snapshot
+     * @returns {{position: number[], yaw: number, pitch: number}} a spawn override
+     */
+    static spawnOverrideOf(snapshot) {
+        if (DoomGameSnapshot.isLevelStart(snapshot)) {
+            return null;
+        }
+        const player = snapshot.player;
+
+        return {
+            position: [player.x, player.y + DoomGameSnapshot.SPAWN_Y_MARGIN, player.z],
+            yaw:      player.yaw,
+            pitch:    player.pitch
+        };
+    }
+
+    _applyInteractions(states) {
+        loader.interactions().getAll().forEach((entity) => {
+            const state = states[entity.getCode()];
+            if (state !== undefined) {
+                entity.getInteraction().importState(state);
+            }
+        });
+    }
+}
+
+// Extra height given to the initial spawn override: a Y exactly at floor level
+// misses the floor snap (the saved Y is the search ceiling). The exact saved Y
+// is re-applied by apply() once the movers are restored.
+DoomGameSnapshot.SPAWN_Y_MARGIN = 0.1;

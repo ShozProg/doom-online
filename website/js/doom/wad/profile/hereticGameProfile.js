@@ -1,0 +1,1761 @@
+/**
+ * Heretic profile. The tables below are transcribed from the UZDoom sources
+ * (wadsrc/static/xlat/heretic.txt vs base.txt, defines.i speed units = 1/8
+ * Doom unit per tic). Divergent specials are remapped to synthetic internal
+ * codes (>= 1000, unreachable by vanilla WAD data, see WadConstants) so the
+ * Doom pipeline stays untouched.
+ */
+class HereticGameProfile extends DefaultGameProfile {
+    getCode() {
+        return 'heretic';
+    }
+
+    /**
+     * Heretic-only lumps (GZDoom iwadinfo: MUS_E1M1 music naming, TINTTAB
+     * translucency blend table).
+     *
+     * @param {WadFile} wadFile
+     * @returns {boolean}
+     */
+    matchesWad(wadFile) {
+        return ((wadFile.getLump('MUS_E1M1') !== null) || (wadFile.getLump('TINTTAB') !== null));
+    }
+
+    // Heretic SNDINFO transcription (filter/game-heretic/sndinfo.txt): same
+    // logical events as Doom, mapped on Raven's bare-named lumps. misc/secret
+    // names a Doom lump heretic.wad does not carry — silent by design.
+    soundDefs() {
+        return {
+            // Player ($playersound male)
+            '*death':   {lump: 'PLRDTH'},
+            '*xdeath':  {lump: 'PLRCDTH'},
+            '*gibbed':  {lump: 'GIBDTH'},
+            '*pain100': {lump: 'PLRPAI'},
+            '*grunt':   {lump: 'PLROOF'},
+            '*usefail': {alias: '*grunt'},
+            '*land':    {alias: '*grunt'},
+            '*jump':    {lump: 'PLRJMP'},
+            '*weaponlaugh': {lump: 'WPNUP'},
+            // Weapons (PL1)
+            'weapons/staffhit':          {lump: 'STFHIT'},
+            'weapons/wandhit':           {lump: 'GLDHIT'},
+            'weapons/bowshoot':          {lump: 'BOWSHT'},
+            'weapons/bowhit':            {lump: 'HRNHIT', limit: 0},
+            'weapons/gauntletsactivate': {lump: 'GNTACT', limit: 0},
+            'weapons/gauntletson':       {lump: 'GNTFUL', limit: 0},
+            'weapons/gauntletshit':      {lump: 'GNTHIT', limit: 0},
+            'weapons/maceshoot':         {lump: 'LOBSHT', limit: 0},
+            'weapons/macebounce':        {lump: 'BOUNCE'},
+            'weapons/macehit':           {lump: 'LOBHIT'},
+            'weapons/macestop':          {lump: 'PSTOP'},
+            'weapons/maceexplode':       {lump: 'PHOHIT', limit: 0},
+            'weapons/blastershoot':      {lump: 'BLSSHT'},
+            'weapons/blasterhit':        {lump: 'BLSHIT'},
+            'weapons/hornrodshoot':      {lump: 'HRNSHT', limit: 0},
+            'weapons/hornrodhit':        {lump: 'HRNHIT', limit: 0},
+            'weapons/phoenixshoot':      {lump: 'PHOSHT'},
+            'weapons/phoenixhit':        {lump: 'PHOHIT', limit: 0},
+            // Monsters
+            'himp/sight':            {lump: 'IMPSIT'},
+            'himp/attack':           {lump: 'IMPAT1'},
+            'himp/pain':             {lump: 'IMPPAI'},
+            'himp/death':            {lump: 'IMPDTH'},
+            'himp/active':           {lump: 'IMPSIT'},
+            'himp/leaderattack':     {lump: 'IMPAT2'},
+            'mummy/sight':           {lump: 'MUMSIT'},
+            'mummy/attack1':         {lump: 'MUMAT1'},
+            'mummy/attack2':         {lump: 'MUMAT2'},
+            'mummy/pain':            {lump: 'MUMPAI'},
+            'mummy/death':           {lump: 'MUMDTH'},
+            'mummy/active':          {lump: 'MUMSIT'},
+            'mummy/head':            {lump: 'MUMHED'},
+            'beast/sight':           {lump: 'BSTSIT'},
+            'beast/attack':          {lump: 'BSTATK'},
+            'beast/pain':            {lump: 'BSTPAI'},
+            'beast/death':           {lump: 'BSTDTH'},
+            'beast/active':          {lump: 'BSTACT'},
+            'snake/attack':          {lump: 'SNKATK'},
+            'snake/sight':           {lump: 'SNKSIT'},
+            'snake/pain':            {lump: 'SNKPAI'},
+            'snake/death':           {lump: 'SNKDTH'},
+            'snake/active':          {lump: 'SNKACT'},
+            'clink/sight':           {lump: 'CLKSIT'},
+            'clink/attack':          {lump: 'CLKATK'},
+            'clink/pain':            {lump: 'CLKPAI'},
+            'clink/death':           {lump: 'CLKDTH'},
+            'clink/active':          {lump: 'CLKACT'},
+            'hknight/sight':         {lump: 'KGTSIT'},
+            'hknight/attack':        {lump: 'KGTATK'},
+            'hknight/melee':         {lump: 'KGTAT2'},
+            'hknight/pain':          {lump: 'KGTPAI'},
+            'hknight/death':         {lump: 'KGTDTH'},
+            'hknight/active':        {lump: 'KGTSIT'},
+            'hknight/hit':           {lump: 'HRNHIT'},
+            'hknight/axewhoosh':     {lump: 'KGTATK'},
+            'wizard/sight':          {lump: 'WIZSIT'},
+            'wizard/attack':         {lump: 'WIZATK'},
+            'wizard/death':          {lump: 'WIZDTH'},
+            'wizard/pain':           {lump: 'WIZPAI'},
+            'wizard/active1':        {lump: 'WIZACT'},
+            'wizard/active':         {random: ['wizard/sight', 'wizard/active1']},
+            'ironlich/sight':        {lump: 'HEDSIT'},
+            'ironlich/attack1':      {lump: 'HEDAT1'},
+            'ironlich/attack2':      {lump: 'HEDAT2'},
+            'ironlich/attack3':      {lump: 'HEDAT3'},
+            'ironlich/pain':         {lump: 'HEDPAI'},
+            'ironlich/death':        {lump: 'HEDDTH'},
+            'ironlich/active':       {lump: 'HEDACT'},
+            'minotaur/sight':        {lump: 'MINSIT'},
+            'minotaur/melee':        {lump: 'STFPOW'},
+            'minotaur/attack1':      {lump: 'MINAT1'},
+            'minotaur/attack2':      {lump: 'MINAT2'},
+            'minotaur/attack3':      {lump: 'MINAT3'},
+            'minotaur/pain':         {lump: 'MINPAI'},
+            'minotaur/death':        {lump: 'MINDTH'},
+            'minotaur/active':       {lump: 'MINACT'},
+            'minotaur/fx2hit':       {lump: 'PHOHIT'},
+            'minotaur/fx3hit':       {lump: 'PHOHIT'},
+            'dsparilserpent/sight':  {lump: 'BSTSIT'},
+            'dsparilserpent/attack': {lump: 'BSTATK'},
+            'dsparilserpent/pain':   {lump: 'SBTPAI'},
+            'dsparilserpent/death':  {lump: 'SBTDTH'},
+            'dsparilserpent/active': {lump: 'SBTACT'},
+            'dsparil/sight':         {lump: 'SORSIT'},
+            'dsparil/attack':        {lump: 'SORATK'},
+            'dsparil/pain':          {lump: 'SORPAI'},
+            'dsparil/active':        {lump: 'SORACT'},
+            'dsparil/rise':          {lump: 'SORRISE'},
+            'dsparil/zap':           {lump: 'SORZAP'},
+            'dsparil/scream':        {lump: 'SORDSPH'},
+            'dsparil/explode':       {lump: 'SORDEXP'},
+            'dsparil/bones':         {lump: 'SORDBON'},
+            // World, movers, pickups
+            'world/podexplode':      {lump: 'PODEXP', limit: 0},
+            'world/podgrow':         {lump: 'NEWPOD', limit: 0},
+            'world/wind':            {lump: 'WIND', limit: 1},
+            'world/waterfall':       {lump: 'WATERFL'},
+            // Terrain splashes: Heretic points both water sounds at the same
+            // gloop and the lava at the burn; its sludge resolves to dsempty,
+            // so that terrain declares no sound at all.
+            'world/watersplash':     {lump: 'GLOOP'},
+            'world/drip':            {lump: 'GLOOP'},
+            'world/lavasizzle':      {lump: 'BURN'},
+            'world/amb1':            {lump: 'AMB1', limit: 1},
+            'world/amb2':            {lump: 'AMB2', limit: 1},
+            'world/amb3':            {lump: 'AMB3', limit: 1},
+            'world/amb4':            {lump: 'AMB4', limit: 1},
+            'world/amb5':            {lump: 'AMB5', limit: 1},
+            'world/amb6':            {lump: 'AMB6', limit: 1},
+            'world/amb7':            {lump: 'AMB7', limit: 1},
+            'world/amb8':            {lump: 'AMB8', limit: 1},
+            'world/amb9':            {lump: 'AMB9', limit: 1},
+            'world/amb10':           {lump: 'AMB10', limit: 1},
+            'world/amb11':           {lump: 'AMB11', limit: 0},
+            'world/amb12':           {lump: 'BSTSIT'},
+            'world/volcano/blast':   {lump: 'LOBHIT'},
+            'world/volcano/shoot':   {lump: 'BSTATK'},
+            'plats/pt1_strt':        {lump: 'PSTART'},
+            'plats/pt1_stop':        {lump: 'PSTOP'},
+            'plats/pt1_mid':         {lump: 'DORMOV'},
+            'doors/dr1_open':        {lump: 'DOROPN'},
+            'doors/dr1_clos':        {lump: 'DORCLS'},
+            'doors/dr2_open':        {lump: 'DOROPN'},
+            'doors/dr2_clos':        {lump: 'DORCLS'},
+            'switches/normbutn':     {lump: 'SWITCH'},
+            'switches/exitbutn':     {alias: 'switches/normbutn'},
+            'misc/secret':           {lump: 'DSSECRET'},
+            'misc/gibbed':           {lump: 'GIBDTH'},
+            'misc/i_pkup':           {lump: 'ITEMUP', pitch: 0},
+            'misc/k_pkup':           {lump: 'KEYUP', pitch: 0},
+            'misc/p_pkup':           {lump: 'ARTIUP'},
+            'misc/w_pkup':           {alias: '*weaponlaugh'},
+            'misc/teleport':         {lump: 'TELEPT'},
+            'misc/spawn':            {lump: 'RESPAWN'}
+        };
+    }
+
+    // zscript sound properties of the Heretic bestiary (the ghost and leader
+    // ednum variants share their base def's code, so one entry serves all).
+    monsterSounds() {
+        return {
+            gargoyle:  {see: 'himp/sight', active: 'himp/active', pain: 'himp/pain', death: 'himp/death', melee: 'himp/attack'},
+            golem:     {see: 'mummy/sight', active: 'mummy/active', pain: 'mummy/pain', death: 'mummy/death', melee: 'mummy/attack1'},
+            disciple:  {see: 'wizard/sight', active: 'wizard/active', pain: 'wizard/pain', death: 'wizard/death'},
+            weredragon: {see: 'beast/sight', active: 'beast/active', pain: 'beast/pain', death: 'beast/death', melee: 'beast/attack'},
+            sabreclaw: {see: 'clink/sight', active: 'clink/active', pain: 'clink/pain', death: 'clink/death', melee: 'clink/attack'},
+            ophidian:  {see: 'snake/sight', active: 'snake/active', pain: 'snake/pain', death: 'snake/death'},
+            ironlich:  {see: 'ironlich/sight', active: 'ironlich/active', pain: 'ironlich/pain', death: 'ironlich/death', boss: true, actions: {A_WhirlwindSeek: 'ironlich/attack1'}},
+            maulotaur: {see: 'minotaur/sight', active: 'minotaur/active', pain: 'minotaur/pain', death: 'minotaur/death', melee: 'minotaur/melee', boss: true, actions: {A_MinotaurAtk2: 'minotaur/attack2', A_MinotaurAtk3: 'minotaur/attack3', A_MinotaurCharge: 'minotaur/attack1'}},
+            dsparil:   {see: 'dsparilserpent/sight', active: 'dsparilserpent/active', pain: 'dsparilserpent/pain', death: 'dsparilserpent/death', boss: true},
+            sorcerer2: {see: 'dsparil/sight', active: 'dsparil/active', pain: 'dsparil/pain', death: 'dsparil/scream', teleport: 'dsparil/zap', boss: true, actions: {A_SorcererRise: 'dsparil/rise', A_Sor2DthLoop: 'dsparil/explode', A_SorDBon: 'dsparil/bones', A_Srcr2Attack: 'dsparil/attack'}},
+            undeadWarrior: {see: 'hknight/sight', active: 'hknight/active', pain: 'hknight/pain', death: 'hknight/death', melee: 'hknight/melee'},
+            pod:           {death: 'world/podexplode'}
+        };
+    }
+
+    // HereticDoorClose (sndseq.txt): the close leg starts on the OPEN lump and
+    // rings the close one on arrival — where Doom plays its close lump at the
+    // start and nothing at the end.
+    doorSoundStyle() {
+        return {closeStart: 'open', closeArrival: true};
+    }
+
+    // Ambient sound things, skipped by the thing catalog (no body, no sprite):
+    // 41/42 are positioned loops; 1200+n addresses the sound sequence whose
+    // `environment` number is n (the HereticAmbience scripts of SNDSEQ).
+    ambientSounds() {
+        return {
+            41:   {loop: 'world/waterfall'},
+            42:   {loop: 'world/wind'},
+            1200: {sequence: 0},
+            1201: {sequence: 1},
+            1202: {sequence: 2},
+            1203: {sequence: 3},
+            1204: {sequence: 4},
+            1205: {sequence: 5},
+            1206: {sequence: 6},
+            1207: {sequence: 7},
+            1208: {sequence: 8},
+            1209: {sequence: 9}
+        };
+    }
+
+    // The game's sound sequences, verbatim from UZDoom sndseq.txt (the
+    // HereticAmbience scheduler and its ten AFX environment scripts) — a WAD
+    // carrying its own SNDSEQ lump overrides this text entirely (Hexen).
+    soundSequencesText() {
+        return HereticGameProfile.SOUND_SEQUENCES;
+    }
+
+    // Raven attenuation ($rolloff * custom 0 1600, game-heretic/sndinfo.txt:8
+    // — the real curve and max come from the WAD's SNDCURVE lump) and pitch
+    // variation ($pitchshiftrange 2, line 10).
+    soundRolloff() {
+        return {type: 'sndcurve', min: 0, max: 1600};
+    }
+
+    soundPitchRange() {
+        return 2;
+    }
+
+    // gameinfo titlemusic / intermissionmusic (mapinfo/heretic.txt:8/30).
+    menuMusicLumps() {
+        return ['MUS_TITL'];
+    }
+
+    intermissionMusicLumps() {
+        return ['MUS_INTR'];
+    }
+
+    finaleMusicLumps() {
+        return ['MUS_CPTD'];
+    }
+
+    // Per-map music of mapinfo/heretic.txt: MUS_ExMy by rule, except the maps
+    // whose block names another episode's song — heretic.wad only carries 19
+    // level songs for 48 maps (E2M5, most of E3, and E4-E6 entirely reuse).
+    levelMusicLumps(levelCode) {
+        const reused = HereticGameProfile.LEVEL_MUSIC_REUSE[levelCode];
+        if (reused !== undefined) {
+            return [reused];
+        }
+
+        return ((WadLevelCode.isEpisodic(levelCode)) ? ['MUS_' + levelCode] : []);
+    }
+
+    // Same ExMy patterns as the baseline, but the secret ExM9 maps return to
+    // other slots (UZDoom mapinfo/heretic.txt); the MAPxx slots stay inert.
+    progressionRules() {
+        return {
+            ...super.progressionRules(),
+            episodeSecretReturns: {1: 'E1M7', 2: 'E2M5', 3: 'E3M5', 4: 'E4M5', 5: 'E5M4'},
+            // Hidden episode 6 loops forever (UZDoom mapinfo/heretic.txt:
+            // E6M1→E6M2→E6M3→E6M1, both exits). E6M1/E6M2 already chain by
+            // lump order; only the loop-back needs an explicit route.
+            explicitRoutes: {E6M3: {next: 'E6M1', nextsecret: 'E6M1'}},
+            // One cluster per episode (UZDoom mapinfo/heretic.txt): the hidden
+            // episode 6 has none — it loops, so it never ends on a text.
+            // Heretic has no MAPxx maps, hence no range table.
+            clusters: {
+                byEpisode:  true,
+                byMapRange: [],
+                byMapExact: {},
+                texts: {
+                    1: {exit: 'HE1TEXT'}, 2: {exit: 'HE2TEXT'}, 3: {exit: 'HE3TEXT'},
+                    4: {exit: 'HE4TEXT'}, 5: {exit: 'HE5TEXT'}
+                }
+            }
+        };
+    }
+
+    // Born mid-fight: D'Sparil rising out of his dying mount, and the
+    // disciples his spawners hatch.
+    runtimeSpawnTypes() {
+        return ['dsparil', 'disciple'];
+    }
+
+    playerBodyData() {
+        return HereticGameProfile.PLAYER_BODY;
+    }
+
+    // zscript hereticplayer.zs Player.ColorRange and Colorset 0-3: green, yellow, red, blue.
+    playerColors() {
+        return HereticGameProfile.PLAYER_COLORS;
+    }
+
+    // No deathmatch ammo bonus: UZDoom Weapon.AddAmmo keeps the ×5/2 to Doom and Chex.
+    multiplayerItemRules() {
+        return HereticGameProfile.MULTIPLAYER_ITEM_RULES;
+    }
+
+    // zscript Inventory HideSpecial: hidden 1400 tics, then the ACLO cloud, the item
+    // takeable again at A_RestoreSpecialThing2; the ring of invulnerability is a
+    // BIGPOWERUP, never back.
+    itemRespawnRules() {
+        return HereticGameProfile.ITEM_RESPAWN_RULES;
+    }
+
+    // A_HBossDeath (heretic p_enemy.c): map 8 of every episode fires
+    // EV_DoFloor(lowerFloor) — to the HIGHEST neighbour, internal special 19 —
+    // on tag 666. The boss per episode is on the defs' bossMaps.
+    bossActions() {
+        return {
+            'E1M8': {special: 19, tag: 666},
+            'E2M8': {special: 19, tag: 666},
+            'E3M8': {special: 19, tag: 666},
+            'E4M8': {special: 19, tag: 666},
+            'E5M8': {special: 19, tag: 666}
+        };
+    }
+
+    finaleAssets() {
+        return '/assets/uzdoom/heretic/texts.json';
+    }
+
+    levelPatchAssets() {
+        return '/assets/uzdoom/heretic/levelPatches.json';
+    }
+
+    // Episode titles (UZDoom mapinfo/heretic.txt episode blocks). The hidden
+    // E6 is unnamed but still listed as "Episode 6": no level exit leads there.
+    episodeNames() {
+        return {
+            E1M1: 'City of the Damned',
+            E2M1: 'Hell\'s Maw',
+            E3M1: 'The Dome of D\'Sparil',
+            E4M1: 'The Ossuary',
+            E5M1: 'The Stagnant Demesne'
+        };
+    }
+
+    // Level names (Heretic source am_map.c LevelNames[]), without the
+    // "E1M1:  " prefix; uppercase in the source (uppercase-only font),
+    // normalized to title case. E6 is unnamed there.
+    levelNames() {
+        return {
+            E1M1: 'The Docks',
+            E1M2: 'The Dungeons',
+            E1M3: 'The Gatehouse',
+            E1M4: 'The Guard Tower',
+            E1M5: 'The Citadel',
+            E1M6: 'The Cathedral',
+            E1M7: 'The Crypts',
+            E1M8: 'Hell\'s Maw',
+            E1M9: 'The Graveyard',
+            E2M1: 'The Crater',
+            E2M2: 'The Lava Pits',
+            E2M3: 'The River of Fire',
+            E2M4: 'The Ice Grotto',
+            E2M5: 'The Catacombs',
+            E2M6: 'The Labyrinth',
+            E2M7: 'The Great Hall',
+            E2M8: 'The Portals of Chaos',
+            E2M9: 'The Glacier',
+            E3M1: 'The Storehouse',
+            E3M2: 'The Cesspool',
+            E3M3: 'The Confluence',
+            E3M4: 'The Azure Fortress',
+            E3M5: 'The Ophidian Lair',
+            E3M6: 'The Halls of Fear',
+            E3M7: 'The Chasm',
+            E3M8: 'D\'Sparil\'s Keep',
+            E3M9: 'The Aquifer',
+            E4M1: 'Catafalque',
+            E4M2: 'Blockhouse',
+            E4M3: 'Ambulatory',
+            E4M4: 'Sepulcher',
+            E4M5: 'Great Stair',
+            E4M6: 'Halls of the Apostate',
+            E4M7: 'Ramparts of Perdition',
+            E4M8: 'Shattered Bridge',
+            E4M9: 'Mausoleum',
+            E5M1: 'Ochre Cliffs',
+            E5M2: 'Rapids',
+            E5M3: 'Quay',
+            E5M4: 'Courtyard',
+            E5M5: 'Hydratyr',
+            E5M6: 'Colonnade',
+            E5M7: 'Foetid Manse',
+            E5M8: 'Field of Judgement',
+            E5M9: 'Skein of D\'Sparil'
+        };
+    }
+
+    // Heretic world things: editor numbers, sprite frames, radii and flags
+    // transcribed from the UZDoom sources (mapinfo/heretic.txt DoomEdNums +
+    // zscript/actors/heretic/ and actors/raven/).
+    // Monsters live in monsterDefs(); starts, ambient-sound things
+    // (41/42/1200-1209), generators (43/52/74), BossSpot (56) and the Bridge
+    // (118) are absent on purpose (silent skip). Inventory artifacts with no
+    // transposable effect (egg, time bomb, chaos device, tome, wings) are
+    // visible pickups with a null effect: never consumed, they stay.
+    thingDecorations() {
+        return {
+            serpentTorch:    new DoomDecoration({code: 'serpentTorch',    name: 'Serpent torch',      sprite: 'SRTCA0', solid: true,  radius: 12 * WadConstants.SCALE}),
+            smallPillar:     new DoomDecoration({code: 'smallPillar',     name: 'Small pillar',       sprite: 'SMPLA0', solid: true,  radius: 16 * WadConstants.SCALE}),
+            stalagmiteSmall: new DoomDecoration({code: 'stalagmiteSmall', name: 'Small stalagmite',   sprite: 'STGSA0', solid: true,  radius: 8 * WadConstants.SCALE}),
+            stalagmiteLarge: new DoomDecoration({code: 'stalagmiteLarge', name: 'Large stalagmite',   sprite: 'STGLA0', solid: true,  radius: 12 * WadConstants.SCALE}),
+            fireBrazier:     new DoomDecoration({code: 'fireBrazier',     name: 'Fire brazier',       sprite: 'KFR1A0', solid: true,  radius: 16 * WadConstants.SCALE}),
+            barrel:          new DoomDecoration({code: 'barrel',          name: 'Barrel',             sprite: 'BARLA0', solid: true,  radius: 12 * WadConstants.SCALE}),
+            brownPillar:     new DoomDecoration({code: 'brownPillar',     name: 'Brown pillar',       sprite: 'BRPLA0', solid: true,  radius: 14 * WadConstants.SCALE}),
+            volcano:         new DoomDecoration({code: 'volcano',         name: 'Volcano',            sprite: 'VLCOA0', solid: true,  radius: 12 * WadConstants.SCALE}),
+            // Key gizmos: solid base pillar only (the floating colored top of
+            // the vanilla actor pair is not spawned)
+            keyGizmoBlue:    new DoomDecoration({code: 'keyGizmoBlue',    name: 'Blue key gizmo',     sprite: 'KGZ1A0', solid: true,  radius: 16 * WadConstants.SCALE}),
+            keyGizmoGreen:   new DoomDecoration({code: 'keyGizmoGreen',   name: 'Green key gizmo',    sprite: 'KGZ1A0', solid: true,  radius: 16 * WadConstants.SCALE}),
+            keyGizmoYellow:  new DoomDecoration({code: 'keyGizmoYellow',  name: 'Yellow key gizmo',   sprite: 'KGZ1A0', solid: true,  radius: 16 * WadConstants.SCALE}),
+            // Wall torch (+NOGRAVITY, sits against a wall at floor height)
+            wallTorch:       new DoomDecoration({code: 'wallTorch',       name: 'Wall torch',         sprite: 'WTRHA0', solid: false, radius: 0}),
+            skullHang70:     new DoomDecoration({code: 'skullHang70',     name: 'Hanging skull 70',   sprite: 'SKH1A0', solid: false, radius: 20 * WadConstants.SCALE, ceiling: true}),
+            skullHang60:     new DoomDecoration({code: 'skullHang60',     name: 'Hanging skull 60',   sprite: 'SKH2A0', solid: false, radius: 20 * WadConstants.SCALE, ceiling: true}),
+            skullHang45:     new DoomDecoration({code: 'skullHang45',     name: 'Hanging skull 45',   sprite: 'SKH3A0', solid: false, radius: 20 * WadConstants.SCALE, ceiling: true}),
+            skullHang35:     new DoomDecoration({code: 'skullHang35',     name: 'Hanging skull 35',   sprite: 'SKH4A0', solid: false, radius: 20 * WadConstants.SCALE, ceiling: true}),
+            chandelier:      new DoomDecoration({code: 'chandelier',      name: 'Chandelier',         sprite: 'CHDLA0', solid: false, radius: 20 * WadConstants.SCALE, ceiling: true}),
+            stalactiteSmall: new DoomDecoration({code: 'stalactiteSmall', name: 'Small stalactite',   sprite: 'STCSA0', solid: true,  radius: 8 * WadConstants.SCALE,  ceiling: true}),
+            stalactiteLarge: new DoomDecoration({code: 'stalactiteLarge', name: 'Large stalactite',   sprite: 'STCLA0', solid: true,  radius: 12 * WadConstants.SCALE, ceiling: true}),
+            moss1:           new DoomDecoration({code: 'moss1',           name: 'Hanging moss 1',     sprite: 'MOS1A0', solid: false, radius: 20 * WadConstants.SCALE, ceiling: true}),
+            moss2:           new DoomDecoration({code: 'moss2',           name: 'Hanging moss 2',     sprite: 'MOS2A0', solid: false, radius: 20 * WadConstants.SCALE, ceiling: true}),
+            hangingCorpse:   new DoomDecoration({code: 'hangingCorpse',   name: 'Hanging corpse',     sprite: 'HCORA0', solid: true,  radius: 8 * WadConstants.SCALE,  ceiling: true})
+        };
+    }
+
+    thingTypes() {
+        return {
+            // --- Weapons ---
+            // No gold wand pickup: editor number 9042 is a GZDoom addition
+            // whose GWAN sprite is not in the vanilla WAD.
+            2001: {kind: 'pickup', sprite: 'WBOWA0', effect: {weapon: 'crossbow'}},
+            53:   {kind: 'pickup', sprite: 'WBLSA0', effect: {weapon: 'blaster'}},
+            2004: {kind: 'pickup', sprite: 'WSKLA0', effect: {weapon: 'skullrod'}},
+            2003: {kind: 'pickup', sprite: 'WPHXA0', effect: {weapon: 'phoenixrod'}},
+            2005: {kind: 'pickup', sprite: 'WGNTA0', effect: {weapon: 'gauntlets'}},
+            // MaceSpawner: vanilla materializes ONE mace per level among all
+            // its spawner spots (P_RepositionMace); spawnerGroup keeps a
+            // single random one.
+            2002: {kind: 'pickup', sprite: 'WMCEA0', spawnerGroup: 'mace', effect: {weapon: 'mace'}},
+            // --- Ammo (small / hefty amounts from the zscript definitions) ---
+            10:   {kind: 'pickup', sprite: 'AMG1A0', effect: {ammo: 'crystals', amount: 10}},
+            12:   {kind: 'pickup', sprite: 'AMG2A0', frames: DoomThingCatalog.animFrames('AMG2', 'ABC'), animDuration: 4 * WadConstants.SECONDS_PER_TIC, effect: {ammo: 'crystals', amount: 50}},
+            18:   {kind: 'pickup', sprite: 'AMC1A0', effect: {ammo: 'arrows', amount: 5}},
+            19:   {kind: 'pickup', sprite: 'AMC2A0', frames: DoomThingCatalog.animFrames('AMC2', 'ABC'), animDuration: 5 * WadConstants.SECONDS_PER_TIC, effect: {ammo: 'arrows', amount: 20}},
+            13:   {kind: 'pickup', sprite: 'AMM1A0', effect: {ammo: 'spheres', amount: 20}},
+            16:   {kind: 'pickup', sprite: 'AMM2A0', effect: {ammo: 'spheres', amount: 100}},
+            54:   {kind: 'pickup', sprite: 'AMB1A0', frames: DoomThingCatalog.animFrames('AMB1', 'ABC'), animDuration: 4 * WadConstants.SECONDS_PER_TIC, effect: {ammo: 'orbs', amount: 10}},
+            55:   {kind: 'pickup', sprite: 'AMB2A0', frames: DoomThingCatalog.animFrames('AMB2', 'ABC'), animDuration: 4 * WadConstants.SECONDS_PER_TIC, effect: {ammo: 'orbs', amount: 25}},
+            20:   {kind: 'pickup', sprite: 'AMS1A0', frames: DoomThingCatalog.animFrames('AMS1', 'AB'), animDuration: 5 * WadConstants.SECONDS_PER_TIC, effect: {ammo: 'runes', amount: 20}},
+            21:   {kind: 'pickup', sprite: 'AMS2A0', frames: DoomThingCatalog.animFrames('AMS2', 'AB'), animDuration: 5 * WadConstants.SECONDS_PER_TIC, effect: {ammo: 'runes', amount: 100}},
+            22:   {kind: 'pickup', sprite: 'AMP1A0', frames: DoomThingCatalog.animFrames('AMP1', 'ABC'), animDuration: 4 * WadConstants.SECONDS_PER_TIC, effect: {ammo: 'flameorbs', amount: 1}},
+            23:   {kind: 'pickup', sprite: 'AMP2A0', frames: DoomThingCatalog.animFrames('AMP2', 'ABC'), animDuration: 4 * WadConstants.SECONDS_PER_TIC, effect: {ammo: 'flameorbs', amount: 10}},
+            8:    {kind: 'pickup', sprite: 'BAGHA0', effect: {backpack: true}},
+            // --- Health / armor ---
+            81:   {kind: 'pickup', sprite: 'PTN1A0', frames: DoomThingCatalog.animFrames('PTN1', 'ABC'), animDuration: 3 * WadConstants.SECONDS_PER_TIC, effect: {health: 10}},
+            82:   {kind: 'pickup', sprite: 'PTN2A0', frames: DoomThingCatalog.animFrames('PTN2', 'ABC'), animDuration: 4 * WadConstants.SECONDS_PER_TIC, effect: {health: 25}},
+            32:   {kind: 'pickup', sprite: 'SPHLA0', effect: {health: 100}},
+            85:   {kind: 'pickup', sprite: 'SHLDA0', effect: {armor: {points: 100, absorb: 0.5}}},
+            31:   {kind: 'pickup', sprite: 'SHD2A0', effect: {armor: {points: 200, absorb: 0.75}}},
+            // --- Keys (+NOTDMATCH, heretickeys.zs) ---
+            73:   {kind: 'pickup', sprite: 'AKYYA0', frames: DoomThingCatalog.animFrames('AKYY', 'ABCDEFGHIJ'), animDuration: 3 * WadConstants.SECONDS_PER_TIC, effect: {item: 'greenKey'}, notDeathmatch: true},
+            79:   {kind: 'pickup', sprite: 'BKYYA0', frames: DoomThingCatalog.animFrames('BKYY', 'ABCDEFGHIJ'), animDuration: 3 * WadConstants.SECONDS_PER_TIC, effect: {item: 'blueKey'}, notDeathmatch: true},
+            80:   {kind: 'pickup', sprite: 'CKYYA0', frames: DoomThingCatalog.animFrames('CKYY', 'ABCDEFGHI'), animDuration: 3 * WadConstants.SECONDS_PER_TIC, effect: {item: 'yellowKey'}, notDeathmatch: true},
+            // --- Artifacts with a transposable immediate effect ---
+            84:   {kind: 'pickup', sprite: 'INVUA0', frames: DoomThingCatalog.animFrames('INVU', 'ABCD'), animDuration: 3 * WadConstants.SECONDS_PER_TIC, effect: {item: 'invulnerability'}},
+            75:   {kind: 'pickup', sprite: 'INVSA0', effect: {item: 'invisibility'}},
+            // BossSpot: not a body, only a spot D'Sparil reappears on.
+            56:   {kind: 'spot', group: 'bossSpot'},
+            33:   {kind: 'pickup', sprite: 'TRCHA0', frames: DoomThingCatalog.animFrames('TRCH', 'ABC'), animDuration: 3 * WadConstants.SECONDS_PER_TIC, effect: {item: 'torch'}},
+            35:   {kind: 'pickup', sprite: 'SPMPA0', effect: {item: 'superMap'}},
+            // --- Inert inventory artifacts ---
+            30:   {kind: 'pickup', sprite: 'EGGCA0', effect: null},
+            34:   {kind: 'pickup', sprite: 'FBMBE0', effect: null},
+            36:   {kind: 'pickup', sprite: 'ATLPA0', effect: null},
+            83:   {kind: 'pickup', sprite: 'SOARA0', effect: null},
+            86:   {kind: 'pickup', sprite: 'PWBKA0', effect: null},
+            // --- Static floor decorations ---
+            29:   {kind: 'decoration', code: 'smallPillar'},
+            37:   {kind: 'decoration', code: 'stalagmiteSmall'},
+            38:   {kind: 'decoration', code: 'stalagmiteLarge'},
+            44:   {kind: 'decoration', code: 'barrel'},
+            47:   {kind: 'decoration', code: 'brownPillar'},
+            87:   {kind: 'decoration', code: 'volcano'},
+            94:   {kind: 'decoration', code: 'keyGizmoBlue'},
+            95:   {kind: 'decoration', code: 'keyGizmoGreen'},
+            96:   {kind: 'decoration', code: 'keyGizmoYellow'},
+            // --- Animated floor decorations ---
+            27:   {kind: 'decoration', code: 'serpentTorch', frames: DoomThingCatalog.animFrames('SRTC', 'ABC'), animDuration: 4 * WadConstants.SECONDS_PER_TIC},
+            76:   {kind: 'decoration', code: 'fireBrazier',  frames: DoomThingCatalog.animFrames('KFR1', 'ABCDEFGH'), animDuration: 3 * WadConstants.SECONDS_PER_TIC},
+            50:   {kind: 'decoration', code: 'wallTorch',    frames: DoomThingCatalog.animFrames('WTRH', 'ABC'), animDuration: 6 * WadConstants.SECONDS_PER_TIC},
+            // --- Ceiling-hung decorations ---
+            17:   {kind: 'decoration', code: 'skullHang70'},
+            24:   {kind: 'decoration', code: 'skullHang60'},
+            25:   {kind: 'decoration', code: 'skullHang45'},
+            26:   {kind: 'decoration', code: 'skullHang35'},
+            28:   {kind: 'decoration', code: 'chandelier', frames: DoomThingCatalog.animFrames('CHDL', 'ABC'), animDuration: 4 * WadConstants.SECONDS_PER_TIC},
+            39:   {kind: 'decoration', code: 'stalactiteSmall'},
+            40:   {kind: 'decoration', code: 'stalactiteLarge'},
+            48:   {kind: 'decoration', code: 'moss1'},
+            49:   {kind: 'decoration', code: 'moss2'},
+            51:   {kind: 'decoration', code: 'hangingCorpse'}
+        };
+    }
+
+    // COUNTITEM of the Raven zscript: super map, shadowsphere, tome of power,
+    // time bomb, bag of holding (not the ring nor the torch). The tome and the
+    // time bomb have no effect yet, so they stay in the total but uncollectable.
+    countedItemTypes() {
+        return new Set([35, 75, 86, 34, 8]);
+    }
+
+    _podDef() {
+        return new DoomMonsterDef({
+            code: 'pod', name: 'Gas Pod', sprite: 'PPOD',
+            health: 45, radius: 16, height: 54, speed: 0, painChance: 255,
+            flags: {countsKill: false, noBlood: true, dontGib: true, dropOff: true, noCorpseThrust: true},
+            params: {explode: {damage: 128, distance: 128}},
+            states: {
+                spawn: [['A', 10, null, 'spawn']],
+                pain:  [['B', 14, 'A_PodPain', 'spawn']],
+                death: [['C', 5, 'A_RemovePod', null, true], ['D', 5, 'A_Scream', null, true], ['E', 5, 'A_Explode', null, true], ['F', 10, null, null, true]]
+            }
+        });
+    }
+
+    // Shared state blocks of the variant families (ghosts = base monsters
+    // with translucency, leaders swap the attack): one transcription each.
+    // A gargoyle claws for 5..12; the fire gargoyle throws its ball instead
+    // and its species is its own (hereticimp.zs HereticImpLeader).
+    _gargoyleParams(leader) {
+        if (leader) {
+            return {melee: {min: 5, max: 12}, missile: 'hereticImpBall', species: 'gargoyleLeader'};
+        }
+
+        return {missileChanceMult: 0.5, melee: {min: 5, max: 12}};
+    }
+
+    _gargoyleStates(leader) {
+        const states = {
+            spawn:  [['ABCB', 10, 'A_Look', 'spawn']],
+            see:    [['AABBCCBB', 3, 'A_Chase', 'see']],
+            pain:   [['G', 3], ['G', 3, 'A_Pain', 'see']],
+            // Death crumples in the air, Crash lands the pieces.
+            death:  [['G', 4, 'A_ImpDeath'], ['H', -1]],
+            xdeath: [['S', 5, 'A_ImpXDeath1'], ['TU', 5], ['V', 5, 'A_Gravity'], ['W', -1]],
+            crash:  [['I', 7, ['A_ImpExplode', {effects: ['gargoyleChunk1', 'gargoyleChunk2']}]], ['J', 7, 'A_Scream'], ['K', 7], ['L', -1]],
+            xcrash: [['XY', 7], ['Z', -1]]
+        };
+        if (leader) {
+            states.missile = [['DE', 6, 'A_FaceTarget'], ['F', 6, ['A_CustomComboAttack', {height: 32}], 'see']];
+            return states;
+        }
+        states.melee   = [['DE', 6, 'A_FaceTarget'], ['F', 6, 'A_CustomMeleeAttack', 'see']];
+        states.missile = [['A', 10, 'A_FaceTarget'], ['B', 6, ['A_ImpMsAttack', {chance: 64, speed: 12}]], ['CBAB', 6, null, 'missile2']];
+        return states;
+    }
+
+    // Golem: claw for 2 × (1..8); the nitrogolem throws the seeking skull
+    // instead, under its own species (mummy.zs MummyLeader).
+    _golemParams(leader, ghost) {
+        const params = {melee: {base: 2, dice: 8}};
+        if (leader) {
+            params.missile = 'mummyFX1';
+            params.species = ((ghost) ? 'golemLeaderGhost' : 'golemLeader');
+        }
+
+        return params;
+    }
+
+    _golemStates(leader) {
+        const states = {
+            spawn: [['AB', 10, 'A_Look', 'spawn']],
+            see:   [['ABCD', 4, 'A_Chase', 'see']],
+            melee: [['E', 6, 'A_FaceTarget'], ['F', 6, 'A_CustomMeleeAttack'], ['G', 6, null, 'see']],
+            pain:  [['H', 4], ['H', 4, 'A_Pain', 'see']],
+            death: [['I', 5], ['J', 5, 'A_Scream'], ['K', 5, ['A_SpawnItemEx', {effect: 'mummySoul'}]], ['L', 5], ['M', 5, 'A_NoBlocking'], ['NO', 5], ['P', -1]]
+        };
+        if (leader) {
+            states.missile = [['X', 5, 'A_FaceTarget'], ['Y', 5, 'A_FaceTarget', null, true], ['X', 5, 'A_FaceTarget'], ['Y', 5, 'A_FaceTarget', null, true], ['X', 5, 'A_FaceTarget'], ['Y', 5, ['A_CustomComboAttack', {height: 32}], 'see', true]];
+        }
+        return states;
+    }
+
+    // knight.zs: Melee and Missile share one block, so the axe thrower keeps
+    // its fist bonus in the missile gate; both variants are one species.
+    _undeadWarriorParams() {
+        return {meleeInMissile: true, species: 'undeadWarrior'};
+    }
+
+    _undeadWarriorStates() {
+        return {
+            // zscript labels Melee+Missile on the same block
+            // (A_KnightAttack picks axe type by range).
+            spawn:   [['AB', 10, 'A_Look', 'spawn']],
+            see:     [['ABCD', 4, 'A_Chase', 'see']],
+            missile: [['E', 10, 'A_FaceTarget'], ['F', 8, 'A_FaceTarget'], ['G', 8, HereticGameProfile.KNIGHT_ATTACK], ['E', 10, 'A_FaceTarget'], ['F', 8, 'A_FaceTarget'], ['G', 8, HereticGameProfile.KNIGHT_ATTACK, 'see']],
+            pain:    [['H', 3], ['H', 3, 'A_Pain', 'see']],
+            death:   [['I', 6], ['J', 6, 'A_Scream'], ['K', 6], ['L', 6, 'A_NoBlocking'], ['MN', 6], ['O', -1]]
+        };
+    }
+
+    // The Heretic bestiary (mapinfo/heretic.txt DoomEdNums, states from
+    // zscript/actors/heretic/*.zs + actors/raven/minotaur.zs). The ghost
+    // variants share the base sprites with a 0.4 translucency (zscript
+    // RenderStyle Translucent / Alpha 0.4). Sorcerer2 (D'Sparil unmounted)
+    // has no editor number: he is spawned by Sorcerer1's death. The chicken
+    // is a player morph (inventory not implemented), not a monster.
+    monsterDefs() {
+        return {
+            // hereticmisc.zs Pod: a shootable exploding body, not a kill.
+            // A_PodPain (the goo squirt) and A_RemovePod (generator hook) are
+            // not implemented. Two editor numbers spawn it.
+            2035: this._podDef(),
+            125:  this._podDef(),
+            66: new DoomMonsterDef({
+                code: 'gargoyle', name: 'Gargoyle', sprite: 'IMPX',
+                health: 40, radius: 16, height: 36, mass: 50, speed: 10, painChance: 200,
+                flags: {float: true, noGravity: true},
+                params: this._gargoyleParams(false),
+                states: this._gargoyleStates(false)
+            }),
+            5: new DoomMonsterDef({
+                code: 'gargoyleLeader', name: 'Fire Gargoyle', sprite: 'IMPX',
+                health: 80, radius: 16, height: 36, mass: 50, speed: 10, painChance: 200,
+                flags: {float: true, noGravity: true},
+                params: this._gargoyleParams(true),
+                states: this._gargoyleStates(true)
+            }),
+            68: new DoomMonsterDef({
+                code: 'golem', name: 'Golem', sprite: 'MUMM',
+                health: 80, radius: 22, height: 62, mass: 75, speed: 12, painChance: 128,
+                dropItems: [{item: 'GoldWandAmmo', chance: 84, amount: 3}],
+                params: this._golemParams(false, false),
+                states: this._golemStates(false)
+            }),
+            45: new DoomMonsterDef({
+                code: 'golemLeader', name: 'Nitrogolem', sprite: 'MUMM',
+                health: 100, radius: 22, height: 62, mass: 75, speed: 12, painChance: 64,
+                dropItems: [{item: 'GoldWandAmmo', chance: 84, amount: 3}],
+                params: this._golemParams(true, false),
+                states: this._golemStates(true)
+            }),
+            69: new DoomMonsterDef({
+                code: 'golemGhost', name: 'Golem Ghost', sprite: 'MUMM', alpha: 0.4,
+                health: 80, radius: 22, height: 62, mass: 75, speed: 12, painChance: 128,
+                flags: {ghost: true, shadow: true},
+                dropItems: [{item: 'GoldWandAmmo', chance: 84, amount: 3}],
+                params: this._golemParams(false, true),
+                states: this._golemStates(false)
+            }),
+            46: new DoomMonsterDef({
+                code: 'golemLeaderGhost', name: 'Nitrogolem Ghost', sprite: 'MUMM', alpha: 0.4,
+                health: 100, radius: 22, height: 62, mass: 75, speed: 12, painChance: 64,
+                flags: {ghost: true, shadow: true},
+                dropItems: [{item: 'GoldWandAmmo', chance: 84, amount: 3}],
+                params: this._golemParams(true, true),
+                states: this._golemStates(true)
+            }),
+            64: new DoomMonsterDef({
+                code: 'undeadWarrior', name: 'Undead Warrior', sprite: 'KNIG',
+                health: 200, radius: 24, height: 78, mass: 150, speed: 12, painChance: 100,
+                dropItems: [{item: 'CrossbowAmmo', chance: 84, amount: 5}],
+                params: this._undeadWarriorParams(),
+                states: this._undeadWarriorStates()
+            }),
+            65: new DoomMonsterDef({
+                code: 'undeadWarriorGhost', name: 'Undead Warrior Ghost', sprite: 'KNIG', alpha: 0.4,
+                health: 200, radius: 24, height: 78, mass: 150, speed: 12, painChance: 100,
+                flags: {ghost: true, shadow: true},
+                dropItems: [{item: 'CrossbowAmmo', chance: 84, amount: 5}],
+                params: this._undeadWarriorParams(),
+                states: this._undeadWarriorStates()
+            }),
+            15: new DoomMonsterDef({
+                code: 'disciple', name: 'Disciple of D\'Sparil', sprite: 'WZRD',
+                health: 180, radius: 16, height: 68, speed: 12, painChance: 64,
+                flags: {float: true, noGravity: true},
+                dropItems: [{item: 'BlasterAmmo', chance: 84, amount: 10}, {item: 'ArtiTomeOfPower', chance: 4, amount: 0}],
+                params: {melee: {base: 4, dice: 8}, missile: 'wizardFX1'},
+                states: {
+                    spawn:   [['AB', 10, 'A_Look', 'spawn']],
+                    see:     [['A', 3, 'A_Chase'], ['A', 4, 'A_Chase'], ['A', 3, 'A_Chase'], ['A', 4, 'A_Chase'], ['B', 3, 'A_Chase'], ['B', 4, 'A_Chase'], ['B', 3, 'A_Chase'], ['B', 4, 'A_Chase', 'see']],
+                    missile: [['C', 4, 'A_WizAtk1'], ['C', 4, 'A_WizAtk2'], ['C', 4, 'A_WizAtk1'], ['C', 4, 'A_WizAtk2'], ['C', 4, 'A_WizAtk1'], ['C', 4, 'A_WizAtk2'], ['C', 4, 'A_WizAtk1'], ['C', 4, 'A_WizAtk2'], ['D', 12, ['A_WizAtk3', {angles: [0, -5.625, 5.625]}], 'see']],
+                    pain:    [['E', 3, 'A_GhostOff'], ['E', 3, 'A_Pain', 'see']],
+                    death:   [['F', 6, 'A_GhostOff'], ['G', 6, 'A_Scream'], ['HI', 6], ['J', 6, 'A_NoBlocking'], ['KL', 6], ['M', -1, 'A_SetFloorClip']]
+                }
+            }),
+            70: new DoomMonsterDef({
+                code: 'weredragon', name: 'Weredragon', sprite: 'BEAS',
+                health: 220, radius: 32, height: 74, mass: 200, speed: 14, painChance: 100,
+                dropItems: [{item: 'CrossbowAmmo', chance: 84, amount: 10}],
+                params: {melee: {base: 3, dice: 8}, missile: 'beastBall'},
+                states: {
+                    spawn:   [['AB', 10, 'A_Look', 'spawn']],
+                    see:     [['ABCDEF', 3, 'A_Chase', 'see']],
+                    missile: [['H', 10, 'A_FaceTarget'], ['I', 10, ['A_CustomComboAttack', {height: 32}], 'see']],
+                    pain:    [['G', 3], ['G', 3, 'A_Pain', 'see']],
+                    death:   [['R', 6], ['S', 6, 'A_Scream'], ['TUV', 6], ['W', 6, 'A_NoBlocking'], ['XY', 6], ['Z', -1]],
+                    xdeath:  [['J', 5], ['K', 6, 'A_Scream'], ['L', 5], ['M', 6], ['N', 5], ['O', 6, 'A_NoBlocking'], ['P', 5], ['Q', -1]]
+                }
+            }),
+            90: new DoomMonsterDef({
+                code: 'sabreclaw', name: 'Sabreclaw', sprite: 'CLNK',
+                health: 150, radius: 20, height: 64, mass: 75, speed: 14, painChance: 32,
+                flags: {noBlood: true},
+                dropItems: [{item: 'SkullRodAmmo', chance: 84, amount: 20}],
+                params: {melee: {min: 3, max: 9}},
+                states: {
+                    spawn: [['AB', 10, 'A_Look', 'spawn']],
+                    see:   [['ABCD', 3, 'A_Chase', 'see']],
+                    melee: [['E', 5, 'A_FaceTarget'], ['F', 4, 'A_FaceTarget'], ['G', 7, 'A_CustomMeleeAttack', 'see']],
+                    pain:  [['H', 3], ['H', 3, 'A_Pain', 'see']],
+                    death: [['IJ', 6], ['K', 5, 'A_Scream'], ['L', 5, 'A_NoBlocking'], ['MN', 5], ['O', -1]]
+                }
+            }),
+            92: new DoomMonsterDef({
+                code: 'ophidian', name: 'Ophidian', sprite: 'SNKE',
+                health: 280, radius: 22, height: 70, speed: 10, painChance: 48,
+                dropItems: [{item: 'PhoenixRodAmmo', chance: 84, amount: 5}],
+                states: {
+                    spawn:   [['AB', 10, 'A_Look', 'spawn']],
+                    see:     [['ABCD', 4, 'A_Chase', 'see']],
+                    missile: [['FF', 5, 'A_FaceTarget'], ['FFF', 4, ['A_SpawnProjectile', {kind: 'snakeProjA', height: 32}]], ['FFF', 5, 'A_FaceTarget'], ['F', 4, ['A_SpawnProjectile', {kind: 'snakeProjB', height: 32}], 'see']],
+                    pain:    [['E', 3], ['E', 3, 'A_Pain', 'see']],
+                    death:   [['G', 5], ['H', 5, 'A_Scream'], ['IJKL', 5], ['M', 5, 'A_NoBlocking'], ['NO', 5], ['P', -1]]
+                }
+            }),
+            6: new DoomMonsterDef({
+                // Sprite HEAD as in the WAD: GZDoom renames it LICH to dodge
+                // the cacodemon clash, which per-game catalogs never meet.
+                code: 'ironlich', name: 'Iron Lich', sprite: 'HEAD',
+                health: 700, radius: 40, height: 72, mass: 325, speed: 6, painChance: 32,
+                flags: {noBlood: true},
+                bossMaps: ['E1M8', 'E4M8'],
+                dropItems: [{item: 'BlasterAmmo', chance: 84, amount: 10}, {item: 'ArtiEgg', chance: 51, amount: 0}],
+                states: {
+                    spawn:   [['A', 10, 'A_Look', 'spawn']],
+                    see:     [['A', 4, 'A_Chase', 'see']],
+                    missile: [['A', 5, 'A_FaceTarget'], ['B', 20, HereticGameProfile.LICH_ATTACK, 'see']],
+                    pain:    [['A', 4], ['A', 4, 'A_Pain', 'see']],
+                    death:   [['C', 7], ['D', 7, 'A_Scream'], ['EF', 7], ['G', 7, 'A_NoBlocking'], ['H', 7], ['I', -1, 'A_BossDeath']]
+                }
+            }),
+            9: new DoomMonsterDef({
+                code: 'maulotaur', name: 'Maulotaur', sprite: 'MNTR',
+                health: 3000, radius: 28, height: 100, mass: 800, speed: 16, painChance: 25,
+                flags: {boss: true, dropOff: true, noTarget: true, noRadiusDmg: true},
+                bossMaps: ['E2M8', 'E5M8'],
+                params: {chargeDamage: {base: 7, dice: 8}},
+                dropItems: [{item: 'ArtiSuperHealth', chance: 51}, {item: 'PhoenixRodAmmo', chance: 84, amount: 10}],
+                states: {
+                    spawn:      [['AB', 10, 'A_MinotaurLook', 'spawn']],
+                    roam:       [['ABCD', 5, 'A_MinotaurRoam', 'roam']],
+                    see:        [['ABCD', 5, 'A_MinotaurChase', 'see']],
+                    melee:      [['V', 10, 'A_FaceTarget'], ['W', 7, 'A_FaceTarget'], ['X', 12, ['A_MinotaurAtk1', {damage: {base: 4, dice: 8}}], 'see']],
+                    missile:    [['V', 10, HereticGameProfile.MINOTAUR_DECIDE], ['Y', 4, 'A_FaceTarget'], ['Z', 9, ['A_MinotaurAtk2', {kind: 'minotaurFX1', height: 40, damage: {base: 5, dice: 8}, angles: [0, -5.625, 5.625, -2.8125, 2.8125]}], 'see']],
+                    hammer:     [['V', 10, 'A_FaceTarget'], ['W', 7, 'A_FaceTarget'], ['X', 12, ['A_MinotaurAtk3', {damage: {base: 5, dice: 8}, kind: 'minotaurFX2', loopChance: 192, loopState: 'hammerLoop0'}], 'see']],
+                    hammerLoop: [['X', 12, null, 'hammer']],
+                    charge:     [['U', 2, ['A_MinotaurCharge', {puff: 'phoenixTrail'}], 'charge']],
+                    pain:       [['E', 3], ['E', 6, 'A_Pain', 'see']],
+                    death:      [['F', 6, 'A_MinotaurDeath'], ['G', 5], ['H', 6, 'A_Scream'], ['I', 5], ['J', 6], ['K', 5], ['L', 6], ['M', 5, 'A_NoBlocking'], ['N', 6], ['O', 5], ['P', 6], ['Q', 5], ['R', 6], ['S', 5], ['T', -1, 'A_BossDeath']]
+                }
+            }),
+            // No editor number: A_SorcererRise alone brings him into the world,
+            // so he is keyed by name (a numeric lookup never reaches him).
+            sorcerer2: new DoomMonsterDef({
+                code: 'dsparil', name: 'D\'Sparil', sprite: 'SOR2',
+                health: 3500, radius: 16, height: 70, mass: 300, speed: 14, painChance: 32,
+                flags: {boss: true, dropOff: true, noTarget: true, noRadiusDmg: true},
+                bossMaps: ['E3M8'],
+                spriteOverrides: {death: 'SDTH', deathLoop: 'SDTH'},
+                states: {
+                    spawn:     [['MN', 10, 'A_Look', 'spawn']],
+                    see:       [['MNOP', 4, 'A_Chase', 'see']],
+                    // Entered by A_SorcererRise: he pulls himself up, then chases.
+                    rise:      [['AB', 4], ['C', 4], ['DEF', 4], ['G', 12, null, 'see']],
+                    pain:      [['Q', 3], ['Q', 6, 'A_Pain', 'see']],
+                    missile:   [['R', 9, HereticGameProfile.SORCERER2_DECIDE], ['S', 9, 'A_FaceTarget'],
+                        ['T', 20, HereticGameProfile.SORCERER2_ATTACK, 'see']],
+                    teleport:  [['LKJIHG', 6, null, 'see']],
+                    death:     [['A', 8, ['A_Sor2DthInit', {loops: 7}]], ['B', 8], ['C', 8, 'A_Scream', 'deathLoop']],
+                    // The middle of the animation replays seven times before
+                    // the bones settle and the map action fires.
+                    deathLoop: [['DE', 7], ['F', 7, ['A_Sor2DthLoop', {state: 'deathLoop0'}]], ['G', 6], ['H', 6], ['I', 18],
+                        ['J', 6, 'A_NoBlocking'], ['K', 6], ['LMN', 6], ['O', -1, 'A_BossDeath']]
+                }
+            }),
+            7: new DoomMonsterDef({
+                code: 'dsparilSerpent', name: 'D\'Sparil', sprite: 'SRCR',
+                health: 2000, radius: 28, height: 100, mass: 800, speed: 16, painChance: 56,
+                flags: {boss: true, noTarget: true, noRadiusDmg: true, dontGib: true},
+                states: {
+                    spawn:    [['AB', 10, 'A_Look', 'spawn']],
+                    see:      [['ABCD', 5, 'A_Sor1Chase', 'see']],
+                    pain:     [['Q', 6, 'A_Sor1Pain', 'see']],
+                    missile:  [['Q', 7, 'A_FaceTarget'], ['R', 6, 'A_FaceTarget'], ['S', 10, HereticGameProfile.SERPENT_ATTACK, 'see']],
+                    missile2: [['S', 10, 'A_FaceTarget'], ['Q', 7, 'A_FaceTarget'], ['R', 6, 'A_FaceTarget'], ['S', 10, HereticGameProfile.SERPENT_ATTACK, 'see']],
+                    // The mount does not end the fight: its last frame stands
+                    // D'Sparil up out of it (A_SorcererRise), and HIS death
+                    // fires the map action.
+                    death:    [['E', 7], ['F', 7, 'A_Scream'], ['G', 7], ['HIJK', 6], ['L', 25], ['MN', 5], ['O', 4], ['L', 20], ['MN', 5], ['O', 4], ['L', 12],
+                        ['P', -1, ['A_SorcererRise', {spawn: 'dsparil', state: 'rise0'}]]]
+                }
+            })
+        };
+    }
+
+    // Heretic monster drops (zscript DropItem): the ammo amounts live on each
+    // monster's dropItems entry; the artifacts drop as the same visible
+    // pickups as their world things (urn heals, egg/tome stay inert).
+    dropItemTypes() {
+        return {
+            GoldWandAmmo:    {sprite: 'AMG1A0', ammoType: 'crystals'},
+            CrossbowAmmo:    {sprite: 'AMC1A0', ammoType: 'arrows'},
+            BlasterAmmo:     {sprite: 'AMB1A0', ammoType: 'orbs'},
+            SkullRodAmmo:    {sprite: 'AMS1A0', ammoType: 'runes'},
+            PhoenixRodAmmo:  {sprite: 'AMP1A0', ammoType: 'flameorbs'},
+            ArtiSuperHealth: {sprite: 'SPHLA0', effect: {health: 100}},
+            ArtiEgg:         {sprite: 'EGGCA0', effect: null},
+            ArtiTomeOfPower: {sprite: 'PWBKA0', effect: null}
+        };
+    }
+
+    // Heretic skill blocks (UZDoom mapinfo/heretic.txt): baby = ammo ×1.5,
+    // damage ×0.5, easy boss brain (Heretic's easy skill has NO easy boss
+    // brain, unlike Doom's); nightmare = ammo ×1.5, fast monsters, instant
+    // reaction and NO respawn (DoubleAmmoFactor is deathmatch-only, ignored).
+    // Skill 0 = skill 3 with pacifist monsters, like the Doom table.
+    skillRules() {
+        return {
+            0: {spawnFilterBit: 0x02, ammoFactor: 1,   damageFactor: 1,   monstersPacifist: true,  fastMonsters: false, instantReaction: false, respawnTicsDelay: 0, easyBossBrain: false},
+            1: {spawnFilterBit: 0x01, ammoFactor: 1.5, damageFactor: 0.5, monstersPacifist: false, fastMonsters: false, instantReaction: false, respawnTicsDelay: 0, easyBossBrain: true},
+            2: {spawnFilterBit: 0x01, ammoFactor: 1,   damageFactor: 1,   monstersPacifist: false, fastMonsters: false, instantReaction: false, respawnTicsDelay: 0, easyBossBrain: false},
+            3: {spawnFilterBit: 0x02, ammoFactor: 1,   damageFactor: 1,   monstersPacifist: false, fastMonsters: false, instantReaction: false, respawnTicsDelay: 0, easyBossBrain: false},
+            4: {spawnFilterBit: 0x04, ammoFactor: 1,   damageFactor: 1,   monstersPacifist: false, fastMonsters: false, instantReaction: false, respawnTicsDelay: 0, easyBossBrain: false},
+            5: {spawnFilterBit: 0x04, ammoFactor: 1.5, damageFactor: 1,   monstersPacifist: false, fastMonsters: true,  instantReaction: true,  respawnTicsDelay: 0, easyBossBrain: false}
+        };
+    }
+
+    // gameinfo nightmarefast = true (mapinfo/heretic.txt:59): fastMonsters
+    // halves EVERY monster's chase cadence at runtime.
+    nightmareFast() {
+        return true;
+    }
+
+    // Amounts/caps from the UZDoom zscript ammo definitions (hereticammo.zs):
+    // clip = small-pickup amount, packGive = what the Bag of Holding grants
+    // (mace spheres get none).
+    buildAmmoTypes() {
+        return {
+            crystals:  new DoomAmmo({code: 'crystals',  name: 'Wand Crystals',   maxNormal: 100, maxPack: 200, clip: 10}),
+            arrows:    new DoomAmmo({code: 'arrows',    name: 'Ethereal Arrows', maxNormal: 50,  maxPack: 100, clip: 5}),
+            orbs:      new DoomAmmo({code: 'orbs',      name: 'Claw Orbs',       maxNormal: 200, maxPack: 400, clip: 10}),
+            runes:     new DoomAmmo({code: 'runes',     name: 'Hellstaff Runes', maxNormal: 200, maxPack: 400, clip: 20}),
+            flameorbs: new DoomAmmo({code: 'flameorbs', name: 'Flame Orbs',      maxNormal: 20,  maxPack: 40,  clip: 1}),
+            spheres:   new DoomAmmo({code: 'spheres',   name: 'Mace Spheres',    maxNormal: 150, maxPack: 300, clip: 20, packGive: 0})
+        };
+    }
+
+    // The Heretic arsenal in slot order (PL1 mode only — the Tome of Power is
+    // out of scope), ported state-for-state from the UZDoom zscript actors
+    // (zscript/actors/heretic/weapon*.zs). Spread: Random2() * (5.625/256)°
+    // per difference unit = exactly the Doom SPREAD constant (360/16384).
+    // Ranges in world units (DEFMELEERANGE 64 → 1, PLAYERMISSILERANGE 8192 →
+    // 128). No Heretic weapon has a muzzle-flash psprite; ammoGive carries the
+    // per-weapon pickup amounts (Weapon.AmmoGive); yAdjust lowers the view
+    // sprites like gzdoom (15, the wand 5, the staff 0).
+    buildWeapons() {
+        const MELEE_RANGE   = 1.0;
+        const HITSCAN_RANGE = 128.0;
+        const SPREAD        = 360 / 16384;
+        const WEAPON_ENTRY  = { ready: 'ready', down: 'down', up: 'up', atk: 'fire1' };
+
+        const weaponDefs = [
+            {
+                code: 'staff', name: 'Staff', ammoType: null, ammoUse: 0,
+                pellets: 1, spreadH: SPREAD, range: MELEE_RANGE,
+                damage: {flat: 4, base: 1, dice: 16}, kickback: 150, puffOnMonsters: true,
+                puffType: 'staffPuff',
+                viewSprite: 'STFF', entry: WEAPON_ENTRY,
+                meleeHitSound: 'weapons/staffhit',
+                main: {
+                    ready: ['A', 1, 'ready', 'ready'], down: ['A', 1, 'lower', 'down'], up: ['A', 1, 'raise', 'up'],
+                    fire1: ['B', 6, null, 'fire2'], fire2: ['C', 8, 'fireMelee', 'fire3'], fire3: ['B', 8, 'refire', 'ready'],
+                },
+            },
+            {
+                code: 'gauntlets', name: 'Gauntlets', ammoType: null, ammoUse: 0,
+                pellets: 1, spreadH: SPREAD, range: MELEE_RANGE, yAdjust: 15,
+                damage: {base: 2, dice: 8}, kickback: 0, puffOnMonsters: true,
+                puffType: 'gauntletPuff',
+                viewSprite: 'GAUN', entry: { ready: 'ready', down: 'down', up: 'up', atk: 'fire1', hold: 'hold1' },
+                upSound: 'weapons/gauntletsactivate', meleeHitSound: 'weapons/gauntletshit', meleeMissSound: 'weapons/gauntletson',
+                main: {
+                    ready: ['A', 1, 'ready', 'ready'], down: ['A', 1, 'lower', 'down'], up: ['A', 1, 'raise', 'up'],
+                    fire1: ['B', 4, null, 'fire2'], fire2: ['C', 4, null, 'hold1'],
+                    hold1: ['D', 4, 'fireMelee', 'hold2', true], hold2: ['E', 4, 'fireMelee', 'hold3', true],
+                    hold3: ['F', 4, 'fireMelee', 'hold4', true], hold4: ['C', 4, 'refire', 'hold5'],
+                    hold5: ['B', 4, null, 'ready'],
+                },
+            },
+            {
+                code: 'goldwand', name: 'Gold Wand', ammoType: 'crystals', ammoUse: 1, ammoGive: 25,
+                pellets: 1, spreadH: SPREAD, range: HITSCAN_RANGE, accurateFirst: true, yAdjust: 5,
+                damage: {flat: 6, base: 1, dice: 8}, kickback: 150, puffOnMonsters: true,
+                puffType: 'goldwandPuff', decalType: 'railscorch',
+                viewSprite: 'GWND', entry: WEAPON_ENTRY,
+                actionSounds: {fireHitscan: 'weapons/wandhit'},
+                main: {
+                    ready: ['A', 1, 'ready', 'ready'], down: ['A', 1, 'lower', 'down'], up: ['A', 1, 'raise', 'up'],
+                    fire1: ['B', 3, null, 'fire2'], fire2: ['C', 5, 'fireHitscan', 'fire3'],
+                    fire3: ['D', 3, null, 'fire4'], fire4: ['D', 0, 'refire', 'ready'],
+                },
+            },
+            {
+                code: 'crossbow', name: 'Ethereal Crossbow', ammoType: 'arrows', ammoUse: 1, ammoGive: 10,
+                yAdjust: 15,
+                projectiles: [
+                    {kind: 'crossbowfx1'},
+                    {kind: 'crossbowfx3', angleOffset: -4.5},
+                    {kind: 'crossbowfx3', angleOffset: 4.5}
+                ],
+                viewSprite: 'CRBW', entry: WEAPON_ENTRY,
+                main: {
+                    ...this._animatedReadyStates('AAAAAABBBBBBCCCCCC'),
+                    down: ['A', 1, 'lower', 'down'], up: ['A', 1, 'raise', 'up'],
+                    fire1: ['D', 6, 'fireProjectiles', 'fire2'],
+                    fire2: ['E', 3, null, 'fire3'], fire3: ['F', 3, null, 'fire4'],
+                    fire4: ['G', 3, null, 'fire5'], fire5: ['H', 3, null, 'fire6'],
+                    fire6: ['A', 4, null, 'fire7'], fire7: ['B', 4, null, 'fire8'],
+                    fire8: ['C', 5, 'refire', 'ready'],
+                },
+            },
+            {
+                code: 'blaster', name: 'Dragon Claw', ammoType: 'orbs', ammoUse: 1, ammoGive: 30,
+                pellets: 1, spreadH: SPREAD, range: HITSCAN_RANGE, accurateFirst: true, yAdjust: 15,
+                damage: {base: 4, dice: 8}, kickback: 150, puffOnMonsters: true,
+                puffType: 'blasterPuff', decalType: 'railscorch',
+                viewSprite: 'BLSR', entry: { ready: 'ready', down: 'down', up: 'up', atk: 'fire1', hold: 'hold1' },
+                actionSounds: {fireHitscan: 'weapons/blastershoot'}, impactSound: 'weapons/blasterhit',
+                main: {
+                    ready: ['A', 1, 'ready', 'ready'], down: ['A', 1, 'lower', 'down'], up: ['A', 1, 'raise', 'up'],
+                    fire1: ['B', 3, null, 'fire2'], fire2: ['C', 3, null, 'hold1'],
+                    hold1: ['D', 2, 'fireHitscan', 'hold2'], hold2: ['C', 2, null, 'hold3'],
+                    hold3: ['B', 2, null, 'hold4'], hold4: ['A', 0, 'refire', 'ready'],
+                },
+            },
+            {
+                code: 'skullrod', name: 'Hellstaff', ammoType: 'runes', ammoUse: 1, ammoGive: 50,
+                yAdjust: 15,
+                projectiles: [{kind: 'hornrodfx1'}],
+                viewSprite: 'HROD', entry: WEAPON_ENTRY,
+                main: {
+                    ready: ['A', 1, 'ready', 'ready'], down: ['A', 1, 'lower', 'down'], up: ['A', 1, 'raise', 'up'],
+                    fire1: ['A', 4, 'fireProjectiles', 'fire2'], fire2: ['B', 4, 'fireProjectiles', 'fire3'],
+                    fire3: ['B', 0, 'refire', 'ready'],
+                },
+            },
+            {
+                code: 'phoenixrod', name: 'Phoenix Rod', ammoType: 'flameorbs', ammoUse: 1, ammoGive: 2,
+                yAdjust: 15, autoFire: false,
+                projectiles: [{kind: 'phoenixfx1'}],
+                viewSprite: 'PHNX', entry: WEAPON_ENTRY,
+                main: {
+                    ready: ['A', 1, 'ready', 'ready'], down: ['A', 1, 'lower', 'down'], up: ['A', 1, 'raise', 'up'],
+                    fire1: ['B', 5, null, 'fire2'], fire2: ['C', 7, 'fireProjectiles', 'fire3'],
+                    fire3: ['D', 4, null, 'fire4'], fire4: ['B', 4, null, 'fire5'],
+                    fire5: ['B', 0, 'refire', 'ready'],
+                },
+            },
+            {
+                code: 'mace', name: 'Firemace', ammoType: 'spheres', ammoUse: 1, ammoGive: 50,
+                yAdjust: 15,
+                projectiles: [{kind: 'macefx1', randomSpreadH: SPREAD, altKind: 'macefx2', altChance: 28}],
+                viewSprite: 'MACE', entry: { ready: 'ready', down: 'down', up: 'up', atk: 'fire1', hold: 'hold1' },
+                actionSounds: {fireProjectiles: 'weapons/maceshoot'},
+                main: {
+                    ready: ['A', 1, 'ready', 'ready'], down: ['A', 1, 'lower', 'down'], up: ['A', 1, 'raise', 'up'],
+                    fire1: ['B', 4, null, 'hold1'],
+                    hold1: ['C', 3, 'fireProjectiles', 'hold2'], hold2: ['D', 3, 'fireProjectiles', 'hold3'],
+                    hold3: ['E', 3, 'fireProjectiles', 'hold4'], hold4: ['F', 3, 'fireProjectiles', 'hold5'],
+                    hold5: ['C', 4, 'refire', 'hold6'], hold6: ['D', 4, null, 'hold7'],
+                    hold7: ['E', 4, null, 'hold8'], hold8: ['F', 4, null, 'hold9'],
+                    hold9: ['B', 4, null, 'ready'],
+                },
+            },
+        ];
+
+        const catalog = {};
+        for (const entry of weaponDefs) {
+            catalog[entry.code] = new DoomWeaponDef(entry);
+        }
+        return catalog;
+    }
+
+    // The crossbow idles on an 18-frame 1-tic animation (CRBW A×6 B×6 C×6),
+    // each state running A_WeaponReady like vanilla — generated as a chained
+    // loop the generic state machine consumes as-is.
+    _animatedReadyStates(letters) {
+        const states = {};
+        for (let i = 0; i < letters.length; i++) {
+            const key  = ((i === 0) ? 'ready' : 'ready' + (i + 1));
+            const next = ((i === (letters.length - 1)) ? 'ready' : 'ready' + (i + 2));
+            states[key] = [letters[i], 1, 'ready', next];
+        }
+        return states;
+    }
+
+    // Heretic hitscan puffs (zscript actors): the staff/gauntlet hits are
+    // translucent rising puffs (Alpha 0.4, VSpeed 1 / 0.8), the wand/claw
+    // sparks glow (RenderStyle Add, default alpha). The claw impact is
+    // BlasterPuff's Crash branch (FX17 ABCDE, the Spawn branch is its
+    // powered-mode in-flight puff).
+    effectTemplates() {
+        return [
+            {name: 'staffPuff',       sprite: 'PUF3', letters: ['A', 'B', 'C', 'D'],      frameTics: [4, 4, 4, 4],    alpha: 0.4, rise: 1,   additive: false, bright: [true, false, false, false]},
+            {name: 'gauntletPuff',    sprite: 'PUF1', letters: ['A', 'B', 'C', 'D'],      frameTics: [4, 4, 4, 4],    alpha: 0.4, rise: 0.8, additive: false, bright: true},
+            {name: 'goldwandPuff',    sprite: 'PUF2', letters: ['A', 'B', 'C', 'D', 'E'], frameTics: [3, 3, 3, 3, 3], alpha: 1,   rise: 0,   additive: true, bright: true},
+            {name: 'blasterPuff',     sprite: 'FX17', letters: ['A', 'B', 'C', 'D', 'E'], frameTics: [4, 4, 4, 4, 4], alpha: 1,   rise: 0,   additive: true, bright: true},
+            // Projectile deaths (zscript Death states): the bolts and the
+            // hellstaff burst glow (Add), the phoenix explosion and the mace
+            // ball break are plain bright frames.
+            {name: 'crossbowExplode1', sprite: 'FX03', letters: ['H', 'I', 'J'],                     frameTics: [8, 8, 8],                alpha: 1,   rise: 0, additive: true, bright: true},
+            {name: 'crossbowExplode3', sprite: 'FX03', letters: ['C', 'D', 'E'],                     frameTics: [8, 8, 8],                alpha: 1,   rise: 0, additive: true, bright: true},
+            {name: 'skullrodExplode',  sprite: 'FX00', letters: ['H', 'I', 'J', 'K', 'L', 'M'],      frameTics: [5, 5, 4, 4, 3, 3],       alpha: 1,   rise: 0, additive: true, bright: true},
+            {name: 'phoenixExplode',   sprite: 'FX08', letters: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], frameTics: [6, 5, 5, 4, 4, 4, 4, 4], alpha: 1, rise: 0, additive: false, bright: true},
+            {name: 'phoenixTrail',     sprite: 'FX04', letters: ['B', 'C', 'D', 'E', 'F'],           frameTics: [4, 4, 4, 4, 4],          alpha: 0.4, rise: 0, additive: false, bright: false},
+            {name: 'maceExplode',      sprite: 'FX02', letters: ['F', 'G', 'H', 'I', 'J'],           frameTics: [4, 4, 4, 4, 4],          alpha: 1,   rise: 0, additive: false, bright: true},
+            // Heretic blood (BLOD lumps): no damage-staged start and no
+            // shortened first tics (Doom-family quirks only).
+            {name: 'blood',            sprite: 'BLOD', letters: ['C', 'B', 'A'],                     frameTics: [8, 8, 8],                alpha: 1,   rise: 2, gravity: 1, shorten: false, additive: false, bright: false},
+            // The two pieces a gargoyle shatters into when its gibbed body hits
+            // the floor (hereticimp.zs HereticImpChunk1/2: thrown up at 9, then
+            // left lying for 700 tics).
+            {name: 'gargoyleChunk1',   sprite: 'IMPX', letters: ['M', 'N'], frameTics: [5, 700], alpha: 1, rise: 9, gravity: 1, shorten: false, additive: false, bright: false},
+            {name: 'gargoyleChunk2',   sprite: 'IMPX', letters: ['O', 'P'], frameTics: [5, 700], alpha: 1, rise: 9, gravity: 1, shorten: false, additive: false, bright: false},
+            // The soul a golem lets go of when it dies (vanilla A_MummySoul:
+            // spawned 10 units up, rising 1 unit/tic).
+            {name: 'mummySoul',        sprite: 'MUMM', letters: ['Q', 'R', 'S', 'T', 'U', 'V', 'W'], frameTics: [5, 5, 5, 5, 5, 5, 5], alpha: 1, rise: 1, spawnHeight: 10, additive: false, bright: false},
+            // Every monster missile's Death animation.
+            {name: 'hereticImpBallDeath', sprite: 'FX10', letters: ['D', 'E', 'F', 'G'],           frameTics: [5, 5, 5, 5],       alpha: 1, rise: 0, additive: true, bright: true},
+            {name: 'mummyFX1Death',       sprite: 'FX15', letters: ['D', 'E', 'F', 'G'],           frameTics: [5, 5, 5, 5],       alpha: 1, rise: 0, additive: true, bright: true},
+            {name: 'knightAxeDeath',      sprite: 'SPAX', letters: ['D', 'E', 'F'],                frameTics: [6, 6, 6],          alpha: 1, rise: 0, additive: false, bright: true},
+            {name: 'redAxeDeath',         sprite: 'RAXE', letters: ['C', 'D', 'E'],                frameTics: [6, 6, 6],          alpha: 1, rise: 0, additive: false, bright: true},
+            {name: 'beastBallDeath',      sprite: 'FRB1', letters: ['D', 'E', 'F', 'G', 'H'],      frameTics: [4, 4, 4, 4, 4],    alpha: 1, rise: 0, additive: true, bright: false},
+            {name: 'snakeProjADeath',     sprite: 'SNFX', letters: ['E', 'F', 'G', 'H', 'I'],      frameTics: [5, 5, 4, 3, 3],    alpha: 1, rise: 0, additive: true, bright: true},
+            {name: 'snakeProjBDeath',     sprite: 'SNFX', letters: ['L', 'M', 'N', 'O'],           frameTics: [5, 5, 4, 3],       alpha: 1, rise: 0, additive: true, bright: true},
+            {name: 'wizardFX1Death',      sprite: 'FX11', letters: ['C', 'D', 'E', 'F', 'G'],      frameTics: [5, 5, 5, 5, 5],    alpha: 1, rise: 0, additive: true, bright: true},
+            {name: 'sorcererFX1Death',    sprite: 'FX14', letters: ['D', 'E', 'F', 'G', 'H'],      frameTics: [5, 5, 5, 5, 5],    alpha: 1, rise: 0, additive: true, bright: true},
+            {name: 'headFX1Death',        sprite: 'FX05', letters: ['D', 'E', 'F', 'G'],           frameTics: [5, 5, 5, 5],       alpha: 1, rise: 0, additive: true, bright: true},
+            {name: 'headFX3Death',        sprite: 'FX06', letters: ['D', 'E', 'F', 'G'],           frameTics: [5, 5, 5, 5],       alpha: 1, rise: 0, additive: true, bright: true},
+            {name: 'whirlwindDeath',      sprite: 'FX07', letters: ['G', 'F', 'E', 'D'],           frameTics: [4, 4, 4, 4],       alpha: 0.4, rise: 0, additive: false, bright: false},
+            {name: 'minotaurFX1Death',    sprite: 'FX12', letters: ['C', 'D', 'E', 'F', 'G', 'H'], frameTics: [5, 5, 5, 5, 5, 5], alpha: 1, rise: 0, additive: true, bright: true},
+            {name: 'minotaurFX2Death',    sprite: 'FX13', letters: ['I', 'J', 'K', 'L', 'M'],      frameTics: [4, 4, 4, 4, 4],    alpha: 1, rise: 0, additive: false, bright: true},
+            {name: 'sorcerer2FX1Death',   sprite: 'FX16', letters: ['G', 'H', 'I', 'J', 'K', 'L'],      frameTics: [5, 5, 5, 5, 5, 5], alpha: 1, rise: 0, additive: true, bright: true},
+            // Terrain splashes (splashes.zs). The base ripple spreads where it
+            // was born; the chunk is thrown out of it and plays its landing
+            // frames on the way down (the Death state of a MISSILE chunk). The
+            // lava is another mechanism entirely: its smoke only drifts up.
+            // Deliberate departure from the sources, which draw all but the
+            // lava smoke opaque: water reads better seen through.
+            {name: 'waterSplashBase',   sprite: 'SPSH', letters: ['E', 'F', 'G', 'H', 'I', 'J', 'K'], frameTics: [5, 5, 5, 5, 5, 5, 5], alpha: 0.7, rise: 0, additive: false, bright: false},
+            {name: 'waterSplashChunk',  sprite: 'SPSH', letters: ['A', 'B', 'C', 'D'], frameTics: [8, 8, 8, 16], alpha: 0.7, rise: 0, gravity: 0.125, additive: false, bright: false,
+                landing: {letters: ['D'], frameTics: [10], bright: false}},
+            {name: 'sludgeSplashBase',  sprite: 'SLDG', letters: ['E', 'F', 'G', 'H'], frameTics: [6, 6, 6, 6], alpha: 0.7, rise: 0, additive: false, bright: false},
+            {name: 'sludgeSplashChunk', sprite: 'SLDG', letters: ['A', 'B', 'C', 'D'], frameTics: [8, 8, 8, 8], alpha: 0.7, rise: 0, gravity: 0.125, additive: false, bright: false,
+                landing: {letters: ['D'], frameTics: [6], bright: false}},
+            {name: 'lavaSplashBase',    sprite: 'LVAS', letters: ['A', 'B', 'C', 'D', 'E', 'F'], frameTics: [5, 5, 5, 5, 5, 5], alpha: 0.7, rise: 0, additive: false, bright: true},
+            {name: 'lavaSmoke',         sprite: 'LVAS', letters: ['G', 'H', 'I', 'J', 'K'], frameTics: [5, 5, 5, 5, 5], alpha: 0.4, rise: 0, additive: false, bright: true},
+            // EV_Teleport fog, Raven branch (zscript TELE ABCDEFGHGFEDC 6 Bright, telefogheight 32)
+            {name: 'teleportFog',      sprite: 'TELE', letters: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'G', 'F', 'E', 'D', 'C'], frameTics: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6], alpha: 1, rise: 0, additive: true, bright: true, spawnHeight: 32},
+            // A hidden artifact coming back (zscript Inventory HideSpecial: ACLO A, then BABCBCDC, then D, 4 tics each)
+            {name: 'itemRestore',      sprite: 'ACLO', letters: ['A', 'B', 'A', 'B', 'C', 'B', 'C', 'D', 'C', 'D'], frameTics: [4, 4, 4, 4, 4, 4, 4, 4, 4, 4], alpha: 1, rise: 0, additive: false, bright: false}
+        ];
+    }
+
+    // Heretic gibs at half the spawn health (gameinfo gibfactor 0.5) and
+    // kicks back harder (defKickback 150); the blood splash always plays
+    // from its first frame.
+    monsterDamageRules() {
+        return {gibFactor: 0.5, defKickback: 150, bloodTemplate: 'blood', bloodDamageAdvance: false};
+    }
+
+    // heretic.wad has no POL5 (UZDoom's Grind then draws nothing; vanilla
+    // Heretic kept the corpse sprite, only shrunk): the corpse stays as-is.
+    crushedCorpseSprite() {
+        return null;
+    }
+
+    // The Heretic projectiles (zscript actors, PL1): speed in map units/tic.
+    // The mace ball flies straight 16 tics then drops (A_MacePL1Check:
+    // gravity 1/8, horizontal speed rescaled to 7, vertical halved) and
+    // bounces once off the floor (A_MaceBallImpact). The phoenix
+    // shot carries the A_Explode 128 splash and leaves its FX04 puff trail.
+    // The additive shots (bolts, hellstaff) are RenderStyle "Add" with the
+    // default actor alpha (1.0) in the zscript — same value as their death
+    // frames in effectTemplates.
+    projectileDefs() {
+        return [
+            {kind: 'crossbowfx1', sprite: 'FX03', letters: ['B'],      speed: 30, flightTics: 1, explosion: 'crossbowExplode1', splashDamage: 0,   impactDamage: 10, alpha: 1, additive: true,  decalType: 'cbowmark', seeSound: 'weapons/bowshoot', deathSound: 'weapons/bowhit'},
+            {kind: 'crossbowfx3', sprite: 'FX03', letters: ['A'],      speed: 20, flightTics: 1, explosion: 'crossbowExplode3', splashDamage: 0,   impactDamage: 2,  alpha: 1, additive: true,  decalType: 'cbowmark2', thruGhost: true, deathSound: 'weapons/bowhit'},
+            {kind: 'hornrodfx1',  sprite: 'FX00', letters: ['A', 'B'], speed: 22, flightTics: 6, explosion: 'skullrodExplode',  splashDamage: 0,   impactDamage: 3,  alpha: 1, additive: true,  decalType: 'hornscorch', seeSound: 'weapons/hornrodshoot', deathSound: 'weapons/hornrodhit'},
+            {kind: 'phoenixfx1',  sprite: 'FX04', letters: ['A'],      speed: 20, flightTics: 1, explosion: 'phoenixExplode',   splashDamage: 128, impactDamage: 20, alpha: 1, additive: false, decalType: 'phoenixscorch', trailEffect: 'phoenixTrail', trailEveryTics: 4, thruGhost: true, seeSound: 'weapons/phoenixshoot', deathSound: 'weapons/phoenixhit'},
+            {kind: 'macefx1',     sprite: 'FX02', letters: ['A', 'B'], speed: 20, flightTics: 4, explosion: 'maceExplode',      splashDamage: 0,   impactDamage: 2, alpha: 1, additive: false, decalType: 'macescorch', gravity: 0.125, gravityDelayTics: 16, dropSpeed: 7, bounce: {damping: 0.75, maxBounces: 1}, thruGhost: true, deathSound: 'weapons/macehit', bounceSound: 'weapons/macebounce'},
+            // The rare lobbed ball (28/256 of A_FireMacePL1 shots): flat launch
+            // at Speed 10 + pitch-driven vertical kick, gravity 0.125 from the
+            // first tic, same death frames as the normal ball. Bounces while
+            // its energy holds, spitting two sideways FX3 each time.
+            {kind: 'macefx2',     sprite: 'FX02', letters: ['C', 'D'], speed: 10, flightTics: 4, explosion: 'maceExplode',      splashDamage: 0,   impactDamage: 6, alpha: 1, additive: false, decalType: 'macescorch', gravity: 0.125, lob: true, spawnHeight: 28, bounce: {damping: 0.75, minVz: 2, spawnKind: 'macefx3'}, deathSound: 'weapons/maceexplode', bounceSound: 'weapons/macebounce'},
+            // The tiny side balls spat by an FX2 bounce — one bounce each,
+            // like the normal ball (they inherit MaceFX1's impact).
+            {kind: 'macefx3',     sprite: 'FX02', letters: ['A', 'B'], speed: 7,  flightTics: 4, explosion: 'maceExplode',      splashDamage: 0,   impactDamage: 4, alpha: 1, additive: false, decalType: 'macescorch', gravity: 0.125, bounce: {damping: 0.75, maxBounces: 1}, deathSound: 'weapons/macehit', bounceSound: 'weapons/macebounce'},
+            // The monsters' shots (zscript/actors/heretic/*.zs, raven/minotaur.zs).
+            {kind: 'hereticImpBall', sprite: 'FX10', letters: ['A', 'B', 'C'],      speed: 10, fastSpeed: 20, flightTics: 6, explosion: 'hereticImpBallDeath', splashDamage: 0, impactDamage: 1,  alpha: 1,   additive: true,  seeSound: 'himp/leaderattack'},
+            {kind: 'mummyFX1',       sprite: 'FX15', letters: ['A', 'B', 'C', 'B'], speed: 9,  fastSpeed: 18, flightTics: 5, explosion: 'mummyFX1Death',      splashDamage: 0, impactDamage: 4,  alpha: 1,   additive: true,  seek: {threshold: 10, turnMax: 20, everyTics: 10}, seeSound: 'mummy/head'},
+            {kind: 'knightAxe',      sprite: 'SPAX', letters: ['A', 'B', 'C'],      speed: 9,  fastSpeed: 18, flightTics: 3, explosion: 'knightAxeDeath',     splashDamage: 0, impactDamage: 2,  alpha: 1,   additive: false, thruGhost: true, seeSound: 'hknight/axewhoosh', deathSound: 'hknight/hit'},
+            {kind: 'redAxe',         sprite: 'RAXE', letters: ['A', 'B'],           speed: 9,  fastSpeed: 18, flightTics: 5, explosion: 'redAxeDeath',        splashDamage: 0, impactDamage: 7,  alpha: 1,   additive: false, thruGhost: true, seeSound: 'hknight/axewhoosh', deathSound: 'hknight/hit'},
+            {kind: 'beastBall',      sprite: 'FRB1', letters: ['A', 'B', 'C'],      speed: 12, fastSpeed: 20, flightTics: 4, explosion: 'beastBallDeath',     splashDamage: 0, impactDamage: 4,  alpha: 1,   additive: true,  seeSound: 'beast/attack'},
+            {kind: 'snakeProjA',     sprite: 'SNFX', letters: ['A', 'B', 'C', 'D'], speed: 14, fastSpeed: 20, flightTics: 5, explosion: 'snakeProjADeath',    splashDamage: 0, impactDamage: 1,  alpha: 1,   additive: true,  seeSound: 'snake/attack'},
+            {kind: 'snakeProjB',     sprite: 'SNFX', letters: ['J', 'K'],           speed: 14, fastSpeed: 20, flightTics: 6, explosion: 'snakeProjBDeath',    splashDamage: 0, impactDamage: 3,  alpha: 1,   additive: true,  seeSound: 'snake/attack'},
+            {kind: 'wizardFX1',      sprite: 'FX11', letters: ['A', 'B'],           speed: 18, fastSpeed: 24, flightTics: 6, explosion: 'wizardFX1Death',     splashDamage: 0, impactDamage: 3,  alpha: 1,   additive: true,  seeSound: 'wizard/attack'},
+            {kind: 'sorcererFX1',    sprite: 'FX14', letters: ['A', 'B', 'C'],      speed: 20, fastSpeed: 28, flightTics: 6, explosion: 'sorcererFX1Death',   splashDamage: 0, impactDamage: 10, alpha: 1,   additive: true,  seeSound: 'dsparilserpent/attack'},
+            {kind: 'headFX1',        sprite: 'FX05', letters: ['A', 'B', 'C'],      speed: 13, fastSpeed: 20, flightTics: 6, explosion: 'headFX1Death',       splashDamage: 0, impactDamage: 1,  alpha: 1,   additive: true,  thruGhost: true, seeSound: 'ironlich/attack2'},
+            {kind: 'headFX3',        sprite: 'FX06', letters: ['A', 'B', 'C'],      speed: 10, fastSpeed: 18, flightTics: 4, explosion: 'headFX3Death',       splashDamage: 0, impactDamage: 5,  alpha: 1,   additive: true, growRise: 9, seeSound: 'ironlich/attack3'},
+            // The whirlwind is no ball: it passes THROUGH its victim and
+            // grinds them for as long as it lasts (Whirlwind::DoSpecialDamage).
+            {kind: 'whirlwind',      sprite: 'FX07', letters: ['D', 'E', 'F', 'G', 'A', 'B', 'C'], speed: 10, flightTics: 3, explosion: 'whirlwindDeath', splashDamage: 0, impactDamage: 0, alpha: 0.4, additive: false,
+                seek: {threshold: 10, turnMax: 30, everyTics: 3}, ripper: {damage: 3, damageEvery: 8, shove: 2, lift: 0.3}, lifeTics: 700, seeSound: 'ironlich/attack1'},
+            {kind: 'minotaurFX1',    sprite: 'FX12', letters: ['A', 'B'],           speed: 20, fastSpeed: 26, flightTics: 6, explosion: 'minotaurFX1Death',   splashDamage: 0,  impactDamage: 3, alpha: 1, additive: true},
+            // MinotaurFX2 crawls along the floor and sows a MinotaurFX3 beside
+            // itself every other tic (A_MntrFloorFire, scattered ±4 units).
+            {kind: 'minotaurFX2',    sprite: 'FX13', letters: ['A'],                speed: 14, fastSpeed: 20, flightTics: 2, explosion: 'minotaurFX2Death',   splashDamage: 24,  impactDamage: 4, alpha: 1, additive: false,
+                floorHugger: true, trailKind: 'minotaurFX3', trailEveryTics: 2, trailScatter: 4, deathSound: 'minotaur/fx2hit'},
+            // The fire it leaves: it goes nowhere, burns out in 40 tics, and
+            // takes a whole room with it if anyone treads on it first.
+            {kind: 'minotaurFX3',    sprite: 'FX13', letters: ['D', 'C', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], speed: 0, flightTics: 4, explosion: 'minotaurFX2Death', splashDamage: 128, impactDamage: 4, alpha: 1, additive: false,
+                contactRadius: 8, lifeTics: 40, deathSound: 'minotaur/fx3hit'},
+            // D'Sparil's blue bolt: a light touch that bursts for 80 to 111.
+            {kind: 'sorcerer2FX1',   sprite: 'FX16', letters: ['A', 'B', 'C'],      speed: 20, fastSpeed: 28, flightTics: 3, explosion: 'sorcerer2FX1Death', splashDamage: {min: 80, max: 111}, impactDamage: 1, alpha: 1, additive: true},
+            // The spawner he throws to his flanks: it drifts, then hatches a
+            // disciple where it flies and burns out (A_GenWizard).
+            {kind: 'sorcerer2FX2',   sprite: 'FX11', letters: ['A', 'B'],           speed: 6,                 flightTics: 5, explosion: 'wizardFX1Death',    splashDamage: 0, impactDamage: 10, alpha: 1, additive: true,
+                spawnMonster: {kind: 'disciple', afterTics: 40, retryTics: 10, fog: 'teleportFog'}}
+        ];
+    }
+
+    // Heretic weapon-preference chain when a weapon runs dry, from the zscript
+    // SelectionOrder values (lower = preferred: skullrod 200, blaster 500,
+    // crossbow 800, mace 1400, goldwand 2000, gauntlets 2300, phoenixrod 2600,
+    // staff 3800 = the unconditional fallback).
+    weaponFallbackOrder() {
+        return [
+            {code: 'skullrod'},
+            {code: 'blaster'},
+            {code: 'crossbow'},
+            {code: 'mace'},
+            {code: 'goldwand'},
+            {code: 'gauntlets'},
+            {code: 'phoenixrod'},
+            {code: 'staff'}
+        ];
+    }
+
+    // Full-kit cheat armour: the Enchanted Shield (zscript hereticarmor.zs,
+    // Armor.Saveamount 200, Savepercent 75).
+    cheatKitArmor() {
+        return {points: 200, absorb: 0.75};
+    }
+
+    buildItems() {
+        return {
+            greenKey:  new DoomItem({code: 'greenKey',  name: 'Green Key',  type: 'key'}),
+            blueKey:   new DoomItem({code: 'blueKey',   name: 'Blue Key',   type: 'key'}),
+            yellowKey: new DoomItem({code: 'yellowKey', name: 'Yellow Key', type: 'key'}),
+            superMap:  new DoomItem({code: 'superMap',  name: 'Map Scroll', type: 'powerupPermanent', effect: 'map'}),
+            invulnerability: new DoomItem({code: 'invulnerability', name: 'Ring of Invincibility', type: 'powerupTimed', effect: 'invulnerability', duration: 30000}),
+            invisibility:    new DoomItem({code: 'invisibility',    name: 'Shadowsphere',          type: 'powerupTimed', effect: 'invisibility', duration: 60000}),
+            torch:           new DoomItem({code: 'torch',           name: 'Torch',                 type: 'powerupTimed', effect: 'light', duration: 120000})
+        };
+    }
+
+    // Canonical Heretic start (zscript hereticplayer.zs Player.StartItem):
+    // Staff + Gold Wand owned, the wand up, 50 wand crystals.
+    startingLoadout() {
+        return {
+            weapons:      ['staff', 'goldwand'],
+            activeWeapon: 'goldwand',
+            ammo:         {crystals: 50},
+            maxArmor:     200
+        };
+    }
+
+    weaponSlots() {
+        return {
+            count: 7,
+            // Slot 1 (the staff) is always lit; the gauntlets are its upgrade.
+            alwaysOwnedSlot: 1,
+            upgradeWeapon:   'gauntlets',
+            byWeapon: {
+                staff:      1,
+                gauntlets:  1,
+                goldwand:   2,
+                crossbow:   3,
+                blaster:    4,
+                skullrod:   5,
+                phoenixrod: 6,
+                mace:       7
+            }
+        };
+    }
+
+    hudKeyColors() {
+        return {blueKey: '#3d7bff', yellowKey: '#ffd23d', greenKey: '#3ddd66'};
+    }
+
+    // Heretic's hues inverted onto a dark ground: am_map.cpp RavenColors draws
+    // dark ink on an opaque parchment (0x6c5440), unreadable (< 3:1 contrast)
+    // over our translucent panel.
+    automapColors() {
+        return {
+            background: [26, 18, 12],
+            wall:       [222, 200, 160],
+            floorStep:  [208, 140, 48],
+            ceilStep:   [188, 84, 48],
+            locked:     [188, 84, 48],
+            notSeen:    [110, 102, 94]
+        };
+    }
+
+    // The lava and water falls of the animated walls (animated.lmp).
+    liquidWallTextures() {
+        return ['LAVAFL1', 'LAVAFL2', 'LAVAFL3', 'WATRWAL1', 'WATRWAL2', 'WATRWAL3'];
+    }
+
+    // Heretic hardcoded animation sequences with their engine speeds
+    // (UZDoom filter/game-heretic/animated.lmp) — heretic.wad has no
+    // ANIMATED lump, these always apply.
+    vanillaAnimSequences() {
+        const sequences = [
+            [true,  ['FLTWAWA1', 'FLTWAWA2', 'FLTWAWA3'], 8],
+            [true,  ['FLTSLUD1', 'FLTSLUD2', 'FLTSLUD3'], 8],
+            [true,  ['FLTTELE1', 'FLTTELE2', 'FLTTELE3', 'FLTTELE4'], 6],
+            [true,  ['FLTFLWW1', 'FLTFLWW2', 'FLTFLWW3'], 9],
+            [true,  ['FLTLAVA1', 'FLTLAVA2', 'FLTLAVA3', 'FLTLAVA4'], 8],
+            [true,  ['FLATHUH1', 'FLATHUH2', 'FLATHUH3', 'FLATHUH4'], 8],
+            [false, ['LAVAFL1', 'LAVAFL2', 'LAVAFL3'], 6],
+            [false, ['WATRWAL1', 'WATRWAL2', 'WATRWAL3'], 4]
+        ];
+
+        return sequences.map((entry) => ({isFlat: entry[0], frames: entry[1], speedTics: entry[2]}));
+    }
+
+    // UZDoom terrain.txt floor entries of Heretic (water and its flowing
+    // variant, the two lavas, the sludge), every frame of their animations.
+    terrainFlats() {
+        return {
+            ...AbstractGameProfile.terrainGroup('water', [
+                'FLTWAWA1', 'FLTWAWA2', 'FLTWAWA3',
+                'FLTFLWW1', 'FLTFLWW2', 'FLTFLWW3'
+            ]),
+            ...AbstractGameProfile.terrainGroup('lava', [
+                'FLTLAVA1', 'FLTLAVA2', 'FLTLAVA3', 'FLTLAVA4',
+                'FLATHUH1', 'FLATHUH2', 'FLATHUH3', 'FLATHUH4'
+            ]),
+            ...AbstractGameProfile.terrainGroup('sludge', [
+                'FLTSLUD1', 'FLTSLUD2', 'FLTSLUD3'
+            ])
+        };
+    }
+
+    // The three splash blocks of terrain.txt. Lava throws no chunk sideways
+    // (its shifts are written -1, read back as the 255 sentinel) and its smoke
+    // simply drifts up; sludge is silent (its sound resolves to dsempty).
+    terrains() {
+        return {
+            water:  {base: 'waterSplashBase',  chunk: 'waterSplashChunk',  chunkVel: {xVelShift: 8,    yVelShift: 8,    zVelShift: 8, baseZVel: 2}, sound: 'world/watersplash', footclip: 10},
+            lava:   {base: 'lavaSplashBase',   chunk: 'lavaSmoke',         chunkVel: {xVelShift: null, yVelShift: null, zVelShift: 7, baseZVel: 1}, sound: 'world/lavasizzle',  footclip: 10},
+            sludge: {base: 'sludgeSplashBase', chunk: 'sludgeSplashChunk', chunkVel: {xVelShift: 8,    yVelShift: 8,    zVelShift: 8, baseZVel: 1}, footclip: 10}
+        };
+    }
+
+    // FOOTCLIPSIZE: the floor sinks under the water line, as the original
+    // draws its actors 10 units deep.
+    liquidSurface() {
+        return {mode: 'sink', alpha: 0.5, bedDarkening: 0.2};
+    }
+
+    terrainGame() {
+        return 'heretic';
+    }
+
+    // Heretic pairs its switches by ON/OFF suffix, not by SW1↔SW2 prefix
+    // (UZDoom animdefs.txt: switch heretic SW1OFF on pic SW1ON…): the generic
+    // prefix rule would swap SW1OFF to SW2OFF, which exists too.
+    switchPairs() {
+        return [
+            ['SW1OFF', 'SW1ON'],
+            ['SW2OFF', 'SW2ON']
+        ];
+    }
+
+    // Heretic skies by episode (UZDoom mapinfo/heretic.txt: E4 reuses SKY1,
+    // E5 reuses SKY3; the hidden E6 slots default to SKY1).
+    skyForLevel(levelCode) {
+        const byEpisode = {1: 'SKY1', 2: 'SKY2', 3: 'SKY3', 4: 'SKY1', 5: 'SKY3'};
+        const episode   = WadLevelCode.parse(levelCode).episode;
+        const name      = ((episode !== null) ? (byEpisode[episode] ?? 'SKY1') : 'SKY1');
+
+        return {name: name, wrap: 4};
+    }
+
+    // The UZDoom impact-decal graphics specific to Heretic (GPL v3,
+    // website/assets/uzdoom/heretic/). The boot loader merges every profile's
+    // keys, so the templates may also use plasma1/plasma2/scorch1 from Doom.
+    decalAssets() {
+        return {
+            basePath: '/assets/uzdoom/heretic/sprite/',
+            keys: ['cbowmark', 'cbalscr1', 'cbalscr2', 'bal7scr1', 'bal7scr2']
+        };
+    }
+
+    // UZDoom decaldef.txt generators: GoldWand/Blaster hitscans
+    // → RailScorchLower (CBALSCR 0.2), CrossbowFX1/FX3 → CrossbowScorch
+    // (CBOWMARK 0.4 / 0.25), HornRodFX1 → PlasmaScorchLower (PLASMA 0.3),
+    // PhoenixFX1 → Scorch (SCORCH1 0.5), MaceFX1 → BaronScorch (BAL7SCR 0.5).
+    // translucent/gain follow the equivalent Doom templates (soft burns
+    // lifted above the shader's a<0.5 cutout).
+    decalTemplates() {
+        return [
+            {type: 'railscorch',    keys: ['cbalscr1', 'cbalscr2'], scale: 0.2,  shade: [0, 0, 0], translucent: 1,    gain: 2.2},
+            {type: 'cbowmark',      keys: ['cbowmark'],             scale: 0.4,  shade: [0, 0, 0], translucent: 0.85, gain: 1.0},
+            {type: 'cbowmark2',     keys: ['cbowmark'],             scale: 0.25, shade: [0, 0, 0], translucent: 0.85, gain: 1.0},
+            {type: 'hornscorch',    keys: ['plasma1', 'plasma2'],   scale: 0.3,  shade: [0, 0, 0], translucent: 1,    gain: 2.2},
+            {type: 'phoenixscorch', keys: ['scorch1'],              scale: 0.5,  shade: [0, 0, 0], translucent: 1,    gain: 1.8},
+            {type: 'macescorch',    keys: ['bal7scr1', 'bal7scr2'], scale: 0.5,  shade: [0, 0, 0], translucent: 1,    gain: 2.2}
+        ];
+    }
+
+    /**
+     * Sources: xlat/heretic.txt overrides of xlat/base.txt.
+     *
+     * @returns {object}
+     */
+    linedefSpecialMap() {
+        return {
+            // Stairs run at FLOORSPEED (1 u/tic, F_SLOW) instead of 0.25/4
+            7:   1007,
+            8:   1008,
+            106: 1106,
+            107: 1107,
+            // 28/33 open with the GREEN key (Heretic has no red key)
+            28:  1028,
+            33:  1033,
+            // USE ceiling lower-and-crush (close-stay at floor+8), not a
+            // perpetual crusher like Doom's 49
+            49:  1049,
+            // Scroll texture RIGHT (Doom 99 is a blazing blue-key door)
+            99:  1099,
+            // WR door raise at D_SLOW*3 = 6 u/tic (Doom 100 is turbo stairs)
+            100: 1100,
+            // W1 secret exit (Doom already has it as 124)
+            105: 124,
+            // W1 Thing_Destroy (massacre), carried by no heretic.wad line —
+            // Raven PWADs only, not implemented yet
+            515: 0
+        };
+    }
+
+    /**
+     * The Heretic behaviours the baseline lacks, injected into the
+     * WadConstants tables under the synthetic codes emitted by the two maps
+     * above (namespace >= 1000, wiped and re-applied at each level build):
+     * green-key doors 1028/1033, WR door 1100 at D_SLOW*3 = 6 u/tic, USE
+     * ceiling lower-and-crush 1049 (close-stay at floor+8, crush damage 0 in
+     * the xlat → same stall+slow pressure as Doom 44/72), stairs at
+     * FLOORSPEED = 1 u/tic (1007/1008 step 8, 1106/1107 step 16), rightward
+     * texture scroll 1099, the lava/sludge sector damages (specials.cpp
+     * SetupSectorDamage: lava 5/16 tics leak 256, hefty lava 8/16 leak 256,
+     * sludge 4/32 leak 0), the sector pushes (winds 1040-1051, conveyors
+     * 1021-1039, scrolling lava 1204 — see _sectorPushTable) and the ice
+     * ground 1015.
+     *
+     * @returns {object}
+     */
+    wadConstantsExtensions() {
+        return {
+            DOOR_BY_SPECIAL: {
+                1028: {kind: 'open',  speed: 2, trigger: 'action',    anim: 'round-trip', loop: false, onlyOnce: false, key: 'greenKey'},
+                1033: {kind: 'open',  speed: 2, trigger: 'action',    anim: 'one-way',    loop: false, onlyOnce: true,  key: 'greenKey'},
+                1100: {kind: 'open',  speed: 6, trigger: 'proximity', anim: 'round-trip', loop: false, onlyOnce: false, key: null},
+                1049: {kind: 'close', speed: 1, trigger: 'none',      anim: 'close-stay', loop: false, onlyOnce: true,  key: null, closeMargin: 8}
+            },
+            STAIR_BY_SPECIAL: {
+                1007: {activation: 'switch', step: 8,  speed: 1},
+                1008: {activation: 'walk',   step: 8,  speed: 1},
+                1106: {activation: 'walk',   step: 16, speed: 1},
+                1107: {activation: 'switch', step: 16, speed: 1}
+            },
+            SWITCH_SPECIALS: [1007, 1107, 1049],
+            WALK_TRIGGER_ONCE_BY_SPECIAL: {1100: false, 1008: true, 1106: true},
+            SCROLL_WALL_BY_SPECIAL: {1099: -35},
+            SECTOR_DAMAGE_BY_SPECIAL: {
+                1204: {damage: 5, windowTics: 16, leak: 256},
+                1205: {damage: 5, windowTics: 16, leak: 256},
+                1207: {damage: 4, windowTics: 32, leak: 0},
+                1216: {damage: 8, windowTics: 16, leak: 256}
+            },
+            SECTOR_PUSH_BY_SPECIAL: this._sectorPushTable(),
+            // Ice ground (dFriction_Low): per-tic momentum keep = 0xF900/0x10000
+            SECTOR_FRICTION_BY_SPECIAL: {1015: {friction: 0.97265625}},
+            // Vanilla only scrolls the floor flat for the EAST carriers and the
+            // lava (specials.cpp: -0.5 × 2^n, lava -4) — map units per tic east
+            SECTOR_FLAT_SCROLL_BY_SPECIAL: {1020: 0.5, 1021: 1, 1022: 2, 1023: 4, 1024: 8, 1204: 4}
+        };
+    }
+
+    /**
+     * Player pushes of the Heretic sector specials, in map units per tic
+     * (UZDoom p_mobj.cpp:4809-4834 + 2410-2437). Carriers 20-39 (→ 1020-1039)
+     * are terminal carry speeds: the east family uses the modern GZDoom values
+     * matched to the scrolling texture (0.5/1/2/4/8; 0.5 sits below
+     * CARRYSTOPSPEED and pushes nothing, hence no 1020 entry), north/south/west
+     * keep the original mul/3 speeds (GZDoom only rebased the east). Winds
+     * 40-51 (→ 1040-1051) are per-tick thrusts (windTab 5/32, 10/32, 25/32);
+     * the scrolling lava 1204 carries east at 4.0 (12 / (32 × CARRYFACTOR)).
+     *
+     * @returns {object}
+     */
+    _sectorPushTable() {
+        const push = {
+            1021: {kind: 'carry', dx: 1, dz: 0},
+            1022: {kind: 'carry', dx: 2, dz: 0},
+            1023: {kind: 'carry', dx: 4, dz: 0},
+            1024: {kind: 'carry', dx: 8, dz: 0},
+            1204: {kind: 'carry', dx: 4, dz: 0}
+        };
+        const muls = [5, 10, 25, 30, 35];
+        for (let step = 0; step < 5; step++) {
+            const speed = muls[step] / 3;
+            push[1025 + step] = {kind: 'carry', dx: 0,      dz: speed};
+            push[1030 + step] = {kind: 'carry', dx: 0,      dz: -speed};
+            push[1035 + step] = {kind: 'carry', dx: -speed, dz: 0};
+        }
+        const windTab = [5 / 32, 10 / 32, 25 / 32];
+        for (let step = 0; step < 3; step++) {
+            push[1040 + step] = {kind: 'wind', dx: windTab[step],  dz: 0};
+            push[1043 + step] = {kind: 'wind', dx: 0,              dz: windTab[step]};
+            push[1046 + step] = {kind: 'wind', dx: 0,              dz: -windTab[step]};
+            push[1049 + step] = {kind: 'wind', dx: -windTab[step], dz: 0};
+        }
+        return push;
+    }
+
+    /**
+     * Identity when absent, 0 = dropped (documented no-op: 17, phased-light
+     * sequences). Winds/carriers 20-51 and the ice 15 map to their synthetic
+     * push/friction codes (1000 + special).
+     *
+     * @returns {object}
+     */
+    sectorSpecialMap() {
+        const map = {
+            4:  1204,
+            5:  1205,
+            7:  1207,
+            16: 1216,
+            15: 1015,
+            17: 0
+        };
+        for (let special = 20; special <= 51; special++) {
+            map[special] = 1000 + special;
+        }
+        return map;
+    }
+}
+
+// A_KnightAttack (knight.zs): fist in reach, else an axe thrown from 36 units
+// up — the red one, far nastier, on a 40/256 jet (always, for a ghost).
+HereticGameProfile.MULTIPLAYER_ITEM_RULES = {weaponsStay: true, keysStay: true, deathmatchWeaponClips: null};
+HereticGameProfile.ITEM_RESPAWN_RULES     = {delayTics: 1400, revealTics: 36, effect: 'itemRestore', sound: 'misc/spawn', neverTypes: [84]};
+
+HereticGameProfile.KNIGHT_ATTACK = ['A_KnightAttack', {
+    damage:     {base: 3, dice: 8},
+    kind:       'knightAxe',
+    rareKind:   'redAxe',
+    rareChance: 40,
+    height:     36
+}];
+
+// A_LichAttack (ironlich.zs): fist in reach, else one of three shots drawn
+// against the distance — ice ball, fire column or whirlwind.
+HereticGameProfile.LICH_ATTACK = ['A_LichAttack', {
+    damage:      {base: 6, dice: 8},
+    farDistance: 8 * 64,
+    iceChance:   [50, 150],
+    fireChance:  [150, 200],
+    iceKind:     'headFX1',
+    fireKind:    'headFX3',
+    fireCount:   5,
+    windKind:    'whirlwind',
+    windHeight:  0
+}];
+
+// A_MinotaurDecide (raven/minotaur.zs): the invulnerable charge at mid range,
+// the floor-fire hammer up close, else the swing the state falls through to.
+HereticGameProfile.MINOTAUR_DECIDE = ['A_MinotaurDecide', {
+    chargeMin:     1 * 64,
+    chargeMax:     8 * 64,
+    chargeChance:  150,
+    chargeSpeed:   13,
+    chargeTics:    17,
+    chargeState:   'charge0',
+    chargeInvulnerable: true,
+    hammerMax:     9 * 64,
+    hammerChance:  220,
+    hammerState:   'hammer0'
+}];
+
+// A_Srcr1Attack (dsparil.zs): one fireball while healthy, three once past a
+// third of its life — and then it may chain a second volley.
+HereticGameProfile.SERPENT_ATTACK = ['A_Srcr1Attack', {
+    damage:      {base: 8, dice: 8},
+    kind:        'sorcererFX1',
+    height:      48,
+    angles:      [0, -3, 3],
+    // Fractions of its full health: the fan starts under two thirds, the
+    // chained second volley under one third (dsparil.zs Srcr1Attack).
+    fanBelow:    {num: 2, den: 3},
+    doubleBelow: {num: 1, den: 3},
+    againState:  'missile20'
+}];
+
+// A_Srcr2Decide (dsparil.zs): the odds of blinking to another BossSpot, read
+// off eighths of his health, WORST first — at full strength he stands his
+// ground, and the more he bleeds the more he runs. A spot must lie at least
+// 128 units away.
+HereticGameProfile.SORCERER2_DECIDE = ['A_Srcr2Decide', {
+    chances:       [192, 120, 120, 120, 64, 64, 32, 16, 0],
+    minDistance:   128,
+    teleportState: 'teleport0'
+}];
+
+// A_Srcr2Attack: 20 × (1..8) in reach, else the blue bolt — or, twice as often
+// under half his life, the two spawners that hatch disciples at his flanks.
+HereticGameProfile.SORCERER2_ATTACK = ['A_Srcr2Attack', {
+    damage:          {base: 20, dice: 8},
+    kind:            'sorcerer2FX1',
+    height:          48,
+    spawnerKind:     'sorcerer2FX2',
+    spawnerHeight:   48,
+    spawnAngles:     [-45, 45],
+    spawnChance:     48,
+    hurtSpawnChance: 96
+}];
+
+// The maps whose mapinfo block names another episode's song instead of their
+// own MUS_ExMy lump (mapinfo/heretic.txt, extracted map by map).
+HereticGameProfile.LEVEL_MUSIC_REUSE = {
+    E2M5: 'MUS_E1M4',
+    E3M1: 'MUS_E1M1', E3M4: 'MUS_E1M6', E3M5: 'MUS_E1M3', E3M6: 'MUS_E1M2',
+    E3M7: 'MUS_E1M5', E3M8: 'MUS_E1M9', E3M9: 'MUS_E2M6',
+    E4M1: 'MUS_E1M6', E4M2: 'MUS_E1M2', E4M3: 'MUS_E1M3', E4M4: 'MUS_E1M4',
+    E4M5: 'MUS_E1M5', E4M6: 'MUS_E1M1', E4M7: 'MUS_E1M7', E4M8: 'MUS_E1M8',
+    E4M9: 'MUS_E1M9',
+    E5M1: 'MUS_E2M1', E5M2: 'MUS_E2M2', E5M3: 'MUS_E2M3', E5M4: 'MUS_E2M4',
+    E5M5: 'MUS_E1M4', E5M6: 'MUS_E2M6', E5M7: 'MUS_E2M7', E5M8: 'MUS_E2M8',
+    E5M9: 'MUS_E2M9',
+    E6M1: 'MUS_E3M2', E6M2: 'MUS_E3M3', E6M3: 'MUS_E1M6'
+};
+
+// UZDoom sndseq.txt, Heretic Ambience block, verbatim.
+HereticGameProfile.SOUND_SEQUENCES = `
+// Heretic Ambience ---------------------------
+
+:HereticAmbience
+	// Heretic waits 10 seconds after level load before it starts
+	// playing any sounds.
+	delayonce	350
+
+	volumerand	0  50
+	attenuation	none
+	randomsequence
+	delayrand	210  465
+	restart
+end
+
+// To be 100% correct, these sequences shouldn't actually wait for
+// the last sound to stop playing, but I thought it would be nice
+// to make them stand-alone so you don't always have to play them
+// from inside HereticAmbience.
+
+:AFX_Scream
+	environment	0
+	slot		HereticAmbience
+
+	playuntildone	world/amb1
+end
+
+:AFX_Squish
+	environment	1
+	slot		HereticAmbience
+
+	playuntildone	world/amb2
+end
+
+:AFX_Drops
+	environment	2
+	slot		HereticAmbience
+
+	play		world/amb3
+	delayrand	16  47
+	play		world/amb7
+	delayrand	16  47
+	play		world/amb3
+	delayrand	16  47
+	play		world/amb7
+	delayrand	16  47
+	play		world/amb3
+	delayrand	16  47
+	play		world/amb7
+	delayrand	16  47
+end
+
+:AFX_SlowFootsteps
+	environment	3
+	slot		HereticAmbience
+
+	playtime	world/amb4  15
+	volumerel	-2.36
+	playtime	world/amb11 15
+	volumerel	-2.36
+	playtime	world/amb4  15
+	volumerel	-2.36
+	playtime	world/amb11 15
+	volumerel	-2.36
+	playtime	world/amb4  15
+	volumerel	-2.36
+	playtime	world/amb11 15
+	volumerel	-2.36
+	playtime	world/amb4  15
+	volumerel	-2.36
+	playuntildone	world/amb11
+end
+
+:AFX_Heartbeat
+	environment	4
+	slot		HereticAmbience
+
+	playtime	world/amb5  35
+	playtime	world/amb5  35
+	playtime	world/amb5  35
+	playuntildone	world/amb5
+end
+
+:AFX_Bells
+	environment	5
+	slot		HereticAmbience
+
+	playtime	world/amb6  17
+	volumerel	-6.3
+	playtime	world/amb6  17
+	volumerel	-6.3
+	playtime	world/amb6  17
+	volumerel	-6.3
+	playuntildone	world/amb6
+end
+
+:AFX_Growl
+	environment	6
+	slot		HereticAmbience
+
+	playuntildone	world/amb12
+end
+
+:AFX_Magic
+	environment	7
+	slot		HereticAmbience
+
+	playuntildone	world/amb8
+end
+
+:AFX_Laughter
+	environment	8
+	slot		HereticAmbience
+
+	playtime	world/amb9  16
+	volumerel	-3.15
+	playtime	world/amb9  16
+	volumerel	-3.15
+	playtime	world/amb9  16
+	volumerel	-3.15
+	playtime	world/amb10 16
+	volumerel	-3.15
+	playtime	world/amb10 16
+	volumerel	-3.15
+	playuntildone	world/amb10
+end
+
+:AFX_FastFootsteps
+	environment	9
+	slot		HereticAmbience
+
+	playtime	world/amb4  8
+	volumerel	-2.36
+	playtime	world/amb11 8
+	volumerel	-2.36
+	playtime	world/amb4  8
+	volumerel	-2.36
+	playtime	world/amb11 8
+	volumerel	-2.36
+	playtime	world/amb4  8
+	volumerel	-2.36
+	playtime	world/amb11 8
+	volumerel	-2.36
+	playtime	world/amb4  8
+	volumerel	-2.36
+	playuntildone	world/amb11
+end
+`;
+// Player.ColorRange 225-240, then Player.Colorset 0-3 of hereticplayer.zs: first index and marker
+// of each (its last follows from the range's length).
+HereticGameProfile.PLAYER_COLORS = {
+    range: [225, 240],
+    slots: [
+        {from: 225, marker: 238},
+        {from: 114, marker: 127},
+        {from: 145, marker: 158},
+        {from: 190, marker: 203}
+    ]
+};
+// zscript hereticplayer.zs. Left out: the skull of the gibbed death (A_SkullPop)
+// and the fire death (Burn), mechanics the game lacks for the player.
+HereticGameProfile.PLAYER_BODY = {
+    code: 'player', name: 'Corvus', sprite: 'PLAY',
+    health: 100, radius: 16, height: 56, speed: 1, painChance: 255,
+    states: {
+        spawn:   [['A', -1]],
+        see:     [['ABCD', 4, null, 'see']],
+        missile: [['F', 6, null, null, true], ['E', 12, null, 'spawn']],
+        melee:   [['F', 6, null, null, true], ['E', 12, null, 'spawn']],
+        pain:    [['G', 4], ['G', 4, 'A_Pain', 'spawn']],
+        death:   [['H', 6], ['I', 6, 'A_PlayerScream'], ['JK', 6], ['L', 6, 'A_NoBlocking'], ['MNO', 6], ['P', -1]],
+        xdeath:  [['Q', 5, 'A_PlayerScream'], ['R', 5, 'A_NoBlocking'], ['STUVWX', 5], ['Y', -1]]
+    }
+};

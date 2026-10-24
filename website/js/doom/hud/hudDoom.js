@@ -1,0 +1,209 @@
+/**
+ * Doom HUD coordinator. It owns two views over the same overlay element and
+ * toggles which one is visible and updated:
+ *   - _gameBar : the graphical status bar (HudGameBar), shown by default
+ *   - _debug   : the textual debug overlay (HudDoomDebug)
+ * plus the automap layer and the crosshair, shown over either view.
+ *
+ * ScreenManager drives a single HUD, so the toggle lives here rather than in a
+ * screen re-binding. Every full-screen tint is composited once here, on the
+ * shared container (_computeScreenTint).
+ */
+class HudDoom extends AbstractHud {
+    constructor(engine) {
+        super(engine);
+        this._debug     = new HudDoomDebug(engine);
+        this._gameBar   = new HudGameBar(engine);
+        this._automap   = new HudAutomap(engine);
+        this._mode      = 'game';
+        this._crosshair = null;
+    }
+
+    bindUser(user) {
+        this._user = user;
+        this._debug.bindUser(user);
+        this._gameBar.bindUser(user);
+        this._automap.bindUser(user);
+        return this;
+    }
+
+    // Inputs are only surfaced by the debug view
+    bindInputs(inputs) {
+        this._inputs = inputs;
+        this._debug.bindInputs(inputs);
+        return this;
+    }
+
+    bindProfile(profile) {
+        this._gameBar.bindProfile(profile);
+        this._automap.bindProfile(profile);
+        return this;
+    }
+
+    bindItemCatalog(itemCatalog) {
+        this._gameBar.bindItemCatalog(itemCatalog);
+        this._automap.bindItemCatalog(itemCatalog);
+        return this;
+    }
+
+    bindLevelStats(stats) {
+        this._debug.bindLevelStats(stats);
+        this._gameBar.bindLevelStats(stats);
+        return this;
+    }
+
+    bindPingSource(source) {
+        this._gameBar.bindPingSource(source);
+        return this;
+    }
+
+    // The game mode's rules: what the scores and the map show.
+    bindRules(rules) {
+        this._debug.bindRules(rules);
+        this._gameBar.bindRules(rules);
+        this._automap.bindRules(rules);
+        return this;
+    }
+
+    bindPlayerBodies(bodies, slotColors) {
+        this._gameBar.bindPlayerBodies(bodies, slotColors);
+        this._automap.bindPlayerBodies(bodies, slotColors);
+        return this;
+    }
+
+    // Level automap, absent when the WAD carries no usable BSP. After bindProfile.
+    bindAutomap(automap) {
+        this._automap.bindAutomap(automap);
+        return this;
+    }
+
+    setLevelInfo(wadName, levelCode, skill, levelName = null) {
+        this._debug.setLevelInfo(wadName, levelCode, skill, levelName);
+        this._automap.setLevelInfo(levelCode, levelName);
+        return this;
+    }
+
+    addDescription(message) {
+        this._debug.addDescription(message);
+        return this;
+    }
+
+    setRatio(ratio) {
+        this._ratio = ratio;
+        this._debug.setRatio(ratio);
+        this._gameBar.setRatio(ratio);
+        this._automap.setRatio(ratio);
+        return this;
+    }
+
+    init(container) {
+        super.init(container);
+        this._debug.init(container);
+        this._gameBar.init(container);
+        this._buildCrosshair(container);
+        // Last, so the map covers the whole HUD; the virtual pad, with its own
+        // z-index in the display, still comes over it.
+        this._automap.init(container);
+        this._applyVisibility();
+    }
+
+    toggleMode() {
+        this._mode = ((this._mode === 'game') ? 'debug' : 'game');
+        this._applyVisibility();
+    }
+
+    // The map is a layer of its own, not a third view: it shows over whichever
+    // view is active.
+    toggleAutomap() {
+        this._automap.toggle();
+    }
+
+    // Carried across a HUD rebuilt on a fresh engine (renderer swap), so the
+    // player keeps his view and his open map.
+    getViewState() {
+        return {mode: this._mode, automap: this._automap.isVisible()};
+    }
+
+    setViewState(state) {
+        this._mode = state.mode;
+        this._applyVisibility();
+        this._automap.setVisible(state.automap);
+
+        return this;
+    }
+
+    update() {
+        this._applyScreenFlash();
+        // Read every frame: a toggle from the options applies without reloading.
+        if (this._crosshair !== null) {
+            this._crosshair.style.display = ((doomSettings.getDisplayCrosshair()) ? 'block' : 'none');
+        }
+        if (this._mode === 'game') {
+            this._gameBar.update();
+        } else {
+            this._debug.update();
+        }
+        this._automap.update();
+    }
+
+    _applyVisibility() {
+        this._gameBar.setVisible(this._mode === 'game');
+        this._debug.setVisible(this._mode === 'debug');
+    }
+
+    // Composited in the order of UZDoom's V_AddPlayerBlend (v_blend.cpp):
+    // power-ups, berserk, pickup, damage, death — a decaying red fades back into
+    // the layers beneath instead of dipping through transparent.
+    _computeScreenTint() {
+        const palette = WadConstants.SCREEN_FLASH_PALETTE;
+        const blend   = [0, 0, 0, 0];
+        for (const [code, tint] of HudDoom.POWERUP_TINT_ENTRIES) {
+            if (this._user.isEffectVisible(code)) {
+                AbstractHud.addBlend(blend, tint.rgb, tint.alpha);
+            }
+        }
+        const berserkMs = this._user.getEffects()['berserkFlash'];
+        if (berserkMs !== undefined) {
+            const elapsedTics = WadConstants.BERSERK_FLASH_TICS - WadConstants.msToTics(berserkMs);
+            AbstractHud.addBlend(blend, WadConstants.BERSERK_FLASH_RGB, WadConstants.berserkFlashAlpha(elapsedTics));
+        }
+        if (this._user.getPickupFlash() > 0) {
+            AbstractHud.addBlend(blend, palette.pickup.rgb, Math.min(palette.pickup.maxAlpha, this._user.getPickupFlash()));
+        }
+        if (this._user.getEnergyFlash() > 0) {
+            AbstractHud.addBlend(blend, palette.damage.rgb, Math.min(palette.damage.maxAlpha, this._user.getEnergyFlash()));
+        }
+        if (this._user.isDead()) {
+            AbstractHud.addBlend(blend, palette.death.rgb, palette.death.alpha);
+        }
+
+        return ((blend[3] > 0) ? AbstractHud.rgba(blend, blend[3]) : null);
+    }
+
+    // The full-size wrapper is a size container, so the bars follow the
+    // letterbox in cqh; the dark halo keeps them readable on bright walls.
+    _buildCrosshair(container) {
+        this._crosshair = document.createElement('div');
+        Object.assign(this._crosshair.style, {
+            position: 'absolute', top: '0', left: '0', width: '100%', height: '100%',
+            pointerEvents: 'none', containerType: 'size'
+        });
+        container.appendChild(this._crosshair);
+
+        const barStyle = {
+            position: 'absolute', left: '50%', top: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'rgba(255, 185, 185, 0.75)',
+            boxShadow: '0 0 0.15cqh rgba(0, 0, 0, 0.8)'
+        };
+        const horizontal = document.createElement('div');
+        Object.assign(horizontal.style, barStyle, {width: '2.2cqh', height: '0.22cqh'});
+        this._crosshair.appendChild(horizontal);
+
+        const vertical = document.createElement('div');
+        Object.assign(vertical.style, barStyle, {width: '0.22cqh', height: '2.2cqh'});
+        this._crosshair.appendChild(vertical);
+    }
+}
+
+HudDoom.POWERUP_TINT_ENTRIES = Object.entries(WadConstants.POWERUP_SCREEN_TINTS);

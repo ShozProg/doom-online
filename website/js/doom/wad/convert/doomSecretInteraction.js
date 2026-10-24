@@ -1,0 +1,63 @@
+/**
+ * Per-level secret counting (sector special 9). Vanilla: P_SpawnSpecials adds
+ * every secret sector to the level total, then P_PlayerInSpecialSector credits
+ * the player the first time his feet rest on the sector floor and clears the
+ * special. Here a found zone is dropped from the list (same one-shot dedup):
+ * the first player to step on it finds it. The counters live in the level
+ * stats.
+ */
+class DoomSecretInteraction extends AbstractInteraction {
+    /**
+     * @param {DoomSectorZones} zones - [{si}] behind the shared locator
+     * @param {DoomLevelStats}  stats
+     * @param {DoomTurnEvents}  events
+     */
+    constructor(zones, stats, events) {
+        super();
+        this._zones  = zones;
+        this._stats  = stats;
+        this._events = events;
+    }
+
+    get code() {
+        return 'secretSectors';
+    }
+
+    // Zone identity in a save: the sector index — stable whatever lookup mode
+    // (BSP or polygon fallback) enumerated the zones at rebuild.
+    exportState() {
+        return {pending: this._zones.list.map((zone) => zone.si)};
+    }
+
+    importState(state) {
+        const pending = new Set(state.pending);
+        this._zones.retain((zone) => pending.has(zone.si));
+    }
+
+    triggered(instance) {
+    }
+
+    update(dt) {
+        if (this._zones.list.length === 0) {
+            return;
+        }
+        for (const user of loader.world().get().getUsers()) {
+            if (!user.isDead()) {
+                this._creditSecretUnder(user);
+            }
+        }
+    }
+
+    // Feet on the sector floor, like the damage sectors (vanilla checks
+    // mo->z == floorheight before crediting the secret)
+    _creditSecretUnder(user) {
+        const zone = this._zones.zoneUnderFeet(user.x, user.y, user.z);
+        if (zone !== null) {
+            this._zones.remove(zone);
+            this._stats.addSecretFound(user.getPlayerId());
+            // DSSECRET ships in no IWAD, only in some PWADs: elsewhere it plays
+            // silence. The finder alone hears it (UZDoom).
+            this._events.soundToPlayer('misc/secret', user);
+        }
+    }
+}

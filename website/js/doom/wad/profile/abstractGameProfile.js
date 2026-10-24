@@ -1,0 +1,863 @@
+/**
+ * Per-game policy of the WAD converter — the pure contract. The binary map
+ * format is identical across Doom-engine games, but the semantics (thing
+ * types, specials, progression, animations, switches, sky, assets) live in
+ * the game executable, hence one profile per game.
+ *
+ * DefaultGameProfile carries the generic doom-format behaviour (the
+ * WadConstants tables are that baseline) and is the fallback for any
+ * unrecognized WAD; every game profile extends it and overrides only its
+ * divergences. GameProfileList.getForWad picks the profile through matchesWad
+ * (GZDoom iwadinfo approach: each game is recognized by lumps only it carries).
+ */
+class AbstractGameProfile {
+    /**
+     * Identifier of the game this profile implements.
+     *
+     * @returns {string} e.g. 'default', 'doom', 'heretic'
+     */
+    getCode() {
+        this._generateException('getCode must be implemented');
+        return '';
+    }
+
+    /**
+     * True when the WAD content identifies this profile's game. The fallback
+     * profile (default) is never probed — it answers for any unmatched WAD.
+     *
+     * @param {WadFile} wadFile
+     * @returns {boolean}
+     */
+    matchesWad(wadFile) {
+        return false;
+    }
+
+    /**
+     * Linedef special remaps (WAD number → internal WadConstants code).
+     * Only the divergent ones; every absent special is identity, 0 = dropped.
+     *
+     * @returns {object}
+     */
+    linedefSpecialMap() {
+        return {};
+    }
+
+    /**
+     * Sector special remaps (WAD number → internal WadConstants code).
+     * Identity when absent, 0 = dropped.
+     *
+     * @returns {object}
+     */
+    sectorSpecialMap() {
+        return {};
+    }
+
+    /**
+     * Game-specific entries merged into the WadConstants baseline tables
+     * before each level build (WadConstants.applyGameExtensions). Every entry
+     * lives in the >= 1000 namespace and is only reachable through this
+     * profile's own special maps. Table name → entries (object or array for
+     * a Set). The baseline needs none.
+     *
+     * @returns {object}
+     */
+    wadConstantsExtensions() {
+        return {};
+    }
+
+    /**
+     * Level progression data (WadMapInfo synthesizes the per-level chain from
+     * these rules applied to the level code patterns; UMAPINFO overlays it).
+     *
+     * @returns {{episodeSecretReturns: object, mapSecretSlot: string, mapSuperSecretSlot: string, mapSecretReturn: string}}
+     */
+    progressionRules() {
+        this._generateException('progressionRules must be implemented');
+        return {};
+    }
+
+    /**
+     * Display names of the game's episodes, keyed by the episode's first map
+     * slot (uppercase). The names are proper nouns, never translated — like
+     * the level names. An episode present in the WAD but absent from this
+     * table only shows its number ("Episode 6").
+     *
+     * @returns {object} first level code → episode name
+     */
+    episodeNames() {
+        this._generateException('episodeNames must be implemented');
+        return {};
+    }
+
+    /**
+     * Readable level names keyed by level code (uppercase), the game's own
+     * HUSTR strings without their "E1M1: " prefix. Proper nouns, never
+     * translated. Consulted after the WAD's UMAPINFO and DEHACKED; a level
+     * absent from the table simply shows its code.
+     *
+     * @returns {object} level code → level name
+     */
+    levelNames() {
+        this._generateException('levelNames must be implemented');
+        return {};
+    }
+
+    /**
+     * Prefix of the game's level-name strings in a DEHACKED [STRINGS] section
+     * (d_englsh.h: HUSTR_ for Doom and Doom II, THUSTR_ / PHUSTR_ for TNT and
+     * Plutonia), the codes a WAD redefines to rename its levels.
+     *
+     * @returns {string}
+     */
+    levelNameStringPrefix() {
+        this._generateException('levelNameStringPrefix must be implemented');
+        return '';
+    }
+
+    /**
+     * RGB tint of the BFG lightning decal (the WAD art shades differ).
+     *
+     * @returns {number[]}
+     */
+    bfgDecalShade() {
+        this._generateException('bfgDecalShade must be implemented');
+        return [];
+    }
+
+    /**
+     * Catalog mapping the THING editor numbers of this game to world
+     * descriptors; only the data (thingDecorations / thingTypes) is per-game.
+     *
+     * @returns {DoomThingCatalog}
+     */
+    createThingCatalog() {
+        return new DoomThingCatalog(this.thingDecorations(), this.thingTypes());
+    }
+
+    /**
+     * The game's monster catalog; only the data (monsterDefs) is per-game.
+     *
+     * @returns {DoomMonsterCatalog}
+     */
+    createMonsterCatalog() {
+        return new DoomMonsterCatalog(this.monsterDefs());
+    }
+
+    /**
+     * Monster definitions of this game, transcribed from the UZDoom zscript
+     * actors (stats, state machine, flags, drops).
+     *
+     * @returns {object} editor number → DoomMonsterDef
+     */
+    monsterDefs() {
+        this._generateException('monsterDefs must be implemented');
+        return {};
+    }
+
+    /**
+     * Map actions fired when the last boss of a type dies (vanilla
+     * A_BossDeath). Keyed by the same codes the monster defs carry in their
+     * bossMaps ('E1M8', or 'MAP07-1'/'MAP07-2' when one map hosts two boss
+     * groups — the level code is key.split('-')[0]). Value: {special, tag}
+     * (internal special codes, same vocabulary as the mover tables) or
+     * {exit: true}.
+     *
+     * @returns {object} boss-map code → action
+     */
+    bossActions() {
+        return {};
+    }
+
+    /**
+     * Maps where a teleporting MONSTER stomps whoever holds its arrival spot
+     * instead of staying put (mapinfo `allowmonstertelefrags`): the Icon of
+     * Sin's arena needs it, nothing else does.
+     *
+     * @returns {string[]} level codes
+     */
+    monsterTelefragMaps() {
+        return [];
+    }
+
+    /**
+     * Monster types this game spawns at RUNTIME rather than from the map
+     * (the pain elemental's lost souls): their views have to be built with the
+     * level, since a body born mid-fight has no chance to load a sprite.
+     *
+     * @returns {string[]} monster def codes
+     */
+    runtimeSpawnTypes() {
+        return [];
+    }
+
+    /**
+     * Editor numbers of the cooperative player starts, in slot order.
+     *
+     * @returns {int[]} index 0 = slot 1
+     */
+    playerStartTypes() {
+        this._generateException('playerStartTypes must be implemented');
+        return [];
+    }
+
+    /**
+     * @returns {int} editor number of the deathmatch starts
+     */
+    deathmatchStartType() {
+        this._generateException('deathmatchStartType must be implemented');
+        return 0;
+    }
+
+    /**
+     * The visible body of a player seen by the others, as a monster definition
+     * (sprite and states) whose actions never run. Built on first use: the
+     * monster classes load after the profiles.
+     *
+     * @returns {DoomMonsterDef}
+     */
+    playerBodyDef() {
+        const data = this.playerBodyData();
+        if (!AbstractGameProfile._playerBodies.has(data)) {
+            AbstractGameProfile._playerBodies.set(data, new DoomMonsterDef(data));
+        }
+
+        return AbstractGameProfile._playerBodies.get(data);
+    }
+
+    /**
+     * @returns {object} the DoomMonsterDef data of the player's body
+     */
+    playerBodyData() {
+        this._generateException('playerBodyData must be implemented');
+        return null;
+    }
+
+    /**
+     * The player colour translations (zscript Player.ColorRange / Colorset): the
+     * palette range a player sprite is drawn in, and per slot the first index
+     * it is moved to plus the index standing for the colour (map arrow, lobby).
+     *
+     * @returns {{range: int[], slots: {from: int, marker: int}[]}} slots index 0 = slot 1
+     */
+    playerColors() {
+        this._generateException('playerColors must be implemented');
+        return null;
+    }
+
+    /**
+     * What stays on the ground once picked up in a multiplayer game, and the
+     * clips a weapon left there gives in deathmatch (null: its usual ammo).
+     *
+     * @returns {{weaponsStay: boolean, keysStay: boolean, deathmatchWeaponClips: int|null}}
+     */
+    multiplayerItemRules() {
+        this._generateException('multiplayerItemRules must be implemented');
+        return null;
+    }
+
+    /**
+     * How a map item taken comes back when the items respawn (deathmatch):
+     * after delayTics its effect and sound play on its spot, and it is back
+     * revealTics later; the thing types listed never come back.
+     *
+     * @returns {{delayTics: int, revealTics: int, effect: string, sound: string, neverTypes: int[]}}
+     */
+    itemRespawnRules() {
+        this._generateException('itemRespawnRules must be implemented');
+        return null;
+    }
+
+    // One player per cooperative start (vanilla MAXPLAYERS matches the start count).
+    maxPlayers() {
+        return this.playerStartTypes().length;
+    }
+
+    /**
+     * Per-game numbers of the shootable-body damage pipeline (gib threshold,
+     * default kickback, blood behaviour) — UZDoom gameinfo + P_SpawnBlood.
+     *
+     * @returns {object} {gibFactor, defKickback, bloodTemplate, bloodDamageAdvance}
+     */
+    monsterDamageRules() {
+        this._generateException('monsterDamageRules must be implemented');
+        return {};
+    }
+
+    /**
+     * Sprite lump a corpse ground by a mover turns into (the vanilla S_GIBS
+     * pool, UZDoom Actor::Grind → GenericCrush). null = this game has none
+     * and a crushed corpse keeps its own sprite.
+     *
+     * @returns {string|null}
+     */
+    crushedCorpseSprite() {
+        return null;
+    }
+
+    /**
+     * Pickup templates of the monsters' DropItems: zscript item name →
+     * {sprite, effect} (fixed effect) or {sprite, ammoType} (the amount comes
+     * from each monster's dropItems entry).
+     *
+     * @returns {object} name → {sprite, effect?|ammoType?}
+     */
+    dropItemTypes() {
+        this._generateException('dropItemTypes must be implemented');
+        return {};
+    }
+
+    /**
+     * @returns {object} code → DoomDecoration
+     */
+    thingDecorations() {
+        this._generateException('thingDecorations must be implemented');
+        return {};
+    }
+
+    /**
+     * THING editor-number table of this game.
+     *
+     * @returns {object} editor number → {kind, sprite|code, frames?, animDuration?, solid?, effect?}
+     */
+    thingTypes() {
+        this._generateException('thingTypes must be implemented');
+        return {};
+    }
+
+    /**
+     * THING editor numbers that count towards the level's item score (vanilla
+     * MF_COUNTITEM): bonuses and power-ups only. The pickup path relies on
+     * these also being ALWAYSPICKUP in vanilla: counted even when useless.
+     *
+     * @returns {Set<number>}
+     */
+    countedItemTypes() {
+        return new Set();
+    }
+
+    /**
+     * Per-skill gameplay rules, transcribed from the game's UZDoom MAPINFO
+     * skill blocks. Skill 0 is our own "Pacifist monsters" mode: the skill-3
+     * world (spawn filter, ammo, damage) with monsters that never attack.
+     *
+     * @returns {object} skill (0-5) → {spawnFilterBit, ammoFactor, damageFactor,
+     *                   monstersPacifist, fastMonsters, instantReaction,
+     *                   respawnTicsDelay, easyBossBrain}
+     */
+    skillRules() {
+        this._generateException('skillRules must be implemented');
+        return {};
+    }
+
+    /**
+     * gameinfo nightmarefast: under the fastMonsters skill, EVERY monster's
+     * chase cadence halves at runtime (Heretic true; Doom relies on its Fast
+     * states only — demon/spectre).
+     *
+     * @returns {boolean}
+     */
+    nightmareFast() {
+        return false;
+    }
+
+    /**
+     * @returns {object} code → DoomAmmo definition
+     */
+    buildAmmoTypes() {
+        this._generateException('buildAmmoTypes must be implemented');
+        return {};
+    }
+
+    /**
+     * @returns {object} code → DoomWeapon definition
+     */
+    buildWeapons() {
+        this._generateException('buildWeapons must be implemented');
+        return {};
+    }
+
+    /**
+     * @returns {object} code → DoomItem definition (keys, power-ups)
+     */
+    buildItems() {
+        this._generateException('buildItems must be implemented');
+        return {};
+    }
+
+    /**
+     * Starting player loadout of a fresh game.
+     *
+     * @returns {{weapons: string[], activeWeapon: string|null, ammo: object, maxArmor: number}}
+     */
+    startingLoadout() {
+        this._generateException('startingLoadout must be implemented');
+        return {};
+    }
+
+    /**
+     * Weapon slots, read by the HUD ARMS panel and the slot keys: number of
+     * slots, weapon → slot mapping, the always-lit slot and its upgrade
+     * weapon (accent border when owned).
+     *
+     * @returns {{count: number, byWeapon: object, alwaysOwnedSlot: number, upgradeWeapon: string}}
+     */
+    weaponSlots() {
+        this._generateException('weaponSlots must be implemented');
+        return {};
+    }
+
+    /**
+     * Key item code → HUD dot color.
+     *
+     * @returns {object}
+     */
+    hudKeyColors() {
+        this._generateException('hudKeyColors must be implemented');
+        return {};
+    }
+
+    /**
+     * Automap palette of this game, one entry per colour role of the drawing
+     * ladder (see DoomAutomap.roleOf) plus the panel background. Picked by
+     * GAME like the engine's own colorsets (am_map.cpp), never carried by the
+     * WAD; a profile may depart from them, since our panel is translucent
+     * where the engine draws on an opaque ground.
+     *
+     * @returns {object} role → [r, g, b]
+     */
+    automapColors() {
+        this._generateException('automapColors must be implemented');
+        return {};
+    }
+
+    /**
+     * SNDINFO table of the game: logical sound name → {lump | alias | random}
+     * plus the per-sound attributes ({limit, limitRange, pitch, singular}).
+     * Lump NAMING is game data (Doom prefixes DS, Heretic uses bare names) —
+     * sounds always resolve by name from this table, never by header sniffing.
+     *
+     * @returns {object} name → definition (see DoomSoundCatalog)
+     */
+    soundDefs() {
+        this._generateException('soundDefs must be implemented');
+        return {};
+    }
+
+    /**
+     * Distance attenuation curve of the game ($rolloff of its SNDINFO):
+     * {type: 'doom', min, max} for the log-scaled linear curve, or
+     * {type: 'sndcurve', min, max} for a lookup in the WAD's SNDCURVE lump
+     * (whose size overrides max when present).
+     *
+     * @returns {{type: string, min: number, max: number}}
+     */
+    soundRolloff() {
+        this._generateException('soundRolloff must be implemented');
+        return {type: 'doom', min: 0, max: 0};
+    }
+
+    /**
+     * $pitchshiftrange of the game: the width (bits) of the random pitch
+     * variation every sound start takes, unless its own def overrides it
+     * (pitch 0 = fixed).
+     *
+     * @returns {number}
+     */
+    soundPitchRange() {
+        this._generateException('soundPitchRange must be implemented');
+        return 0;
+    }
+
+    /**
+     * What each monster def voices (zscript sound properties), by def code:
+     * {see, active, pain, death, melee, attack, boss?, actions?}.
+     *
+     * @returns {object}
+     */
+    monsterSounds() {
+        this._generateException('monsterSounds must be implemented');
+        return {};
+    }
+
+    /**
+     * Door movement sound style (sndseq.txt): Doom starts its close leg on the
+     * close lump and ends silently; Raven overrides with {closeStart: 'open',
+     * closeArrival: true} (HereticDoorClose).
+     *
+     * @returns {{closeStart: string, closeArrival: boolean}}
+     */
+    doorSoundStyle() {
+        return {closeStart: 'close', closeArrival: false};
+    }
+
+    /**
+     * Ambient sound things (ednum → {loop} or {random}): none by default —
+     * a Raven concept (waterfall/wind loops, HereticAmbience scripts).
+     *
+     * @returns {object}
+     */
+    ambientSounds() {
+        return {};
+    }
+
+    /**
+     * The game's sound sequences (SNDSEQ text format), used when the WAD
+     * carries no SNDSEQ lump of its own: none by default — a Raven concept
+     * (Heretic's ambient scripts, every Hexen mover).
+     *
+     * @returns {string}
+     */
+    soundSequencesText() {
+        return '';
+    }
+
+    /**
+     * Candidate lumps of the menu (title) music, first present in the WAD wins.
+     *
+     * @returns {string[]}
+     */
+    menuMusicLumps() {
+        this._generateException('menuMusicLumps must be implemented');
+        return [];
+    }
+
+    /**
+     * Candidate lumps of the intermission music (the tally screen).
+     *
+     * @returns {string[]}
+     */
+    intermissionMusicLumps() {
+        this._generateException('intermissionMusicLumps must be implemented');
+        return [];
+    }
+
+    /**
+     * Candidate lumps of the finale music (the end-of-chapter story text).
+     *
+     * @returns {string[]}
+     */
+    finaleMusicLumps() {
+        this._generateException('finaleMusicLumps must be implemented');
+        return [];
+    }
+
+    /**
+     * Candidate music lumps of a level, first present in the WAD wins (the
+     * games reuse songs across levels when a WAD carries fewer music lumps
+     * than maps).
+     *
+     * @param {string} levelCode
+     * @returns {string[]}
+     */
+    levelMusicLumps(levelCode) {
+        this._generateException('levelMusicLumps must be implemented');
+        return [];
+    }
+
+    /**
+     * Terrain of each flat of this game (the floor entries of the UZDoom
+     * TERRAIN lump): flat name (uppercase, EVERY animation frame) → terrain
+     * code declared by terrains(). A flat absent from the table is dry.
+     *
+     * @returns {object} flat name → terrain code
+     */
+    terrainFlats() {
+        this._generateException('terrainFlats must be implemented');
+        return {};
+    }
+
+    /**
+     * What each terrain code does, transcribed from the splash blocks of the
+     * TERRAIN lump. Every component is optional, so one shape covers them all:
+     * `base` (the ripple spreading on the spot), `chunk` (the piece thrown out
+     * of it) with its `chunkVel`, and `sound`. A terrain declaring none is a
+     * liquid that splashes nothing — which is how the Doom family keeps its
+     * impact decals filtered without gaining a splash it never had.
+     *
+     * chunkVel carries the lump's own fields: the velocity is
+     * `(Random2() << xVelShift) / 65536` and `(Random2() << yVelShift) / 65536`
+     * sideways (null = thrown straight up, the lump's 255 sentinel) and
+     * `baseZVel + (Random() << zVelShift) / 65536` upward.
+     *
+     * @returns {object} terrain code → {base?, chunk?, chunkVel?, sound?}
+     */
+    terrains() {
+        this._generateException('terrains must be implemented');
+        return {};
+    }
+
+    /**
+     * How the converter shows the water line of a liquid sector, from the
+     * terrain's footclip: 'sink' lowers the physical floor by it under a sheet
+     * at the WAD height (the original's sunk sprites), 'raise' keeps the floor
+     * and lays the sheet above it, no higher than the lowest bank, 'none' does
+     * nothing. alpha is the sheet's opacity, bedDarkening the share of light
+     * the floor under it loses.
+     *
+     * @returns {{mode: string, alpha: number, bedDarkening: number}}
+     */
+    liquidSurface() {
+        return {mode: 'none', alpha: 1, bedDarkening: 0};
+    }
+
+    /**
+     * Game this profile answers to in the `if<game>` conditionals of a WAD's
+     * TERRAIN lump (ifdoom / ifheretic / ifhexen / ifstrife): a lump written
+     * for another game is skipped whole.
+     *
+     * @returns {string}
+     */
+    terrainGame() {
+        this._generateException('terrainGame must be implemented');
+        return '';
+    }
+
+    /**
+     * Flat → terrain entries of a whole animation family, so a profile names
+     * the frames once instead of repeating the terrain on every line.
+     *
+     * @param {string}   terrain
+     * @param {string[]} flats
+     * @returns {object}
+     */
+    static terrainGroup(terrain, flats) {
+        const entries = {};
+        for (const name of flats) {
+            entries[name] = terrain;
+        }
+
+        return entries;
+    }
+
+    /**
+     * Hardcoded texture/flat animation sequences of this game's engine, used
+     * when the WAD carries no ANIMATED lump (the lump always wins).
+     *
+     * @returns {object[]} [{isFlat, frames, speedTics}]
+     */
+    vanillaAnimSequences() {
+        this._generateException('vanillaAnimSequences must be implemented');
+        return [];
+    }
+
+    /**
+     * Wall textures that show a liquid (falls, drips, lava walls), every
+     * animation frame: like the liquid flats, they take no impact decal.
+     *
+     * @returns {string[]}
+     */
+    liquidWallTextures() {
+        return [];
+    }
+
+    /**
+     * Switch texture pairs hardcoded in this game's engine, used when the WAD
+     * carries no SWITCHES lump (the lump always wins). Each pair is
+     * registered in both directions.
+     *
+     * @returns {string[][]} [[offName, onName], …]
+     */
+    switchPairs() {
+        this._generateException('switchPairs must be implemented');
+        return [];
+    }
+
+    /**
+     * Sky texture + horizontal wrap for a level.
+     *
+     * @param {string} levelCode
+     * @returns {{name: string, wrap: number}}
+     */
+    skyForLevel(levelCode) {
+        this._generateException('skyForLevel must be implemented');
+        return {};
+    }
+
+    /**
+     * External decal graphics of this game (loaded once at app startup, for
+     * every registered profile — keys must be unique across games).
+     *
+     * @returns {{basePath: string, keys: string[]}}
+     */
+    decalAssets() {
+        this._generateException('decalAssets must be implemented');
+        return {};
+    }
+
+    /**
+     * Every PNG this game draws from outside the WAD, decoded once at startup:
+     * its own decal graphics, and the generic splash masks.
+     *
+     * @returns {{basePath: string, keys: string[]}[]}
+     */
+    imageAssets() {
+        const splash = this.genericSplash();
+        const keys   = [];
+        for (const part of splash.parts) {
+            for (const frame of part.frames) {
+                keys.push(frame.key);
+            }
+        }
+
+        return [this.decalAssets(), {basePath: splash.basePath, keys: keys}];
+    }
+
+    /**
+     * The splash shown on a liquid this game describes none for: our own
+     * masks, colourised at level load with the flat's average colour
+     * (DoomGenericSplash).
+     *
+     * The masks are greyscale PNGs with alpha (alpha = shape, red = luminance);
+     * world size = pixel size / pixelsPerUnit, so a redraw at another
+     * resolution scales that figure. Each frame is cropped and carries its
+     * anchor in its own pixels, like a sprite's leftOffset / topOffset; the
+     * anchors were measured against the Heretic SPSH sprites they replace.
+     *
+     * @returns {object}
+     */
+    genericSplash() {
+        return {
+            basePath: '/assets/spipu/splash/',
+            // The chunk is thrown like Heretic's water chunk (terrain.txt),
+            // and tumbles: each one is drawn within 90° either side of
+            // upright, which no original game does.
+            chunkVel: {xVelShift: 8, yVelShift: 8, zVelShift: 8, baseZVel: 2},
+            chunkSpin: 90,
+            // Tinted with the flat's own average colour, the translucent splash
+            // would vanish into it: this gain lifts it off its background.
+            tintGain: 1.3,
+            parts: [
+                {
+                    part: 'base', sprite: 'SPLB', alpha: 0.7, rise: 0, additive: false, bright: false, mirror: true,
+                    pixelsPerUnit: 3.65,
+                    frames: [
+                        {letter: 'A', key: 'base-1', tics: 5, anchorX: 54, anchorY:  30},
+                        {letter: 'B', key: 'base-2', tics: 5, anchorX: 56, anchorY:  63},
+                        {letter: 'C', key: 'base-3', tics: 5, anchorX: 60, anchorY: 100},
+                        {letter: 'D', key: 'base-4', tics: 5, anchorX: 49, anchorY:  60},
+                        {letter: 'E', key: 'base-5', tics: 5, anchorX: 50, anchorY:  38},
+                        {letter: 'F', key: 'base-6', tics: 5, anchorX: 56, anchorY:  30},
+                        {letter: 'G', key: 'base-7', tics: 5, anchorX: 36, anchorY:  10}
+                    ]
+                },
+                {
+                    part: 'chunk', sprite: 'SPLC', alpha: 0.7, rise: 0, gravity: 0.125, additive: false, bright: false, mirror: true,
+                    pixelsPerUnit: 5.43,
+                    frames: [
+                        {letter: 'A', key: 'chunk-1', tics: 8,  anchorX: 14, anchorY: 27},
+                        {letter: 'B', key: 'chunk-2', tics: 8,  anchorX: 12, anchorY: 25},
+                        {letter: 'C', key: 'chunk-3', tics: 8,  anchorX: 13, anchorY: 24},
+                        {letter: 'D', key: 'chunk-4', tics: 16, anchorX:  5, anchorY: 10}
+                    ],
+                    // Replayed where it falls back into the liquid, like the
+                    // Death state of the Heretic chunk.
+                    landing: {letters: ['D'], frameTics: [10], bright: false}
+                }
+            ]
+        };
+    }
+
+    /**
+     * Impact decal templates (decaldef data): per type, the graphics keys and
+     * their scale/shade/translucency/gain — shade 'bfg' resolves to
+     * bfgDecalShade(). fade marks the fading (GoAway2) templates.
+     *
+     * @returns {object[]}
+     */
+    decalTemplates() {
+        this._generateException('decalTemplates must be implemented');
+        return [];
+    }
+
+    /**
+     * Transcribed finale-text catalog of this game, merged into the translator
+     * at app startup. Its codes are namespaced by this profile's code
+     * ('finale.doom.E1TEXT'), so a game whose WAD carries its own texts
+     * (Freedoom, through DEHACKED) declares none and falls back on them.
+     *
+     * @returns {string|null} catalog URL, null when the game ships no text
+     */
+    finaleAssets() {
+        return null;
+    }
+
+    /**
+     * URL of the map patch catalog of this game (UZDoom LevelCompatibility
+     * transcribed, keyed by map fingerprint), null when the game has none.
+     *
+     * @returns {string|null}
+     */
+    levelPatchAssets() {
+        return null;
+    }
+
+    /**
+     * Transient effect templates (hitscan puffs, projectile explosions,
+     * blood, teleport fog): short sprite animations built once per level in
+     * the load batch. rise is the upward drift in map units/tic (0 = static),
+     * gravity its per-tic decay; shorten opts out of the Doom first-frame tic
+     * cut; meleeStart is the frame index a melee hit starts the puff at;
+     * spawnHeight lifts the spawn point (gameinfo telefogheight, Doom units);
+     * bright names the Bright frames, which ignore the sector light: true or
+     * false for the whole timeline, or one flag per letter (a landing too).
+     *
+     * @returns {object[]} [{name, sprite, letters, frameTics, alpha, rise,
+     *                       additive, bright, gravity?, shorten?, meleeStart?, spawnHeight?}]
+     */
+    effectTemplates() {
+        this._generateException('effectTemplates must be implemented');
+        return [];
+    }
+
+    /**
+     * Projectile definitions: in-flight sprite frames, speed (map units/tic),
+     * in-flight alpha, death effect template, wall decal. Optional: gravity
+     * (map units/tic², applied after gravityDelayTics of straight flight,
+     * with the horizontal speed rescaled to dropSpeed and the vertical speed
+     * halved at dropoff) and trailEffect (template spawned every
+     * trailEveryTics of flight — set the two together).
+     *
+     * A monster's shot adds: fastSpeed (the nightmare skill's FastSpeed),
+     * seek (homing — {threshold, turnMax} in degrees, everyTics = the cadence
+     * of the vanilla action), ripper (a shot that passes THROUGH bodies and
+     * grinds them — {damage, damageEvery, shove, lift}), lifeTics (a forced
+     * lifetime), growRise (map units climbed per tic while growing) and
+     * floorHugger (it crawls along the floor).
+     *
+     * @returns {object[]} [{kind, sprite, letters, speed, flightTics, explosion, splashDamage, alpha, additive, decalType, gravity?, gravityDelayTics?, dropSpeed?, trailEffect?, trailEveryTics?, fastSpeed?, seek?, ripper?, lifeTics?, growRise?, floorHugger?}]
+     */
+    projectileDefs() {
+        this._generateException('projectileDefs must be implemented');
+        return [];
+    }
+
+    /**
+     * Weapon preference order when the current weapon runs dry
+     * (P_CheckAmmo): the first owned entry with enough ammo wins. min
+     * overrides the ammo threshold (default = the weapon's perShot); the
+     * last entry is the unconditional fallback.
+     *
+     * @returns {object[]} [{code, min?}]
+     */
+    weaponFallbackOrder() {
+        this._generateException('weaponFallbackOrder must be implemented');
+        return [];
+    }
+
+    /**
+     * Armour granted by the full-kit test cheat — the best armour class of
+     * this game.
+     *
+     * @returns {{points: number, absorb: number}}
+     */
+    cheatKitArmor() {
+        this._generateException('cheatKitArmor must be implemented');
+        return {};
+    }
+
+    _generateException(msg) {
+        throw new Error('GameProfile - ' + msg);
+    }
+}
+
+AbstractGameProfile._playerBodies = new Map();   // body data → its DoomMonsterDef

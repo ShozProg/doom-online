@@ -1,0 +1,98 @@
+/**
+ * Raw ImageData of the PNGs drawn from outside the WAD (impact decals, splash
+ * masks), decoded once at startup: loader.reset() wipes the engine textures at
+ * every level, so the consumers re-register them from here in each load batch.
+ *
+ * Every profile's imageAssets() manifests ({basePath, keys}) are loaded, since
+ * the game is only known once a WAD is chosen. Keys must be unique across all
+ * manifests; a profile may reuse another's keys (Heretic reuses Doom's decals).
+ *
+ * The decals are third-party GPL v3 assets (see website/assets/uzdoom/).
+ */
+class DoomImageAssets {
+    constructor() {
+        this._imageData = {};
+        this._ready     = false;
+        this._waiters   = [];
+    }
+
+    isReady() {
+        return this._ready;
+    }
+
+    // Settles once every image is decoded or failed, at once when they already are.
+    whenReady() {
+        if (this._ready) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => this._waiters.push(resolve));
+    }
+
+    get(key) {
+        return ((this._imageData[key] !== undefined) ? this._imageData[key] : null);
+    }
+
+    load(callback = null) {
+        const files = [];
+        const seen  = new Set();
+        for (const profile of new GameProfileList().getAll()) {
+            for (const manifest of profile.imageAssets()) {
+                for (const key of manifest.keys) {
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        files.push({key: key, url: manifest.basePath + key + '.png'});
+                    }
+                }
+            }
+        }
+        if (files.length === 0) {
+            this._markReady(callback);
+            return;
+        }
+
+        let pending = files.length;
+        const settle = () => {
+            pending -= 1;
+            if (pending === 0) {
+                this._markReady(callback);
+            }
+        };
+        for (const file of files) {
+            const img = new Image();
+            img.onload = () => {
+                this._imageData[file.key] = DoomImageAssets._decode(img);
+                settle();
+            };
+            // A missing image is left out (get() → null, which its consumers skip): waiting for it would never end.
+            img.onerror = () => {
+                console.error('DoomImageAssets - image failed to load: ' + file.url);
+                settle();
+            };
+            img.src = appBootstrap.buildUrl(file.url);
+        }
+    }
+
+    static _decode(img) {
+        const canvas  = document.createElement('canvas');
+        canvas.width  = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        return ctx.getImageData(0, 0, img.width, img.height);
+    }
+
+    _markReady(callback) {
+        this._ready = true;
+        if (callback !== null) {
+            callback();
+        }
+        for (const resolve of this._waiters) {
+            resolve();
+        }
+        this._waiters = [];
+    }
+}
+
+const doomImageAssets = new DoomImageAssets();

@@ -1,0 +1,1432 @@
+/**
+ * Every user-facing text of Spipu-Doom, served by AppTranslator.
+ *
+ * Proper nouns are not translated (the brand, WAD and level names, language
+ * autonyms, BFG9000). Of the game data, only the weapon names reach a screen;
+ * the other names stay in their profile tables as transcribed.
+ */
+class DoomTranslations {
+    static get CATALOG() {
+        return {
+            // --- Menu screens ---
+            'menu.storageUnavailable': {
+                fr: 'Stockage navigateur indisponible — impossible de gérer les WADs.',
+                en: 'Browser storage unavailable — WADs cannot be managed.',
+                it: 'Archiviazione del browser non disponibile — impossibile gestire i WAD.',
+                es: 'Almacenamiento del navegador no disponible — imposible gestionar los WAD.'
+            },
+            'menu.storageBlocked': {
+                fr: 'Mise à jour des données en attente : fermez les autres onglets ou fenêtres de Spipu-Doom.',
+                en: 'Data update waiting: close the other Spipu-Doom tabs or windows.',
+                it: 'Aggiornamento dei dati in attesa: chiudi le altre schede o finestre di Spipu-Doom.',
+                es: 'Actualización de datos en espera: cierra las demás pestañas o ventanas de Spipu-Doom.'
+            },
+            'menu.storageFull': {
+                fr: 'Espace insuffisant pour mettre à jour les données : libérez de la place sur l\'appareil, puis rechargez.',
+                en: 'Not enough space to update the data: free some space on the device, then reload.',
+                it: 'Spazio insufficiente per aggiornare i dati: libera spazio sul dispositivo, poi ricarica.',
+                es: 'Espacio insuficiente para actualizar los datos: libera espacio en el dispositivo y recarga.'
+            },
+
+            'menu.wad.title': {
+                fr: 'Fichiers WAD',
+                en: 'WAD files',
+                it: 'File WAD',
+                es: 'Archivos WAD'
+            },
+            'menu.wad.empty': {
+                fr: 'Aucun jeu pour l\'instant',
+                en: 'No game yet',
+                it: 'Nessun gioco per ora',
+                es: 'Ningún juego por ahora'
+            },
+            'menu.wad.emptyHint': {
+                fr: 'Pour jouer, il faut d\'abord ajouter un jeu.',
+                en: 'To play, you first need to add a game.',
+                it: 'Per giocare, devi prima aggiungere un gioco.',
+                es: 'Para jugar, primero hay que añadir un juego.'
+            },
+            'menu.wad.emptyHintHelp': {
+                fr: 'Vous n\'en avez pas ?',
+                en: 'Don\'t have one?',
+                it: 'Non ne hai uno?',
+                es: '¿No tienes ninguno?'
+            },
+            'menu.wad.emptyHintSteps': {
+                fr: 'Cliquez sur « {help} » : tout y est expliqué pas à pas.',
+                en: 'Click "{help}": it is all explained step by step.',
+                it: 'Clicca su «{help}»: è tutto spiegato passo a passo.',
+                es: 'Haz clic en «{help}»: allí está todo explicado paso a paso.'
+            },
+            'menu.wad.urlPlaceholder': {
+                fr: 'https://exemple.com/fichier.wad',
+                en: 'https://example.com/file.wad',
+                it: 'https://esempio.com/file.wad',
+                es: 'https://ejemplo.com/archivo.wad'
+            },
+            'menu.wad.add': {
+                fr: 'Ajouter un fichier WAD',
+                en: 'Add a WAD file',
+                it: 'Aggiungi un file WAD',
+                es: 'Añadir un archivo WAD'
+            },
+            'menu.wad.byUrl': {
+                fr: 'Par URL',
+                en: 'By URL',
+                it: 'Tramite URL',
+                es: 'Por URL'
+            },
+            'menu.wad.byUrlTitle': {
+                fr: 'Ajouter un fichier WAD par URL',
+                en: 'Add a WAD file by URL',
+                it: 'Aggiungi un file WAD tramite URL',
+                es: 'Añadir un archivo WAD por URL'
+            },
+            'menu.wad.byUrlHint': {
+                fr: 'Télécharger le WAD depuis une adresse internet',
+                en: 'Download the WAD from a web address',
+                it: 'Scarica il WAD da un indirizzo internet',
+                es: 'Descargar el WAD desde una dirección de internet'
+            },
+            'menu.wad.addButton': {
+                fr: 'Ajouter',
+                en: 'Add',
+                it: 'Aggiungi',
+                es: 'Añadir'
+            },
+            'menu.wad.byFile': {
+                fr: 'Fichier local',
+                en: 'Local file',
+                it: 'File locale',
+                es: 'Archivo local'
+            },
+            'menu.wad.byFileHint': {
+                fr: 'Choisir un fichier .wad de cet appareil',
+                en: 'Pick a .wad file on this device',
+                it: 'Scegli un file .wad di questo dispositivo',
+                es: 'Elegir un archivo .wad de este dispositivo'
+            },
+            'menu.wad.play': {
+                fr: 'Jouer',
+                en: 'Play',
+                it: 'Gioca',
+                es: 'Jugar'
+            },
+            'menu.wad.version': {
+                fr: 'Version',
+                en: 'Version',
+                it: 'Versione',
+                es: 'Versión'
+            },
+            'menu.wad.size': {
+                fr: 'Taille',
+                en: 'Size',
+                it: 'Dimensione',
+                es: 'Tamaño'
+            },
+            'menu.wad.addedAt': {
+                fr: 'Ajouté le',
+                en: 'Added on',
+                it: 'Aggiunto il',
+                es: 'Añadido el'
+            },
+            'menu.wad.urlMissing': {
+                fr: 'Saisissez une URL',
+                en: 'Enter a URL',
+                it: 'Inserisci un URL',
+                es: 'Introduce una URL'
+            },
+            'menu.wad.downloading': {
+                fr: 'Téléchargement...',
+                en: 'Downloading...',
+                it: 'Download in corso...',
+                es: 'Descargando...'
+            },
+            'menu.wad.reading': {
+                fr: 'Lecture du fichier...',
+                en: 'Reading the file...',
+                it: 'Lettura del file...',
+                es: 'Leyendo el archivo...'
+            },
+            'menu.wad.added': {
+                fr: '{wad} ajouté',
+                en: '{wad} added',
+                it: '{wad} aggiunto',
+                es: '{wad} añadido'
+            },
+            'menu.wad.updated': {
+                fr: '{wad} mis à jour',
+                en: '{wad} updated',
+                it: '{wad} aggiornato',
+                es: '{wad} actualizado'
+            },
+            'menu.wad.updating': {
+                fr: 'Mise à jour de {wad}…',
+                en: 'Updating {wad}…',
+                it: 'Aggiornamento di {wad}…',
+                es: 'Actualizando {wad}…'
+            },
+            'menu.wad.updateSlot': {
+                fr: 'Slot {n} ({level})',
+                en: 'Slot {n} ({level})',
+                it: 'Slot {n} ({level})',
+                es: 'Ranura {n} ({level})'
+            },
+            'menu.wad.updateConfirm': {
+                fr: 'Mettre à jour {wad} de {from} vers {to} ?',
+                en: 'Update {wad} from {from} to {to}?',
+                it: 'Aggiornare {wad} da {from} a {to}?',
+                es: '¿Actualizar {wad} de {from} a {to}?'
+            },
+            'menu.wad.updateRestarted': {
+                fr: 'Niveau modifié par la mise à jour, ces sauvegardes repartiront de son début : {slots}',
+                en: 'Level changed by the update, these saves will restart from its beginning: {slots}',
+                it: 'Livello modificato dall\'aggiornamento, questi salvataggi ripartiranno dal suo inizio: {slots}',
+                es: 'Nivel modificado por la actualización, estas partidas volverán a su inicio: {slots}'
+            },
+            'menu.wad.updateRemoved': {
+                fr: 'Niveau absent de la nouvelle version, ces sauvegardes seront supprimées : {slots}',
+                en: 'Level missing from the new version, these saves will be deleted: {slots}',
+                it: 'Livello assente dalla nuova versione, questi salvataggi saranno eliminati: {slots}',
+                es: 'Nivel ausente de la nueva versión, estas partidas se eliminarán: {slots}'
+            },
+            'menu.wad.delete': {
+                fr: 'Supprimer',
+                en: 'Delete',
+                it: 'Elimina',
+                es: 'Eliminar'
+            },
+            'menu.wad.deleteConfirm': {
+                fr: 'Supprimer {wad} ?',
+                en: 'Delete {wad}?',
+                it: 'Eliminare {wad}?',
+                es: '¿Eliminar {wad}?'
+            },
+            'menu.wad.deleteDetail': {
+                fr: 'Ses sauvegardes sont supprimées avec lui.',
+                en: 'Its saves are deleted with it.',
+                it: 'I suoi salvataggi vengono eliminati con esso.',
+                es: 'Sus partidas guardadas se eliminan con él.'
+            },
+            'menu.wad.loading': {
+                fr: 'Chargement de {wad}',
+                en: 'Loading {wad}',
+                it: 'Caricamento di {wad}',
+                es: 'Cargando {wad}'
+            },
+
+            // WAD menu (one WAD selected)
+            'menu.game.continue': {
+                fr: 'Continuer',
+                en: 'Continue',
+                it: 'Continua',
+                es: 'Continuar'
+            },
+            'menu.game.newGame': {
+                fr: 'Nouvelle partie',
+                en: 'New game',
+                it: 'Nuova partita',
+                es: 'Nueva partida'
+            },
+            'menu.game.load': {
+                fr: 'Charger une partie',
+                en: 'Load game',
+                it: 'Carica partita',
+                es: 'Cargar partida'
+            },
+            'menu.game.options': {
+                fr: 'Options',
+                en: 'Options',
+                it: 'Opzioni',
+                es: 'Opciones'
+            },
+            'menu.game.quit': {
+                fr: 'Quitter',
+                en: 'Quit',
+                it: 'Esci',
+                es: 'Salir'
+            },
+            'menu.game.reportBug': {
+                fr: 'Déclarer un bug',
+                en: 'Report a bug',
+                it: 'Segnala un bug',
+                es: 'Informar de un error'
+            },
+
+            // Save slots modal (load from the WAD menu or the pause menu,
+            // save from the pause menu)
+            'menu.save.titleLoad': {
+                fr: 'Charger une partie',
+                en: 'Load game',
+                it: 'Carica partita',
+                es: 'Cargar partida'
+            },
+            'menu.save.titleSave': {
+                fr: 'Sauvegarder la partie',
+                en: 'Save game',
+                it: 'Salva partita',
+                es: 'Guardar la partida'
+            },
+            'menu.save.slot': {
+                fr: 'Slot {n}',
+                en: 'Slot {n}',
+                it: 'Slot {n}',
+                es: 'Ranura {n}'
+            },
+            'menu.save.empty': {
+                fr: 'Vide',
+                en: 'Empty',
+                it: 'Vuoto',
+                es: 'Vacía'
+            },
+            'menu.save.delete': {
+                fr: 'Supprimer',
+                en: 'Delete',
+                it: 'Elimina',
+                es: 'Eliminar'
+            },
+            'menu.save.deleteConfirm': {
+                fr: 'Supprimer la sauvegarde du slot {n} ?',
+                en: 'Delete the save in slot {n}?',
+                it: 'Eliminare il salvataggio dello slot {n}?',
+                es: '¿Eliminar la partida guardada de la ranura {n}?'
+            },
+            'menu.save.saving': {
+                fr: 'Sauvegarde en cours',
+                en: 'Saving',
+                it: 'Salvataggio in corso',
+                es: 'Guardando'
+            },
+            'menu.save.overwriteConfirm': {
+                fr: 'Remplacer la sauvegarde du slot {n} ?',
+                en: 'Replace the save in slot {n}?',
+                it: 'Sostituire il salvataggio dello slot {n}?',
+                es: '¿Reemplazar la partida guardada de la ranura {n}?'
+            },
+            'menu.save.deadInfo': {
+                fr: 'Impossible de sauvegarder quand on est mort',
+                en: 'Cannot save while dead',
+                it: 'Impossibile salvare quando si è morti',
+                es: 'No se puede guardar estando muerto'
+            },
+            'menu.save.incompatible': {
+                fr: 'Sauvegarde incompatible avec cette version du jeu',
+                en: 'Save incompatible with this game version',
+                it: 'Salvataggio incompatibile con questa versione del gioco',
+                es: 'Partida guardada incompatible con esta versión del juego'
+            },
+            'menu.save.loadError': {
+                fr: 'Impossible de charger la sauvegarde',
+                en: 'Unable to load the save',
+                it: 'Impossibile caricare il salvataggio',
+                es: 'No se puede cargar la partida guardada'
+            },
+
+            // Episode selection (New game). The episode NAMES are proper
+            // nouns carried by the game profiles, never translated — like the
+            // level names.
+            'menu.episode.title': {
+                fr: 'Choix de l\'épisode',
+                en: 'Choose the episode',
+                it: 'Scelta dell\'episodio',
+                es: 'Elección del episodio'
+            },
+            'menu.episode.item': {
+                fr: 'Épisode {episode}',
+                en: 'Episode {episode}',
+                it: 'Episodio {episode}',
+                es: 'Episodio {episode}'
+            },
+            'menu.episode.empty': {
+                fr: 'Aucun niveau trouvé dans ce WAD',
+                en: 'No level found in this WAD',
+                it: 'Nessun livello trovato in questo WAD',
+                es: 'No se ha encontrado ningún nivel en este WAD'
+            },
+
+            'menu.difficulty.title': {
+                fr: 'Choix de la difficulté',
+                en: 'Choose the difficulty',
+                it: 'Scelta della difficoltà',
+                es: 'Elección de la dificultad'
+            },
+
+            // Level launch modal
+            'menu.level.loading': {
+                fr: 'Chargement du niveau {level} de {wad}',
+                en: 'Loading level {level} of {wad}',
+                it: 'Caricamento del livello {level} di {wad}',
+                es: 'Cargando el nivel {level} de {wad}'
+            },
+
+            // --- Options modal (also serves the About page of the ? button) ---
+            'help.display': {
+                fr: 'Affichage',
+                en: 'Display',
+                it: 'Visualizzazione',
+                es: 'Pantalla'
+            },
+            'help.game': {
+                fr: 'Jeu',
+                en: 'Game',
+                it: 'Gioco',
+                es: 'Juego'
+            },
+            'help.multiplayer': {
+                fr: 'Multijoueur',
+                en: 'Multiplayer',
+                it: 'Multigiocatore',
+                es: 'Multijugador'
+            },
+            'help.sound': {
+                fr: 'Son',
+                en: 'Sound',
+                it: 'Audio',
+                es: 'Sonido'
+            },
+            'help.controls': {
+                fr: 'Contrôles',
+                en: 'Controls',
+                it: 'Comandi',
+                es: 'Controles'
+            },
+            'help.reset': {
+                fr: 'Réinitialiser tous les paramètres',
+                en: 'Reset all settings',
+                it: 'Reimposta tutte le impostazioni',
+                es: 'Restablecer todos los ajustes'
+            },
+            'help.resetConfirm': {
+                fr: 'Supprimer tous les paramètres enregistrés ?',
+                en: 'Delete every saved setting?',
+                it: 'Eliminare tutte le impostazioni salvate?',
+                es: '¿Eliminar todos los ajustes guardados?'
+            },
+            'help.resetDetail': {
+                fr: 'Tous les réglages reviennent à leur valeur par défaut, contrôles compris.',
+                en: 'Every setting goes back to its default, the controls included.',
+                it: 'Tutte le impostazioni tornano al valore predefinito, comandi compresi.',
+                es: 'Todos los ajustes vuelven a su valor predeterminado, controles incluidos.'
+            },
+            'help.about': {
+                fr: 'À propos',
+                en: 'About',
+                it: 'Informazioni',
+                es: 'Acerca de'
+            },
+            'help.guide': {
+                fr: 'Aide',
+                en: 'Help',
+                it: 'Aiuto',
+                es: 'Ayuda'
+            },
+            'help.guide.wad': {
+                fr: 'Pour jouer, il faut un fichier de jeu, appelé un WAD : c\'est lui qui contient les niveaux, les monstres, les images et les sons. Spipu-Doom n\'en fournit aucun — vous en apportez un, et il le fait tourner.',
+                en: 'To play, you need a game file, called a WAD: it holds the levels, the monsters, the graphics and the sounds. Spipu-Doom comes with none — you bring one, and it runs it.',
+                it: 'Per giocare serve un file di gioco, chiamato WAD: è lui che contiene i livelli, i mostri, le immagini e i suoni. Spipu-Doom non ne fornisce nessuno — tu ne porti uno, e lui lo fa girare.',
+                es: 'Para jugar hace falta un archivo de juego, llamado WAD: es el que contiene los niveles, los monstruos, las imágenes y los sonidos. Spipu-Doom no incluye ninguno — tú traes uno, y él lo hace funcionar.'
+            },
+            'help.guide.freedoom': {
+                fr: 'Le plus simple est Freedoom : un jeu complet, gratuit et légal, dans le style de Doom. Téléchargez-le sur le site ci-dessous, ouvrez le fichier ZIP obtenu, et vous y trouverez « freedoom1.wad ». Revenez ici, cliquez sur « {addFile} » et choisissez ce fichier.',
+                en: 'The simplest one is Freedoom: a complete game, free and legal, in the style of Doom. Download it from the site below, open the ZIP file you get, and you will find "freedoom1.wad" inside. Come back here, click "{addFile}" and pick that file.',
+                it: 'Il più semplice è Freedoom: un gioco completo, gratuito e legale, nello stile di Doom. Scaricalo dal sito qui sotto, apri il file ZIP ottenuto e all\'interno troverai «freedoom1.wad». Torna qui, clicca su «{addFile}» e scegli quel file.',
+                es: 'Lo más sencillo es Freedoom: un juego completo, gratuito y legal, al estilo de Doom. Descárgalo desde el sitio de abajo, abre el archivo ZIP obtenido y dentro encontrarás «freedoom1.wad». Vuelve aquí, haz clic en «{addFile}» y elige ese archivo.'
+            },
+            'help.guide.own': {
+                fr: 'Si vous possédez déjà Doom, Doom II ou Heretic, leur fichier WAD fonctionne exactement pareil. « {addUrl} » sert à aller chercher un fichier directement sur une adresse internet, quand le site qui l\'héberge le permet.',
+                en: 'If you already own Doom, Doom II or Heretic, their WAD file works exactly the same. "{addUrl}" fetches a file straight from a web address, when the site hosting it allows it.',
+                it: 'Se possiedi già Doom, Doom II o Heretic, il loro file WAD funziona esattamente allo stesso modo. «{addUrl}» serve a prelevare un file direttamente da un indirizzo internet, quando il sito che lo ospita lo consente.',
+                es: 'Si ya posees Doom, Doom II o Heretic, su archivo WAD funciona exactamente igual. «{addUrl}» sirve para traer un archivo directamente desde una dirección de internet, cuando el sitio que lo aloja lo permite.'
+            },
+            'help.guide.install': {
+                fr: 'Sur téléphone ou tablette, installez Spipu-Doom pour jouer en plein écran, sans la barre du navigateur : sur iPhone et iPad, avec Safari, touchez le bouton Partager puis « Sur l\'écran d\'accueil » ; sur Android, avec Chrome, ouvrez le menu ⋮ (les trois points) puis « Installer l\'application ». Une icône apparaît, et le jeu fonctionne ensuite même sans connexion internet.',
+                en: 'On a phone or a tablet, install Spipu-Doom to play fullscreen, without the browser bar: on iPhone and iPad, in Safari, tap the Share button then "Add to Home Screen"; on Android, in Chrome, open the ⋮ (three dots) menu then "Install app". An icon appears, and the game then works even with no internet connection.',
+                it: 'Su telefono o tablet, installa Spipu-Doom per giocare a schermo intero, senza la barra del browser: su iPhone e iPad, con Safari, tocca il pulsante Condividi e poi «Aggiungi a Home»; su Android, con Chrome, apri il menu ⋮ (i tre puntini) e poi «Installa app». Compare un\'icona, e il gioco funziona poi anche senza connessione internet.',
+                es: 'En un teléfono o una tableta, instala Spipu-Doom para jugar a pantalla completa, sin la barra del navegador: en iPhone y iPad, con Safari, toca el botón Compartir y luego «Añadir a pantalla de inicio»; en Android, con Chrome, abre el menú ⋮ (los tres puntos) y luego «Instalar aplicación». Aparece un icono, y el juego funciona después incluso sin conexión a internet.'
+            },
+            'help.guide.controls': {
+                fr: 'Jouez au clavier et à la souris, à la manette, ou avec les commandes tactiles qui s\'affichent à l\'écran : Spipu-Doom reconnaît tout seul l\'appareil que vous utilisez, sauf si vous en choisissez un dans les options. Chaque touche peut être changée dans les options, une fois un jeu choisi.',
+                en: 'Play with the keyboard and mouse, with a gamepad, or with the touch controls shown on screen: Spipu-Doom works out on its own which device you are using, unless you pick one in the options. Every key can be changed in the options, once you have picked a game.',
+                it: 'Gioca con tastiera e mouse, con un controller, o con i comandi touch che compaiono sullo schermo: Spipu-Doom riconosce da solo il dispositivo che stai usando, a meno che tu non ne scelga uno nelle opzioni. Ogni tasto può essere cambiato nelle opzioni, dopo aver scelto un gioco.',
+                es: 'Juega con teclado y ratón, con un mando, o con los controles táctiles que aparecen en pantalla: Spipu-Doom reconoce por sí solo el dispositivo que estás usando, salvo que elijas uno en las opciones. Cada tecla puede cambiarse en las opciones, una vez elegido un juego.'
+            },
+            'help.about.what': {
+                fr: 'Spipu-Doom convertit et fait tourner vos fichiers WAD Doom à la volée, entièrement dans le navigateur : rendu WebGL, physique FPS, éléments mouvants et armes fidèles au jeu original.',
+                en: 'Spipu-Doom converts and runs your Doom WAD files on the fly, entirely in the browser: WebGL rendering, FPS physics, moving elements and weapons faithful to the original game.',
+                it: 'Spipu-Doom converte e fa girare i tuoi file WAD di Doom al volo, interamente nel browser: rendering WebGL, fisica FPS, elementi mobili e armi fedeli al gioco originale.',
+                es: 'Spipu-Doom convierte y ejecuta tus archivos WAD de Doom al vuelo, completamente en el navegador: renderizado WebGL, físicas FPS, elementos móviles y armas fieles al juego original.'
+            },
+            'help.about.author': {
+                fr: 'Développé par Spipu (Laurent Minguet).',
+                en: 'Developed by Spipu (Laurent Minguet).',
+                it: 'Sviluppato da Spipu (Laurent Minguet).',
+                es: 'Desarrollado por Spipu (Laurent Minguet).'
+            },
+            'help.about.source': {
+                fr: 'Code source du projet :',
+                en: 'Project source code:',
+                it: 'Codice sorgente del progetto:',
+                es: 'Código fuente del proyecto:'
+            },
+            'help.about.licence': {
+                fr: 'Licence MIT — à l\'exception des graphismes de decals d\'impact et des textes de fin de chapitre, repris d\'UZDoom sous licence GPL v3, du synthétiseur musical libADLMIDI, embarqué sous licence LGPL v3, et de la police Oswald, sous licence SIL OFL 1.1.',
+                en: 'MIT licence — except the impact decal graphics and the end-of-chapter texts, taken from UZDoom under the GPL v3 licence, the libADLMIDI music synthesizer, embedded under the LGPL v3 licence, and the Oswald font, under the SIL OFL 1.1 licence.',
+                it: 'Licenza MIT — a eccezione della grafica dei segni d\'impatto e dei testi di fine capitolo, ripresi da UZDoom con licenza GPL v3, del sintetizzatore musicale libADLMIDI, incorporato con licenza LGPL v3, e del carattere Oswald, con licenza SIL OFL 1.1.',
+                es: 'Licencia MIT — salvo los gráficos de las marcas de impacto y los textos de fin de capítulo, tomados de UZDoom bajo licencia GPL v3, el sintetizador musical libADLMIDI, integrado bajo licencia LGPL v3, y la tipografía Oswald, bajo licencia SIL OFL 1.1.'
+            },
+            'help.about.wads': {
+                fr: 'Aucun fichier WAD n\'est fourni. Utilisez un WAD libre comme Freedoom, ou vos propres fichiers dont vous détenez les droits — Doom et ses données de jeu restent la propriété de leurs ayants droit.',
+                en: 'No WAD file is shipped. Use a free WAD such as Freedoom, or your own files that you hold the rights to — Doom and its game data remain the property of their rights holders.',
+                it: 'Nessun file WAD è incluso. Usa un WAD libero come Freedoom, o i tuoi file di cui detieni i diritti — Doom e i suoi dati di gioco restano proprietà dei rispettivi titolari.',
+                es: 'No se incluye ningún archivo WAD. Usa un WAD libre como Freedoom, o tus propios archivos cuyos derechos poseas — Doom y sus datos de juego siguen siendo propiedad de sus titulares.'
+            },
+            'help.about.copyright': {
+                fr: '© 2024-{year} Spipu.',
+                en: '© 2024-{year} Spipu.',
+                it: '© 2024-{year} Spipu.',
+                es: '© 2024-{year} Spipu.'
+            },
+
+            // Setting values and input devices
+            'value.noLimit': {
+                fr: 'Aucune',
+                en: 'None',
+                it: 'Nessuno',
+                es: 'Ninguno'
+            },
+            'value.deathmatchItems.weaponsStay': {
+                fr: 'Armes permanentes',
+                en: 'Weapons stay',
+                it: 'Armi permanenti',
+                es: 'Armas permanentes'
+            },
+            'value.deathmatchItems.itemsRespawn': {
+                fr: 'Objets qui réapparaissent',
+                en: 'Items respawn',
+                it: 'Oggetti che ricompaiono',
+                es: 'Objetos que reaparecen'
+            },
+            // Renderer values: 'WebGL' is a proper name and stays literal in
+            // the definition, the three CPU rasterizers are named by what they
+            // can draw.
+            'value.renderer.softwareTextured': {
+                fr: 'Logiciel texturé',
+                en: 'Software textured',
+                it: 'Software con texture',
+                es: 'Software con texturas'
+            },
+            'value.renderer.softwareFlat': {
+                fr: 'Logiciel en aplats',
+                en: 'Software flat',
+                it: 'Software a tinte piatte',
+                es: 'Software plano'
+            },
+            'value.renderer.softwareWireframe': {
+                fr: 'Logiciel filaire',
+                en: 'Software wireframe',
+                it: 'Software wireframe',
+                es: 'Software de alambre'
+            },
+            'device.auto': {
+                fr: 'Automatique : {device}',
+                en: 'Automatic: {device}',
+                it: 'Automatico: {device}',
+                es: 'Automático: {device}'
+            },
+            'device.gamepad': {
+                fr: 'Manette ({name})',
+                en: 'Gamepad ({name})',
+                it: 'Controller ({name})',
+                es: 'Mando ({name})'
+            },
+            'device.virtualPad': {
+                fr: 'Commandes tactiles',
+                en: 'Touch controls',
+                it: 'Comandi touch',
+                es: 'Controles táctiles'
+            },
+            'device.keyboardMouse': {
+                fr: 'Clavier et souris',
+                en: 'Keyboard and mouse',
+                it: 'Tastiera e mouse',
+                es: 'Teclado y ratón'
+            },
+
+            // --- Errors (WadError codes) ---
+            'error.generic': {
+                fr: 'Erreur : {message}',
+                en: 'Error: {message}',
+                it: 'Errore: {message}',
+                es: 'Error: {message}'
+            },
+            'error.fetchOffline': {
+                fr: 'Aucune connexion réseau',
+                en: 'No network connection',
+                it: 'Nessuna connessione di rete',
+                es: 'Sin conexión de red'
+            },
+            'error.fetchBlocked': {
+                fr: 'Ce serveur n\'autorise pas le téléchargement direct — enregistrez le fichier, puis utilisez « Fichier local »',
+                en: 'This server does not allow direct downloads — save the file, then use "Local file"',
+                it: 'Questo server non consente il download diretto — salva il file, poi usa «File locale»',
+                es: 'Este servidor no permite la descarga directa — guarda el archivo y luego usa «Archivo local»'
+            },
+            'error.fetchHttp': {
+                fr: 'Le serveur a refusé le fichier',
+                en: 'The server refused the file',
+                it: 'Il server ha rifiutato il file',
+                es: 'El servidor rechazó el archivo'
+            },
+            'error.fetchFailed': {
+                fr: 'Téléchargement impossible',
+                en: 'Download failed',
+                it: 'Download impossibile',
+                es: 'Descarga imposible'
+            },
+            'error.invalidFormat': {
+                fr: 'Ce fichier n\'est pas un WAD valide (IWAD/PWAD attendu)',
+                en: 'This file is not a valid WAD (IWAD/PWAD expected)',
+                it: 'Questo file non è un WAD valido (atteso IWAD/PWAD)',
+                es: 'Este archivo no es un WAD válido (se esperaba IWAD/PWAD)'
+            },
+            'error.quotaExceeded': {
+                fr: 'Espace de stockage insuffisant — supprimez un WAD',
+                en: 'Not enough storage space — delete a WAD',
+                it: 'Spazio di archiviazione insufficiente — elimina un WAD',
+                es: 'Espacio de almacenamiento insuficiente — elimina un WAD'
+            },
+            'error.storageUnavailable': {
+                fr: 'Stockage navigateur indisponible',
+                en: 'Browser storage unavailable',
+                it: 'Archiviazione del browser non disponibile',
+                es: 'Almacenamiento del navegador no disponible'
+            },
+            'error.notFound': {
+                fr: 'WAD introuvable',
+                en: 'WAD not found',
+                it: 'WAD non trovato',
+                es: 'WAD no encontrado'
+            },
+            'error.wadDuplicate': {
+                fr: 'Ce WAD est déjà dans la liste',
+                en: 'This WAD is already in the list',
+                it: 'Questo WAD è già nella lista',
+                es: 'Este WAD ya está en la lista'
+            },
+            'error.wadOlder': {
+                fr: 'Une version plus récente de ce WAD est déjà dans la liste',
+                en: 'A newer version of this WAD is already in the list',
+                it: 'Una versione più recente di questo WAD è già nella lista',
+                es: 'Una versión más reciente de este WAD ya está en la lista'
+            },
+
+            // --- Game (pause menu + level chaining modals) ---
+            'game.pause.resume': {
+                fr: 'Reprendre',
+                en: 'Resume',
+                it: 'Riprendi',
+                es: 'Reanudar'
+            },
+            'game.pause.save': {
+                fr: 'Sauvegarder la partie',
+                en: 'Save game',
+                it: 'Salva partita',
+                es: 'Guardar la partida'
+            },
+            'game.pause.quit': {
+                fr: 'Quitter le niveau',
+                en: 'Leave the level',
+                it: 'Esci dal livello',
+                es: 'Salir del nivel'
+            },
+            'game.death.title': {
+                fr: 'Vous êtes mort',
+                en: 'You are dead',
+                it: 'Sei morto',
+                es: 'Has muerto'
+            },
+            'game.level.restart': {
+                fr: 'Recommencer le niveau',
+                en: 'Restart the level',
+                it: 'Ricomincia il livello',
+                es: 'Reiniciar el nivel'
+            },
+            'game.level.restartConfirm': {
+                fr: 'Recommencer le niveau ?',
+                en: 'Restart the level?',
+                it: 'Ricominciare il livello?',
+                es: '¿Reiniciar el nivel?'
+            },
+            'game.level.restartDetail': {
+                fr: 'Chaque joueur repart avec l\'équipement qu\'il avait en y entrant.',
+                en: 'Every player starts again with the equipment they had on entering it.',
+                it: 'Ogni giocatore riparte con l\'equipaggiamento che aveva entrandoci.',
+                es: 'Cada jugador vuelve a empezar con el equipo que tenía al entrar.'
+            },
+            'game.level.loading': {
+                fr: 'Chargement du niveau {level}',
+                en: 'Loading level {level}',
+                it: 'Caricamento del livello {level}',
+                es: 'Cargando el nivel {level}'
+            },
+            'game.level.finished': {
+                fr: 'Niveau {level} terminé !',
+                en: 'Level {level} finished!',
+                it: 'Livello {level} completato!',
+                es: '¡Nivel {level} completado!'
+            },
+            'game.level.finishedNamed': {
+                fr: '{level} {name} terminé !',
+                en: '{level} {name} finished!',
+                it: '{level} {name} completato!',
+                es: '¡{level} {name} completado!'
+            },
+            'game.episode.finished': {
+                fr: 'Épisode terminé !',
+                en: 'Episode finished!',
+                it: 'Episodio completato!',
+                es: '¡Episodio completado!'
+            },
+            'game.finished': {
+                fr: 'Partie terminée !',
+                en: 'Game over!',
+                it: 'Partita completata!',
+                es: '¡Partida completada!'
+            },
+            'game.tally.time': {
+                fr: 'Temps',
+                en: 'Time',
+                it: 'Tempo',
+                es: 'Tiempo'
+            },
+            'game.tally.kills': {
+                fr: 'Ennemis',
+                en: 'Kills',
+                it: 'Nemici',
+                es: 'Enemigos'
+            },
+            'game.tally.items': {
+                fr: 'Objets',
+                en: 'Items',
+                it: 'Oggetti',
+                es: 'Objetos'
+            },
+            'game.tally.secrets': {
+                fr: 'Secrets',
+                en: 'Secrets',
+                it: 'Segreti',
+                es: 'Secretos'
+            },
+            'game.tally.fragsTotal': {
+                fr: 'Total',
+                en: 'Total',
+                it: 'Totale',
+                es: 'Total'
+            },
+            'game.tally.none': {
+                fr: 'aucun',
+                en: 'none',
+                it: 'nessuno',
+                es: 'ninguno'
+            },
+            'game.tally.next': {
+                fr: 'Niveau suivant',
+                en: 'Next level',
+                it: 'Livello successivo',
+                es: 'Siguiente nivel'
+            },
+            'game.tally.menu': {
+                fr: 'Retour au menu',
+                en: 'Back to menu',
+                it: 'Torna al menu',
+                es: 'Volver al menú'
+            },
+            // Leaves the tally for the story text.
+            'game.finale.continue': {
+                fr: 'Continuer',
+                en: 'Continue',
+                it: 'Continua',
+                es: 'Continuar'
+            },
+
+            'hud.ammo': {
+                fr: 'MUNITIONS',
+                en: 'AMMO',
+                it: 'MUNIZIONI',
+                es: 'MUNICIÓN'
+            },
+            'hud.automap': {
+                fr: 'Carte',
+                en: 'Map',
+                it: 'Mappa',
+                es: 'Mapa'
+            },
+            'hud.fps': {
+                fr: '{value} fps',
+                en: '{value} fps',
+                it: '{value} fps',
+                es: '{value} fps'
+            },
+            'hud.fpsPing': {
+                fr: '{value} fps - ping {ping} ms',
+                en: '{value} fps - ping {ping} ms',
+                it: '{value} fps - ping {ping} ms',
+                es: '{value} fps - ping {ping} ms'
+            },
+
+            // Running power-up effects: one label per effect, whatever the game's item name.
+            'effect.berserk': {
+                fr: 'Berserk',
+                en: 'Berserk',
+                it: 'Berserk',
+                es: 'Berserk'
+            },
+            'effect.invulnerability': {
+                fr: 'Invulnérabilité',
+                en: 'Invulnerability',
+                it: 'Invulnerabilità',
+                es: 'Invulnerabilidad'
+            },
+            'effect.radiationSuit': {
+                fr: 'Anti-radiations',
+                en: 'Radiation suit',
+                it: 'Anti-radiazioni',
+                es: 'Antirradiación'
+            },
+            'effect.light': {
+                fr: 'Vision de nuit',
+                en: 'Night vision',
+                it: 'Visione notturna',
+                es: 'Visión nocturna'
+            },
+            'effect.invisibility': {
+                fr: 'Invisibilité',
+                en: 'Invisibility',
+                it: 'Invisibilità',
+                es: 'Invisibilidad'
+            },
+
+            // --- Difficulties ---
+            // Generic scale instead of the vanilla skill titles; skill 0 is our
+            // own monster-free exploration mode.
+            'difficulty.0': {
+                fr: 'Monstres pacifiques',
+                en: 'Pacifist monsters',
+                it: 'Mostri pacifici',
+                es: 'Monstruos pacíficos'
+            },
+            'difficulty.1': {
+                fr: 'Très facile',
+                en: 'Very easy',
+                it: 'Molto facile',
+                es: 'Muy fácil'
+            },
+            'difficulty.2': {
+                fr: 'Facile',
+                en: 'Easy',
+                it: 'Facile',
+                es: 'Fácil'
+            },
+            'difficulty.3': {
+                fr: 'Moyen',
+                en: 'Normal',
+                it: 'Normale',
+                es: 'Normal'
+            },
+            'difficulty.4': {
+                fr: 'Difficile',
+                en: 'Hard',
+                it: 'Difficile',
+                es: 'Difícil'
+            },
+            'difficulty.5': {
+                fr: 'Très difficile',
+                en: 'Very hard',
+                it: 'Molto difficile',
+                es: 'Muy difícil'
+            },
+
+            // --- Weapon names ---
+            // Keyed by weapon code; the profile table's name stays the HUD fallback.
+            'weapon.fist': {
+                fr: 'Poing',
+                en: 'Fist',
+                it: 'Pugno',
+                es: 'Puño'
+            },
+            'weapon.chainsaw': {
+                fr: 'Tronçonneuse',
+                en: 'Chainsaw',
+                it: 'Motosega',
+                es: 'Motosierra'
+            },
+            'weapon.pistol': {
+                fr: 'Pistolet',
+                en: 'Pistol',
+                it: 'Pistola',
+                es: 'Pistola'
+            },
+            'weapon.shotgun': {
+                fr: 'Fusil à pompe',
+                en: 'Shotgun',
+                it: 'Fucile a pompa',
+                es: 'Escopeta'
+            },
+            'weapon.supershotgun': {
+                fr: 'Fusil à pompe double',
+                en: 'Super Shotgun',
+                it: 'Doppietta',
+                es: 'Superescopeta'
+            },
+            'weapon.chaingun': {
+                fr: 'Mitrailleuse',
+                en: 'Chaingun',
+                it: 'Mitragliatrice',
+                es: 'Ametralladora'
+            },
+            'weapon.rocket': {
+                fr: 'Lance-roquettes',
+                en: 'Rocket Launcher',
+                it: 'Lanciarazzi',
+                es: 'Lanzacohetes'
+            },
+            'weapon.plasma': {
+                fr: 'Fusil à plasma',
+                en: 'Plasma Rifle',
+                it: 'Fucile al plasma',
+                es: 'Rifle de plasma'
+            },
+            'weapon.bfg': {
+                fr: 'BFG9000',
+                en: 'BFG9000',
+                it: 'BFG9000',
+                es: 'BFG9000'
+            },
+            'weapon.staff': {
+                fr: 'Bâton',
+                en: 'Staff',
+                it: 'Bastone',
+                es: 'Bastón'
+            },
+            'weapon.gauntlets': {
+                fr: 'Gantelets',
+                en: 'Gauntlets',
+                it: 'Manopole',
+                es: 'Guanteletes'
+            },
+            'weapon.goldwand': {
+                fr: 'Baguette d\'or',
+                en: 'Gold Wand',
+                it: 'Bacchetta d\'oro',
+                es: 'Vara de oro'
+            },
+            'weapon.crossbow': {
+                fr: 'Arbalète éthérée',
+                en: 'Ethereal Crossbow',
+                it: 'Balestra eterea',
+                es: 'Ballesta etérea'
+            },
+            'weapon.blaster': {
+                fr: 'Griffe de dragon',
+                en: 'Dragon Claw',
+                it: 'Artiglio di drago',
+                es: 'Garra de dragón'
+            },
+            'weapon.skullrod': {
+                fr: 'Bâton de l\'enfer',
+                en: 'Hellstaff',
+                it: 'Bastone infernale',
+                es: 'Báculo infernal'
+            },
+            'weapon.phoenixrod': {
+                fr: 'Sceptre du phénix',
+                en: 'Phoenix Rod',
+                it: 'Scettro della fenice',
+                es: 'Cetro del fénix'
+            },
+            'weapon.mace': {
+                fr: 'Masse de feu',
+                en: 'Firemace',
+                it: 'Mazza di fuoco',
+                es: 'Maza de fuego'
+            },
+
+            // --- Settings (DoomSettings.DEFINITIONS nameCode) ---
+            'settings.display.language': {
+                fr: 'Langue',
+                en: 'Language',
+                it: 'Lingua',
+                es: 'Idioma'
+            },
+            'settings.display.renderer': {
+                fr: 'Moteur de rendu',
+                en: 'Rendering engine',
+                it: 'Motore di rendering',
+                es: 'Motor de renderizado'
+            },
+            'settings.display.crosshair': {
+                fr: 'Afficher le réticule',
+                en: 'Show the crosshair',
+                it: 'Mostra il mirino',
+                es: 'Mostrar la mira'
+            },
+            'settings.display.showFps': {
+                fr: 'Afficher le framerate',
+                en: 'Show the framerate',
+                it: 'Mostra il frame rate',
+                es: 'Mostrar los FPS'
+            },
+            'settings.display.distanceShading': {
+                fr: 'Assombrissement à la distance',
+                en: 'Distance darkening',
+                it: 'Oscuramento con la distanza',
+                es: 'Oscurecimiento con la distancia'
+            },
+            'settings.display.textureSmoothing': {
+                fr: 'Lissage des textures',
+                en: 'Texture smoothing',
+                it: 'Filtraggio delle texture',
+                es: 'Suavizado de texturas'
+            },
+            'settings.display.waterEffects': {
+                fr: 'Effets d\'eau',
+                en: 'Water effects',
+                it: 'Effetti dell\'acqua',
+                es: 'Efectos de agua'
+            },
+            'settings.game.fallDamage': {
+                fr: 'Dégâts de chute',
+                en: 'Fall damage',
+                it: 'Danni da caduta',
+                es: 'Daño por caída'
+            },
+            'settings.game.jump': {
+                fr: 'Autoriser le saut',
+                en: 'Allow jumping',
+                it: 'Consenti il salto',
+                es: 'Permitir el salto'
+            },
+            'settings.game.crouch': {
+                fr: 'Autoriser l\'accroupissement',
+                en: 'Allow crouching',
+                it: 'Consenti l\'accovacciamento',
+                es: 'Permitir agacharse'
+            },
+            'settings.multiplayer.nickname': {
+                fr: 'Surnom',
+                en: 'Nickname',
+                it: 'Soprannome',
+                es: 'Apodo'
+            },
+            'settings.multiplayer.friendlyFire': {
+                fr: 'Tir allié en coopératif',
+                en: 'Friendly fire in cooperative',
+                it: 'Fuoco amico in cooperativa',
+                es: 'Fuego amigo en cooperativo'
+            },
+            'settings.multiplayer.dmMonsters': {
+                fr: 'Monstres en deathmatch',
+                en: 'Monsters in deathmatch',
+                it: 'Mostri nel deathmatch',
+                es: 'Monstruos en deathmatch'
+            },
+            'settings.multiplayer.fragLimit': {
+                fr: 'Limite de frags',
+                en: 'Frag limit',
+                it: 'Limite di frag',
+                es: 'Límite de frags'
+            },
+            'settings.multiplayer.timeLimit': {
+                fr: 'Limite de temps',
+                en: 'Time limit',
+                it: 'Limite di tempo',
+                es: 'Límite de tiempo'
+            },
+            'settings.multiplayer.dmItems': {
+                fr: 'Objets en deathmatch',
+                en: 'Deathmatch items',
+                it: 'Oggetti nel deathmatch',
+                es: 'Objetos en deathmatch'
+            },
+            // --- Multiplayer ---
+            'multiplayer.newCooperative': {
+                fr: 'Nouvelle partie coopérative',
+                en: 'New cooperative game',
+                it: 'Nuova partita cooperativa',
+                es: 'Nueva partida cooperativa'
+            },
+            'multiplayer.newDeathmatch': {
+                fr: 'Nouveau deathmatch',
+                en: 'New deathmatch',
+                it: 'Nuovo deathmatch',
+                es: 'Nuevo deathmatch'
+            },
+            'multiplayer.options': {
+                fr: 'Options multijoueur',
+                en: 'Multiplayer options',
+                it: 'Opzioni multigiocatore',
+                es: 'Opciones multijugador'
+            },
+            'multiplayer.pause.menu': {
+                fr: 'Multijoueur',
+                en: 'Multiplayer',
+                it: 'Multigiocatore',
+                es: 'Multijugador'
+            },
+            'multiplayer.pause.share': {
+                fr: 'Partager l\'écran',
+                en: 'Share screen',
+                it: 'Condividi lo schermo',
+                es: 'Compartir pantalla'
+            },
+            'multiplayer.pause.lobby': {
+                fr: 'Salon',
+                en: 'Lobby',
+                it: 'Sala',
+                es: 'Sala'
+            },
+            'multiplayer.pause.stop': {
+                fr: 'Arrêter le partage',
+                en: 'Stop sharing',
+                it: 'Interrompi la condivisione',
+                es: 'Dejar de compartir'
+            },
+            'multiplayer.pause.leave': {
+                fr: 'Quitter le partage d\'écran',
+                en: 'Leave the screen sharing',
+                it: 'Esci dalla condivisione dello schermo',
+                es: 'Salir de la pantalla compartida'
+            },
+            'multiplayer.pause.stopConfirm': {
+                fr: 'Arrêter le partage ?',
+                en: 'Stop sharing?',
+                it: 'Interrompere la condivisione?',
+                es: '¿Dejar de compartir?'
+            },
+            'multiplayer.pause.stopDetail': {
+                fr: 'Tous les joueurs seront déconnectés.',
+                en: 'Every player will be disconnected.',
+                it: 'Tutti i giocatori saranno disconnessi.',
+                es: 'Todos los jugadores serán desconectados.'
+            },
+            'multiplayer.pause.switchToCooperative': {
+                fr: 'Passer en coopératif',
+                en: 'Switch to cooperative',
+                it: 'Passa alla cooperativa',
+                es: 'Pasar a cooperativo'
+            },
+            'multiplayer.pause.stopCoop': {
+                fr: 'Arrêter le coopératif',
+                en: 'Stop cooperative',
+                it: 'Interrompi la cooperativa',
+                es: 'Detener el cooperativo'
+            },
+            'multiplayer.pause.stopCoopConfirm': {
+                fr: 'Arrêter le coopératif ?',
+                en: 'Stop cooperative?',
+                it: 'Interrompere la cooperativa?',
+                es: '¿Detener el cooperativo?'
+            },
+            'multiplayer.pause.stopDeathmatch': {
+                fr: 'Arrêter le deathmatch',
+                en: 'Stop deathmatch',
+                it: 'Interrompi il deathmatch',
+                es: 'Detener el deathmatch'
+            },
+            'multiplayer.pause.stopDeathmatchConfirm': {
+                fr: 'Arrêter le deathmatch ?',
+                en: 'Stop deathmatch?',
+                it: 'Interrompere il deathmatch?',
+                es: '¿Detener el deathmatch?'
+            },
+            'multiplayer.pause.leaveGame': {
+                fr: 'Quitter la partie',
+                en: 'Leave the game',
+                it: 'Esci dalla partita',
+                es: 'Salir de la partida'
+            },
+            'multiplayer.settings.title': {
+                fr: 'Réglages de la partie',
+                en: 'Game settings',
+                it: 'Impostazioni della partita',
+                es: 'Ajustes de la partida'
+            },
+            'multiplayer.settings.continue': {
+                fr: 'Continuer',
+                en: 'Continue',
+                it: 'Continua',
+                es: 'Continuar'
+            },
+            'multiplayer.error.wadMissing': {
+                fr: 'Vous n\'avez pas le WAD de l\'hôte :\n{wad}',
+                en: 'You do not have the host\'s WAD:\n{wad}',
+                it: 'Non hai il WAD dell\'host:\n{wad}',
+                es: 'No tienes el WAD del anfitrión:\n{wad}'
+            },
+            'multiplayer.error.wadVersion': {
+                fr: 'Vous avez ce jeu, mais pas dans la version de l\'hôte :\n{wad}',
+                en: 'You have this game, but not in the host\'s version:\n{wad}',
+                it: 'Hai questo gioco, ma non nella versione dell\'host:\n{wad}',
+                es: 'Tienes este juego, pero no en la versión del anfitrión:\n{wad}'
+            },
+            'multiplayer.error.identity': {
+                fr: 'L\'identité de ce WAD n\'a pas pu être calculée sur cet appareil',
+                en: 'The identity of this WAD could not be computed on this device',
+                it: 'Impossibile calcolare l\'identità di questo WAD su questo dispositivo',
+                es: 'No se pudo calcular la identidad de este WAD en este dispositivo'
+            },
+            'multiplayer.respawnPrompt': {
+                fr: 'Appuyez sur Action pour réapparaître',
+                en: 'Press Action to respawn',
+                it: 'Premi Azione per riapparire',
+                es: 'Pulsa Acción para reaparecer'
+            },
+            'multiplayer.mainDead': {
+                fr: 'L\'hôte est mort',
+                en: 'The host is dead',
+                it: 'L\'host è morto',
+                es: 'El anfitrión ha muerto'
+            },
+            'multiplayer.end.matchOver': {
+                fr: 'Le match est terminé',
+                en: 'The match is over',
+                it: 'La partita è finita',
+                es: 'La partida ha terminado'
+            },
+            'settings.sound.volumeMusic': {
+                fr: 'Volume de la musique',
+                en: 'Music volume',
+                it: 'Volume della musica',
+                es: 'Volumen de la música'
+            },
+            'settings.sound.volumeEffects': {
+                fr: 'Volume des effets',
+                en: 'Effects volume',
+                it: 'Volume degli effetti',
+                es: 'Volumen de los efectos'
+            },
+            'settings.controls.device': {
+                fr: 'Appareil',
+                en: 'Device',
+                it: 'Dispositivo',
+                es: 'Dispositivo'
+            },
+            'settings.pad.yInverse': {
+                fr: 'Inverser l\'axe vertical',
+                en: 'Invert the vertical axis',
+                it: 'Inverti l\'asse verticale',
+                es: 'Invertir el eje vertical'
+            },
+            'settings.pad.moveX': {
+                fr: 'Déplacement — axe horizontal',
+                en: 'Movement — horizontal axis',
+                it: 'Movimento — asse orizzontale',
+                es: 'Movimiento — eje horizontal'
+            },
+            'settings.pad.moveY': {
+                fr: 'Déplacement — axe vertical',
+                en: 'Movement — vertical axis',
+                it: 'Movimento — asse verticale',
+                es: 'Movimiento — eje vertical'
+            },
+            'settings.pad.lookX': {
+                fr: 'Regard — axe horizontal',
+                en: 'Look — horizontal axis',
+                it: 'Visuale — asse orizzontale',
+                es: 'Mirada — eje horizontal'
+            },
+            'settings.pad.lookY': {
+                fr: 'Regard — axe vertical',
+                en: 'Look — vertical axis',
+                it: 'Visuale — asse verticale',
+                es: 'Mirada — eje vertical'
+            },
+            'settings.virtualPad.yInverse': {
+                fr: 'Inverser l\'axe vertical',
+                en: 'Invert the vertical axis',
+                it: 'Inverti l\'asse verticale',
+                es: 'Invertir el eje vertical'
+            },
+            'settings.mouse.yInverse': {
+                fr: 'Inverser l\'axe vertical de la souris',
+                en: 'Invert the mouse vertical axis',
+                it: 'Inverti l\'asse verticale del mouse',
+                es: 'Invertir el eje vertical del ratón'
+            },
+            'settings.virtualPad.moveDeadZone': {
+                fr: 'Stick de déplacement — zone morte',
+                en: 'Move stick — dead zone',
+                it: 'Stick di movimento — zona morta',
+                es: 'Stick de movimiento — zona muerta'
+            },
+            'settings.virtualPad.aimDeadZone': {
+                fr: 'Stick de visée — zone morte',
+                en: 'Aim stick — dead zone',
+                it: 'Stick di mira — zona morta',
+                es: 'Stick de puntería — zona muerta'
+            },
+            'settings.virtualPad.fireDeadZone': {
+                fr: 'Stick de visée en tirant — zone morte',
+                en: 'Aim stick while firing — dead zone',
+                it: 'Stick di mira durante il fuoco — zona morta',
+                es: 'Stick de puntería disparando — zona muerta'
+            },
+            'settings.virtualPad.fireSensitivity': {
+                fr: 'Stick de visée en tirant — sensibilité',
+                en: 'Aim stick while firing — sensitivity',
+                it: 'Stick di mira durante il fuoco — sensibilità',
+                es: 'Stick de puntería disparando — sensibilidad'
+            },
+            'settings.keyboard.forward': {
+                fr: 'Avancer',
+                en: 'Move forward',
+                it: 'Avanza',
+                es: 'Avanzar'
+            },
+            'settings.keyboard.backward': {
+                fr: 'Reculer',
+                en: 'Move backward',
+                it: 'Retrocedi',
+                es: 'Retroceder'
+            },
+            'settings.keyboard.strafeLeft': {
+                fr: 'Pas à gauche',
+                en: 'Strafe left',
+                it: 'Passo a sinistra',
+                es: 'Paso a la izquierda'
+            },
+            'settings.keyboard.strafeRight': {
+                fr: 'Pas à droite',
+                en: 'Strafe right',
+                it: 'Passo a destra',
+                es: 'Paso a la derecha'
+            },
+            'settings.action.run': {
+                fr: 'Courir',
+                en: 'Run',
+                it: 'Corri',
+                es: 'Correr'
+            },
+            'settings.action.jump': {
+                fr: 'Sauter',
+                en: 'Jump',
+                it: 'Salta',
+                es: 'Saltar'
+            },
+            'settings.action.crouch': {
+                fr: 'S\'accroupir',
+                en: 'Crouch',
+                it: 'Accovacciati',
+                es: 'Agacharse'
+            },
+            'settings.action.action': {
+                fr: 'Action / utiliser',
+                en: 'Action / use',
+                it: 'Azione / usa',
+                es: 'Acción / usar'
+            },
+            'settings.action.fire': {
+                fr: 'Tirer',
+                en: 'Fire',
+                it: 'Spara',
+                es: 'Disparar'
+            },
+            'settings.action.weaponPrev': {
+                fr: 'Arme précédente',
+                en: 'Previous weapon',
+                it: 'Arma precedente',
+                es: 'Arma anterior'
+            },
+            'settings.action.weaponNext': {
+                fr: 'Arme suivante',
+                en: 'Next weapon',
+                it: 'Arma successiva',
+                es: 'Arma siguiente'
+            },
+            'settings.keyboard.weaponSlot1': {
+                fr: 'Arme 1',
+                en: 'Weapon 1',
+                it: 'Arma 1',
+                es: 'Arma 1'
+            },
+            'settings.keyboard.weaponSlot2': {
+                fr: 'Arme 2',
+                en: 'Weapon 2',
+                it: 'Arma 2',
+                es: 'Arma 2'
+            },
+            'settings.keyboard.weaponSlot3': {
+                fr: 'Arme 3',
+                en: 'Weapon 3',
+                it: 'Arma 3',
+                es: 'Arma 3'
+            },
+            'settings.keyboard.weaponSlot4': {
+                fr: 'Arme 4',
+                en: 'Weapon 4',
+                it: 'Arma 4',
+                es: 'Arma 4'
+            },
+            'settings.keyboard.weaponSlot5': {
+                fr: 'Arme 5',
+                en: 'Weapon 5',
+                it: 'Arma 5',
+                es: 'Arma 5'
+            },
+            'settings.keyboard.weaponSlot6': {
+                fr: 'Arme 6',
+                en: 'Weapon 6',
+                it: 'Arma 6',
+                es: 'Arma 6'
+            },
+            'settings.keyboard.weaponSlot7': {
+                fr: 'Arme 7',
+                en: 'Weapon 7',
+                it: 'Arma 7',
+                es: 'Arma 7'
+            },
+            'settings.action.pause': {
+                fr: 'Pause',
+                en: 'Pause',
+                it: 'Pausa',
+                es: 'Pausa'
+            },
+            'settings.keyboard.toggleHud': {
+                fr: 'Afficher le HUD de debug',
+                en: 'Show the debug HUD',
+                it: 'Mostra l\'HUD di debug',
+                es: 'Mostrar el HUD de depuración'
+            },
+            'settings.action.map': {
+                fr: 'Afficher la carte',
+                en: 'Show the map',
+                it: 'Mostra la mappa',
+                es: 'Mostrar el mapa'
+            },
+            'settings.keyboard.lookDown': {
+                fr: 'Fausse souris - Y+',
+                en: 'Fake mouse - Y+',
+                it: 'Mouse finto - Y+',
+                es: 'Ratón falso - Y+'
+            },
+            'settings.keyboard.lookUp': {
+                fr: 'Fausse souris - Y-',
+                en: 'Fake mouse - Y-',
+                it: 'Mouse finto - Y-',
+                es: 'Ratón falso - Y-'
+            },
+            'settings.keyboard.lookRight': {
+                fr: 'Fausse souris - X+',
+                en: 'Fake mouse - X+',
+                it: 'Mouse finto - X+',
+                es: 'Ratón falso - X+'
+            },
+            'settings.keyboard.lookLeft': {
+                fr: 'Fausse souris - X-',
+                en: 'Fake mouse - X-',
+                it: 'Mouse finto - X-',
+                es: 'Ratón falso - X-'
+            }
+        };
+    }
+}

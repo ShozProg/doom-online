@@ -1,0 +1,359 @@
+/**
+ * Builds the world things (decorations + pickups + monsters) from the level
+ * THINGS lump. Each mapped thing becomes a camera-facing Billboard sprite;
+ * the player and deathmatch starts are collected apart, teleport landings
+ * are left out (not mapped in the catalogs). Monsters resolve
+ * through the monster catalog and carry their rotation sets + facing.
+ *
+ * Returns a flat list of placed things; WadWorldBuilder deduplicates the shared
+ * Billboard Object3d per sprite and creates one Instance per occurrence.
+ */
+class WadThingBuilder {
+    /**
+     * @param {object}             level          parsed level ({things, vertexes, …})
+     * @param {object}             catalog        thing catalog exposing getThingForType(type)
+     * @param {WadSpriteBank}      spriteBank     decodes sprite lumps to engine textures
+     * @param {function}           sectorFinder   (doomX, doomY) → {fh, ch} in Doom units
+     * @param {number}             skill          difficulty 0..5 (defaults to 3, HMP)
+     * @param {DoomMonsterCatalog} monsterCatalog editor number → DoomMonsterDef (null = no monsters)
+     * @param {object}             skillRule      the profile's skillRules()[skill] (null = legacy bits)
+     */
+    constructor(level, catalog, spriteBank, sectorFinder, skill = 3, monsterCatalog = null, skillRule = null) {
+        this._level               = level;
+        this._catalog             = catalog;
+        this._spriteBank          = spriteBank;
+        this._sectorFinder        = sectorFinder;
+        this._skill               = skill;
+        this._monsterCatalog      = monsterCatalog;
+        this._skillRule           = skillRule;
+        this._thingFilter         = WadThingBuilder.SINGLE_PLAYER_FILTER;
+        this._spawnerSeed         = 0;
+        this._skipped             = 0;
+        this._filtered            = 0;
+        this._monsterCount        = 0;
+        this._spots               = {};
+        this._playerStartTypes    = [];
+        this._playerStarts        = {};
+        this._deathmatchStartType = null;
+        this._deathmatchStarts    = [];
+        this._paddedFrames        = {};   // anim key → padded frame view
+    }
+
+    /**
+     * @param {{multiplayer: boolean, deathmatch: boolean, monsters: boolean}} filter - see DoomGameRules.thingFilter
+     */
+    setThingFilter(filter) {
+        this._thingFilter = filter;
+
+        return this;
+    }
+
+    // Seed of the spot each spawner group keeps: the same on every device building the level.
+    setSpawnerSeed(seed) {
+        this._spawnerSeed = seed;
+
+        return this;
+    }
+
+    setPlayerStartTypes(types) {
+        this._playerStartTypes = types;
+
+        return this;
+    }
+
+    setDeathmatchStartType(type) {
+        this._deathmatchStartType = type;
+
+        return this;
+    }
+
+    // P_SpawnMapThing: the MTF_NOT_SINGLE things outside a netgame, the
+    // MF_NOTDMATCH ones in deathmatch.
+    _excludedByMode(thing, notDeathmatch) {
+        if (!this._thingFilter.multiplayer && ((thing.flags & WadConstants.MTF_NOT_SINGLE) !== 0)) {
+            return true;
+        }
+
+        return (this._thingFilter.deathmatch && notDeathmatch);
+    }
+
+    // -nomonsters: every MF_COUNTKILL monster (the lost soul counts a kill here, vanilla tests it apart).
+    _excludedMonster(thing, def) {
+        return (this._excludedByMode(thing, false) || (!this._thingFilter.monsters && (def.getFlags().countsKill !== false)));
+    }
+
+    /**
+     * @returns {object[]} {key, texIds, animDuration, halfWidth, height,
+     *                      anchorOffsetX, anchorOffsetY, anchorTop, si, light,
+     *                      position:[x,y,z], type (THING editor number),
+     *                      kind, solid, radius, effect}
+     */
+    buildAll() {
+        const entries  = [];
+        const spawners = {};
+        this._skipped          = 0;
+        this._filtered         = 0;
+        this._monsterCount     = 0;
+        this._spots            = {};
+        this._playerStarts     = {};
+        this._deathmatchStarts = [];
+
+        // P_SpawnMapThing skill bit; without a profile rule: 0-2 → 0x01,
+        // 3 → 0x02, 4-5 → 0x04.
+        const skillBit = ((this._skillRule !== null)
+            ? this._skillRule.spawnFilterBit
+            : ((this._skill <= 2) ? 0x01 : ((this._skill === 3) ? 0x02 : 0x04)));
+
+        for (const thing of this._level.things) {
+            // Vanilla takes the starts before any filter; a later one of a slot wins.
+            if (thing.type === this._deathmatchStartType) {
+                this._deathmatchStarts.push({x: thing.x, y: thing.y, angle: thing.angle});
+                continue;
+            }
+            const slot = this._playerStartTypes.indexOf(thing.type) + 1;
+            if (slot > 0) {
+                this._playerStarts[slot] = {x: thing.x, y: thing.y, angle: thing.angle};
+                continue;
+            }
+            const monsterDef = ((this._monsterCatalog !== null) ? this._monsterCatalog.getMonsterForType(thing.type) : null);
+            if (monsterDef !== null) {
+                if (this._excludedMonster(thing, monsterDef) || ((thing.flags & skillBit) === 0)) {
+                    this._filtered++;
+                    continue;
+                }
+                const sect = this._sectorFinder(thing.x, thing.y);
+                if (sect === null) {
+                    this._skipped++;
+                    continue;
+                }
+                const monsterEntry = this._buildMonsterEntry(thing, monsterDef, sect);
+                if (monsterEntry !== null) {
+                    entries.push(monsterEntry);
+                    this._monsterCount++;
+                }
+                continue;
+            }
+
+            const desc = this._catalog.getThingForType(thing.type);
+            if (desc === null) {
+                continue;
+            }
+
+            // Vanilla registers every spot regardless of skill.
+            if (desc.kind === 'spot') {
+                if (this._spots[desc.spotGroup] === undefined) {
+                    this._spots[desc.spotGroup] = [];
+                }
+                this._spots[desc.spotGroup].push({x: thing.x, y: thing.y, angle: thing.angle});
+                continue;
+            }
+
+            // Heretic collects its mace spots before the skill and multiplayer
+            // filters (P_SpawnMapThing); one spot per group spawns.
+            if (desc.spawnerGroup !== null) {
+                const sect = this._sectorFinder(thing.x, thing.y);
+                if (sect === null) {
+                    this._skipped++;
+                    continue;
+                }
+                if (spawners[desc.spawnerGroup] === undefined) {
+                    spawners[desc.spawnerGroup] = [];
+                }
+                spawners[desc.spawnerGroup].push({thing, desc, sect});
+                continue;
+            }
+
+            if (this._excludedByMode(thing, desc.notDeathmatch)) {
+                this._filtered++;
+                continue;
+            }
+            if ((thing.flags & skillBit) === 0) {
+                this._filtered++;
+                continue;
+            }
+
+            // Dropped rather than misplaced at height 0.
+            const sect = this._sectorFinder(thing.x, thing.y);
+            if (sect === null) {
+                this._skipped++;
+                continue;
+            }
+
+            const entry = this._buildEntry(thing, desc, sect);
+            if (entry !== null) {
+                entries.push(entry);
+            }
+        }
+
+        for (const group of Object.keys(spawners)) {
+            const candidates = spawners[group];
+            const pick       = candidates[this._spawnerSeed % candidates.length];
+            const entry      = this._buildEntry(pick.thing, pick.desc, pick.sect);
+            if (entry !== null) {
+                entries.push(entry);
+            }
+        }
+
+        return entries;
+    }
+
+    // World descriptor of one placed thing; null when the WAD lacks every
+    // sprite frame.
+    _buildEntry(thing, desc, sect) {
+        const scale = WadConstants.SCALE;
+
+        const sprites = desc.frames.map((name) => this._spriteBank.get(name)).filter((s) => (s !== null));
+        if (sprites.length === 0) {
+            return null;
+        }
+
+        const view  = this._frameView(desc, sprites);
+        const geo   = WadGeometry.spriteBillboardData(view);
+        const baseH = ((desc.ceiling) ? sect.ch : sect.fh);
+
+        // Floor things are floor-clipped like modern ports (vanilla lets feet
+        // sink a few pixels, unseen without free look).
+        const sink = view.topOffset - view.height;
+
+        return {
+            key:           desc.frames.join('|'),
+            texIds:        view.texIds,
+            animDuration:  desc.animDuration,
+            halfWidth:     geo.halfWidth,
+            height:        geo.height,
+            anchorOffsetX: geo.anchorOffsetX,
+            anchorOffsetY: ((desc.ceiling) ? sink : Math.max(0, sink)) * scale,
+            anchorTop:     desc.ceiling,
+            si:            sect.si,
+            light:         sect.light,
+            position:      WadGeometry.doomToWorld(thing.x, thing.y, baseH),
+            type:          thing.type,
+            kind:          desc.kind,
+            solid:         desc.solid,
+            radius:        desc.radius,
+            effect:        desc.effect
+        };
+    }
+
+    // World descriptor of one placed monster.
+    _buildMonsterEntry(thing, def, sect) {
+        const frames = DoomMonsterFrames.build(def, this._spriteBank);
+        if (frames === null) {
+            return null;
+        }
+
+        const baseH = ((def.isCeiling()) ? (sect.ch - def.getHangHeight()) : sect.fh);
+
+        return {
+            kind:       'monster',
+            def:        def,
+            facing:     thing.angle,
+            flags:      thing.flags,
+            frames:     frames,
+            si:         sect.si,
+            position:   WadGeometry.doomToWorld(thing.x, thing.y, baseH),
+            solid:      true,
+            radius:     def.getRadius() * WadConstants.SCALE,
+            alpha:      def.getAlpha(),
+            effect:     null
+        };
+    }
+
+    // Texture ids + the box the billboard is sized on. The animation only swaps
+    // textures, so frames of different boxes are padded onto a common canvas
+    // (vanilla anchors each frame on its own offsets).
+    _frameView(desc, sprites) {
+        const first   = sprites[0];
+        const sameBox = sprites.every((s) => (
+            (s.width === first.width) && (s.height === first.height)
+            && (s.leftOffset === first.leftOffset) && (s.topOffset === first.topOffset)
+        ));
+        if (sameBox) {
+            return {
+                texIds:     sprites.map((s) => s.loaderId),
+                width:      first.width,
+                height:     first.height,
+                leftOffset: first.leftOffset,
+                topOffset:  first.topOffset
+            };
+        }
+
+        const key = desc.frames.join('|');
+        if (this._paddedFrames[key] === undefined) {
+            this._paddedFrames[key] = this._padFrames(sprites);
+        }
+
+        return this._paddedFrames[key];
+    }
+
+    // Every frame blitted at its vanilla position in the union of their boxes.
+    _padFrames(sprites) {
+        const top   = Math.max(...sprites.map((s) => s.topOffset));
+        const foot  = Math.min(...sprites.map((s) => (s.topOffset - s.height)));
+        const left  = Math.max(...sprites.map((s) => s.leftOffset));
+        const right = Math.max(...sprites.map((s) => (s.width - s.leftOffset)));
+        const w     = left + right;
+        const h     = top - foot;
+
+        const texIds = sprites.map((spr) => {
+            const src    = loader.textures().get(spr.loaderId);
+            const padded = new ImageData(w, h);
+            const dx     = left - spr.leftOffset;
+            const dy     = top - spr.topOffset;
+            for (let row = 0; row < spr.height; row++) {
+                const srcStart = row * spr.width * 4;
+                padded.data.set(
+                    src.data.subarray(srcStart, srcStart + (spr.width * 4)),
+                    (((row + dy) * w) + dx) * 4
+                );
+            }
+
+            return loader.textures().loadFromData(null, padded);
+        });
+
+        return {texIds, width: w, height: h, leftOffset: left, topOffset: top};
+    }
+
+    /**
+     * Spots of the map by group, in DOOM coordinates (call after buildAll):
+     * where D'Sparil reappears ('bossSpot'), where the Icon of Sin sends its
+     * cubes ('bossTarget')…
+     *
+     * @returns {object} group → [{x, y, angle}] in map order
+     */
+    getSpots() {
+        return this._spots;
+    }
+
+    /**
+     * @returns {object} slot → {x, y, angle} in Doom units, for the slots the map places
+     */
+    getPlayerStarts() {
+        return this._playerStarts;
+    }
+
+    /**
+     * @returns {object[]} {x, y, angle} in Doom units, every deathmatch start of the map in map order
+     */
+    getDeathmatchStarts() {
+        return this._deathmatchStarts;
+    }
+
+    // Number of mapped things dropped because no sector was found (call after buildAll).
+    getSkipped() {
+        return this._skipped;
+    }
+
+    // Number of mapped things filtered out by skill or game mode (call after buildAll).
+    getFiltered() {
+        return this._filtered;
+    }
+
+    // Number of monsters placed (call after buildAll).
+    getMonsterCount() {
+        return this._monsterCount;
+    }
+}
+
+// The things a single player game is built with.
+WadThingBuilder.SINGLE_PLAYER_FILTER = {multiplayer: false, deathmatch: false, monsters: true};

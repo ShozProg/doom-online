@@ -1,0 +1,450 @@
+/**
+ * What one device shows of the game, seen through one player: the screen, the
+ * engine and the HUD built on it, the display settings, the weapon overlay,
+ * the view effects (night vision, muzzle flash, telezoom), the level's sound
+ * heard from that player, and the automap lines the view reveals — the one
+ * piece of level state it writes, as vanilla's renderer does. It never knows
+ * the simulation: what it shows is the level every device builds, the game's
+ * profile and item catalog, and the level statistics, whoever counts them.
+ */
+class DoomPresentation {
+    constructor() {
+        this._inputs             = null;
+        this._profile            = null;
+        this._itemCatalog        = null;
+        this._level              = null;
+        this._stats              = null;
+        this._rules              = null;   // the game mode's, for what the HUD and the map show
+        this._world              = null;
+        this._player             = null;
+        this._automap            = null;
+        this._levelInfo          = null;
+        this._screen             = null;
+        this._engine             = null;
+        this._hud                = null;
+        this._weaponOverlay      = null;
+        this._bodyRenderer       = null;
+        this._projectileRenderer = null;
+        this._effects            = null;
+        this._decals             = null;   // null while the decal graphics are not decoded
+        this._turnEventPlayer    = null;
+        this._rendererCode       = null;   // renderer the current engine was built on
+        this._forcedRenderer     = null;   // renderer imposed over the setting, null = the setting's
+        this._noticeText         = null;   // message over the game (a wait), null = none
+        this._pingSource         = null;   // () => round trip in ms or null, during a session
+        this._padControls        = {};     // pad control → allowed, the role's, over the settings'
+        this._noticeEl           = null;
+        this._depthShadingOn     = null;   // last states pushed to the engine (null = never)
+        this._texSmoothingOn     = null;
+        this._fov                = WadConstants.PLAYER_FOV;
+        this._fovUntickedMs      = 0;
+        this._hudWasDown         = false;
+        this._mapWasDown         = false;
+    }
+
+    bindInputs(inputs) {
+        this._inputs = inputs;
+
+        return this;
+    }
+
+    getEngine() {
+        return this._engine;
+    }
+
+    /**
+     * @param {DoomGameRules} rules - the game mode's: what the scores and the automap show
+     */
+    useRules(rules) {
+        this._rules = rules;
+        if (this._hud !== null) {
+            this._hud.bindRules(rules);
+        }
+
+        return this;
+    }
+
+    /**
+     * @param {AbstractGameProfile} profile     - the WAD's
+     * @param {DoomItemCatalog}     itemCatalog - built on that profile
+     */
+    bindProfile(profile, itemCatalog) {
+        this._profile     = profile;
+        this._itemCatalog = itemCatalog;
+
+        return this;
+    }
+
+    /**
+     * @param {World}          world      - the loaded level
+     * @param {DoomBuiltLevel} builtLevel - what the world builder handed back for it
+     * @param {DoomLevelStats} stats
+     * @param {DoomPlayer}     player     - the viewed one
+     * @param {{wadName: string|null, levelCode: string, skill: int, levelName: string|null}} levelInfo
+     */
+    showLevel(world, builtLevel, stats, player, levelInfo) {
+        this._world              = world;
+        this._level              = builtLevel;
+        this._stats              = stats;
+        this._player             = player;
+        this._automap            = builtLevel.getAutomap();
+        this._weaponOverlay      = new DoomWeaponOverlay(builtLevel.getWeaponSprites(), this._itemCatalog);
+        this._bodyRenderer       = new DoomBodyRenderer(builtLevel.getBodyViews(), builtLevel.getSectorLight(), builtLevel.getCrushedCorpseView(),
+            builtLevel.getEmptyBodyObject());
+        this._projectileRenderer = new DoomProjectileRenderer(builtLevel.getProjectileViews());
+        this._effects            = new DoomEffects(builtLevel.getEffectTemplates()).setWorld(world.getCollision(), builtLevel.getSectorLight());
+        this._decals             = ((builtLevel.getDecalTemplates() !== null) ? new DoomDecals(builtLevel.getDecalTemplates()) : null);
+        this._turnEventPlayer    = new DoomTurnEventPlayer(this._effects, this._decals, player.getUser(), () => this.startTeleZoom());
+        this._levelInfo          = levelInfo;
+        this._fov                = WadConstants.PLAYER_FOV;
+        this._fovUntickedMs      = 0;
+        this._buildDisplay();
+
+        return this;
+    }
+
+    /**
+     * Another player of the same body is viewed from now on (a sub switched
+     * from the main's player to its own): its weapon and state are drawn.
+     *
+     * @param {DoomPlayer} player
+     */
+    setViewedPlayer(player) {
+        this._player = player;
+
+        return this;
+    }
+
+    // Once the level state is final (a loaded save included).
+    startLevelSound(musicLumps) {
+        // Also lifts the sound freeze left by an exit modal.
+        doomSound.bindLevel(this._player.getUser());
+        doomSound.playLevelMusic(musicLumps);
+        // Declared during the batch, wired now that the loader hands the instances out.
+        const moverSounds = this._level.getMoverSounds();
+        if (moverSounds !== null) {
+            moverSounds.wireAll();
+        }
+
+        return this;
+    }
+
+    teardown() {
+        if (this._screen !== null) {
+            this._screen.destroyContainer();
+            this._screen = null;
+        }
+    }
+
+    /**
+     * Builds the screen, the engine and the HUD: the objects tied to the canvas.
+     * Also called on a renderer change, since a canvas keeps one context type
+     * (2D or WebGL) for its whole life.
+     */
+    _buildDisplay() {
+        this._screen = new ScreenManager('screen', {
+            fullscreen: true,
+            virtualWidth: DoomPresentation.VIRTUAL_WIDTH,
+            virtualHeight: DoomPresentation.VIRTUAL_HEIGHT
+        });
+
+        this._inputs.bindScreen(this._screen);
+        doomSettings.applyToInputs(this._inputs);
+        this._inputs.setVirtualPadControlAllowed('map', this._automap !== null);
+        this.applyPadControls();
+
+        // The wanted code, not the effective one: the list falls back to 'full'
+        // when a renderer is unavailable, which would trigger a rebuild every frame.
+        this._rendererCode = this._wantedRenderer();
+        this._engine = new Engine3d(this._screen, new Object3dRendererList().getRenderer(this._rendererCode));
+        // Not reset: a telezoom in progress must survive a renderer swap.
+        this._applyFov();
+        this._engine.setZBuffer(DoomPresentation.Z_NEAR, DoomPresentation.Z_FAR);
+        // Forces every setting to be pushed onto the fresh engine.
+        this._depthShadingOn = null;
+        this._texSmoothingOn = null;
+        this._applyDisplaySettings();
+
+        this._hud = new HudDoom(this._engine)
+            .bindUser(this._player.getUser())
+            .bindInputs(this._inputs)
+            .bindProfile(this._profile)
+            .bindItemCatalog(this._itemCatalog)
+            .bindLevelStats(this._stats)
+            .bindRules(this._rules)
+            .bindPingSource(this._pingSource)
+            .setLevelInfo(this._levelInfo.wadName, this._levelInfo.levelCode, this._levelInfo.skill, this._levelInfo.levelName)
+            .addDescription('(c)2026 Spipu')
+        ;
+        this._hud.bindPlayerBodies(this._level.getBodyViews(), this._level.getPlayerColors());
+        if (this._automap !== null) {
+            this._hud.bindAutomap(this._automap);
+        }
+
+        this._screen.bindHud(this._hud);
+
+        this._noticeEl = null;
+        this.setNotice(this._noticeText);
+
+        this._engine.initFromWorld(this._world);
+        this._engine.setOverlayCallback((renderer, engine) => this._drawWeaponOverlay(renderer, engine));
+    }
+
+    /**
+     * Rebuilds the display on a renderer change, on live frames only: the menus
+     * and the screen are stacked by DOM order, so a screen rebuilt under an open
+     * menu would cover it. It also costs one rebuild for several changes.
+     *
+     * @param {boolean} menuOpen - a menu still covers the screen
+     */
+    applyRendererSetting(menuOpen) {
+        const wanted = this._wantedRenderer();
+        if ((wanted === this._rendererCode) || menuOpen) {
+            return;
+        }
+        const viewState = this._hud.getViewState();
+        // Before the canvas goes: bindCanvas clears the lock flag without exiting the lock.
+        this._inputs.releaseMouse();
+        this._screen.destroyContainer();
+        this._buildDisplay();
+        this._hud.setViewState(viewState);
+    }
+
+    /**
+     * A renderer imposed whatever the setting says (a multiplayer session
+     * renders with WebGL); the stored setting is left untouched and applies
+     * again once released. Applied on the next live frame.
+     *
+     * @param {string|null} code - null releases it
+     */
+    setForcedRenderer(code) {
+        this._forcedRenderer = code;
+
+        return this;
+    }
+
+    /**
+     * The pad targets the device's role plays with, applied over the settings.
+     *
+     * @param {object} controls - pad control → allowed (Inputs.setVirtualPadControlAllowed)
+     */
+    setPadControls(controls) {
+        this._padControls = controls;
+
+        return this;
+    }
+
+    // The role plays with other targets during the level (a sub switched to
+    // cooperative): the settings first, they give jump and crouch back.
+    changePadControls(controls) {
+        this._padControls = controls;
+        if (this._inputs !== null) {
+            doomSettings.applyToInputs(this._inputs);
+            this.applyPadControls();
+        }
+
+        return this;
+    }
+
+    // Again after the settings are pushed to the inputs: they give jump and crouch back.
+    applyPadControls() {
+        for (const control in this._padControls) {
+            this._inputs.setVirtualPadControlAllowed(control, this._padControls[control]);
+        }
+
+        return this;
+    }
+
+    /**
+     * The round trip shown beside the fps readout, kept across levels and renderer swaps.
+     *
+     * @param {function(): (number|null)|null} source - null outside a session
+     */
+    setPingSource(source) {
+        this._pingSource = source;
+        if (this._hud !== null) {
+            this._hud.bindPingSource(source);
+        }
+
+        return this;
+    }
+
+    /**
+     * A message shown over the game until replaced (a turn waiting for a
+     * player), kept across a renderer swap.
+     *
+     * @param {string|null} text - null hides it
+     */
+    setNotice(text) {
+        this._noticeText = text;
+        if (this._screen === null) {
+            return this;
+        }
+        if (this._noticeEl === null) {
+            this._noticeEl = AppMenuDom.addElement(this._screen.getDisplay(), 'div', 'doom-game-notice');
+        }
+        this._noticeEl.textContent   = (text ?? '');
+        this._noticeEl.style.display = ((text !== null) ? '' : 'none');
+
+        return this;
+    }
+
+    _wantedRenderer() {
+        return (this._forcedRenderer ?? doomSettings.getDisplayRenderer());
+    }
+
+    readViewToggles() {
+        const hudDown = this._inputs.readButtonToggleHud();
+        if (hudDown && !this._hudWasDown) {
+            this._hud.toggleMode();
+        }
+        this._hudWasDown = hudDown;
+
+        const mapDown = this._inputs.readButtonMap();
+        if (mapDown && !this._mapWasDown) {
+            this._hud.toggleAutomap();
+        }
+        this._mapWasDown = mapDown;
+    }
+
+    // Vanilla marks the lines from the renderer, even with the map closed.
+    revealAutomap() {
+        if (this._automap !== null) {
+            this._automap.reveal(this._player.getUser(), this._fov / 2);
+        }
+    }
+
+    /**
+     * @param {number} dt
+     * @param {boolean} menuOpen - a menu covers the screen (the death menu runs over live frames)
+     */
+    present(dt, menuOpen) {
+        this._updateSound(dt);
+        this._updateEffects(dt);
+        // Before every push onto the engine, which a swap replaces.
+        this.applyRendererSetting(menuOpen);
+        this._applyDisplaySettings();
+        this._updateTeleZoom(dt);
+        this._pushEffectDisplay();
+        this._draw();
+    }
+
+    // Played as the simulation emits them; the turn's events are all in when
+    // the effects advance.
+    playTurnEvent(event) {
+        this._turnEventPlayer.play(event);
+    }
+
+    _updateEffects(dt) {
+        this._effects.update(dt);
+        if (this._decals !== null) {
+            this._decals.update(dt);
+        }
+    }
+
+    // S_UpdateSounds.
+    _updateSound(dt) {
+        doomSound.update();
+        const ambientSounds = this._level.getAmbientSounds();
+        if (ambientSounds !== null) {
+            ambientSounds.update(dt);
+        }
+    }
+
+    // Frozen frame (pause, tally): redrawn since a resize wipes the canvas, the settings stay live.
+    presentFrozen() {
+        this._applyDisplaySettings();
+        this._draw();
+    }
+
+    _draw() {
+        this._bodyRenderer.draw(this._player.getUser());
+        this._projectileRenderer.draw();
+        this._engine.displayWorld(this._world, this._player.getUser());
+        this._screen.update();
+    }
+
+    // Read every frame so a change from the pause options applies live.
+    _applyDisplaySettings() {
+        this._depthShadingOn = DoomPresentation._pushSetting(
+            this._depthShadingOn,
+            doomSettings.getDisplayDistanceShading(),
+            (on) => this._engine.setDepthShading(((on) ? WadConstants.lightDiminishParams() : null)));
+        this._texSmoothingOn = DoomPresentation._pushSetting(
+            this._texSmoothingOn,
+            doomSettings.getDisplayTextureSmoothing(),
+            (on) => this._engine.setTextureSmoothing(on));
+    }
+
+    static _pushSetting(current, wanted, apply) {
+        if (wanted !== current) {
+            apply(wanted);
+        }
+        return wanted;
+    }
+
+    // Night vision (light visor / torch) and the muzzle flash extralight.
+    _pushEffectDisplay() {
+        this._engine.setLightOverride(((this._player.getUser().isEffectVisible('light'))
+            ? WadConstants.NIGHT_VISION_LIGHT : null));
+        this._engine.setLightBoost(this._player.getWeaponView().getExtraLight() * WadConstants.WEAPON_FLASH_LIGHT_STEP);
+    }
+
+    // Borrowed from ZDoom (cvar telezoom): a teleport arrival widens the FOV,
+    // then _updateTeleZoom eases it back.
+    startTeleZoom() {
+        this._fov           = Math.min(WadConstants.TELEZOOM_FOV_MAX, WadConstants.PLAYER_FOV + WadConstants.TELEZOOM_FOV_BOOST);
+        this._fovUntickedMs = 0;
+        this._applyFov();
+    }
+
+    // ZDoom CheckFOV, per tic.
+    _updateTeleZoom(dt) {
+        if (this._fov === WadConstants.PLAYER_FOV) {
+            return;
+        }
+        const msPerTic = WadConstants.SECONDS_PER_TIC * 1000;
+        this._fovUntickedMs += dt;
+        while (this._fovUntickedMs >= msPerTic) {
+            this._fovUntickedMs -= msPerTic;
+            const diff = this._fov - WadConstants.PLAYER_FOV;
+            if (Math.abs(diff) < WadConstants.TELEZOOM_STEP_MIN) {
+                this._fov = WadConstants.PLAYER_FOV;
+                break;
+            }
+            const step = Math.max(WadConstants.TELEZOOM_STEP_MIN, Math.abs(diff) * WadConstants.TELEZOOM_STEP_FACTOR);
+            this._fov += ((diff > 0) ? -step : step);
+        }
+        this._applyFov();
+    }
+
+    // The engine's fov parameter is the half-angle of the projection.
+    _applyFov() {
+        this._engine.setFov(this._fov / 2);
+    }
+
+    // The weapon is lit by the sector the viewed player stands in.
+    _weaponSprites() {
+        const user = this._player.getUser();
+
+        return this._weaponOverlay.sprites(this._player.getWeaponView(), this._level.getSectorLight().factorAt(user.x, user.z));
+    }
+
+    // The 4:3 psprite layer is squeezed around the centre on a wider screen
+    // (like GZDoom) rather than stretched, so asymmetric weapons stay in place.
+    _drawWeaponOverlay(renderer, engine) {
+        const squeeze = DoomPresentation.PSPRITE_ASPECT / this._screen.getAspectRatio();
+        const alpha   = ((this._player.getUser().isEffectVisible('invisibility'))
+            ? WadConstants.INVISIBILITY_WEAPON_ALPHA : 1);
+        for (const sprite of this._weaponSprites()) {
+            renderer.drawScreenSprite(engine, sprite.texId, 0.5 + (sprite.x - 0.5) * squeeze, sprite.y, sprite.w * squeeze, sprite.h, sprite.light, alpha);
+        }
+    }
+}
+
+// The 320x200 psprite canvas was authored for a 4:3 display.
+DoomPresentation.PSPRITE_ASPECT = 4 / 3;
+DoomPresentation.VIRTUAL_WIDTH  = 1920;
+DoomPresentation.VIRTUAL_HEIGHT = 1080;
+DoomPresentation.Z_NEAR         = 0.1;
+DoomPresentation.Z_FAR          = 100;

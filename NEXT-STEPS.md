@@ -1,0 +1,120 @@
+# Next steps
+
+## Description
+
+Tracks the major upcoming work and the milestones already reached. Only large milestones belong here: the detail of each fix lives in the git history.
+
+When a ToDo item is done, move it to the top of Finished with its completion date.
+
+A ToDo item that specifies a project split into steps keeps only what its remaining steps need: what the finished steps built is documented in the project's knowledge base.
+
+## ToDo
+
+### Level testing
+
+Finish playing through every level of Doom 2, Freedoom 1 and Freedoom 2.
+
+### Heretic inventory
+
+The artifact bar and everything it holds (flight, tome of power, morph ovum, chaos device, time bomb…) is the last large gap of an otherwise playable game.
+
+* Today the artifacts get a simplified immediate effect, and those that cannot be transposed are visible pickups with a null effect, never consumed.
+* The **tome of power** also gates the PL2 modes of the eight weapons, out of the scope of the current arsenal (PL1 only).
+* The summoned **Maulotaur** (`A_MinotaurDeath` / `A_MinotaurRoam`) is unreachable until the inventory exists.
+
+### PWAD compatibility
+
+The converter understands vanilla specials only, so most community WADs load with dead lines and stock actors. Three parts:
+
+* **DEHACKED**: only the `[STRINGS]` section is read today (`WadDehackedStrings`, for the finale texts). Still missing: things, frames, weapons, sounds, and the `Text` blocks of the old format (replacement by byte offset).
+* **BOOM generalized specials**: ranges of parameterised specials instead of one table entry per number.
+* **BOOM silent teleports**: 207/208 to a landing thing, 243/244 and 262–269 from line to line (keeping the relative position and angle), without fog, sound or freeze. None of the five readable IWADs uses them.
+* **Heretic `Thing_Destroy` (linedef 515)**: `xlat/heretic.txt:17` = `WALK, Thing_Destroy(0,0,0)` → `Level->Massacre()` (`p_lnspec.cpp:1506`, `p_enemy.cpp:3407`, `p_mobj.cpp:1711`): every non-dormant `MF3_ISMONSTER` actor dies from `TELEFRAG_DAMAGE` (hence gibbed), invulnerability lifted.
+  * The xlat neutralises it today (`515: 0`): **no linedef of `heretic.wad` carries 515** (scan of the 48 maps; E1M8 only has 2, 11, 31, 36, 62, 88, 97, 103), it is an xlat entry for Raven PWADs.
+  * Planned implementation: `515: 1515` in the xlat, a `massacre` entry of the generic line action channel (`LINE_ACTION_BY_SPECIAL`, served by `DoomLineActions`, which already carries the light lines), and `DoomMonsterSystem.massacre()` through the existing damage pipeline.
+  * Prerequisite: an explicit `isMonster` flag on the definitions — the 4 `countsKill: false` definitions (barrel, pod, BossBrain, BossEye) are indeed the 4 `: Actor` without `Monster;` in the zscript, but both notions coincide by construction, not by definition.
+  * Not verifiable in game on the 6 IWADs: validation through a hand-made test map.
+
+### Hexen
+
+The WAD loads under the fallback profile only. It needs its own thing and special semantics, its hub progression, and its script and polyobject machinery.
+
+* A far more divergent profile than Heretic: extended map format (**16-byte linedefs, specials with args**) and **shared manas with HUD gauges**.
+* Its multiplayer has 8 players: starts 1 to 4, then 9100 to 9103.
+* The profile must be probed **before** Heretic in `GameProfileList`: `hexen.wad` carries a `TINTTAB` lump, so it matches the Heretic profile today (and inherits its rules, `mapEndSlot` MAP30 = end of game included, meaningless for its hubs).
+* **No level of `hexen.wad` converts today** (measured on MAP01): the parser reads the Hexen LINEDEFS (16 bytes, with args) as Doom ones (14), so the sidedef indices are absurd and the analysis breaks as early as `WadMapAnalyzer._identifyLifts` on `sidedefs[ld.right] is undefined` — the launch falls back cleanly to the error modal.
+* The first Hexen step is therefore **the level parser**, before any game semantics. `WadBspTree.build` already refuses this WAD (out-of-bounds index guard), and the polygon fallback is useless as long as the linedefs are misread.
+
+### Rendering performance & quality options
+
+The renderer is selectable in game (`display.renderer`, WebGL by default) and the three CPU modes draw the weapon in hand, but they still lag behind WebGL.
+
+What the CPU modes still lack against WebGL, by order of interest:
+
+* **`full`: the sky** (the engine primitive is applied by the WebGL renderer only).
+
+### Visibility culling (PVS / portals) — last, after everything else
+
+A large **performance / rendering** item, to start only **after** everything above. NB: the sector adjacency graph built for `P_NoiseAlert` is a reusable brick here, and the BSP walk + angular clipper of the automap (`DoomAutomapReveal`) is **exactly** the visibility pass asked for below, already written and proven — on the logic side, not the rendering side.
+
+**First step — quality options**: there is **no quality setting** today. A face and draw-call budget, plus a resolution or draw-distance option, would decide how well it runs on a phone. They come before any partitioning: they are the profiling the item below requires.
+
+**Observed problem**: no visibility culling — every frame, the **whole** map (a single static mesh) is drawn, and the **z-buffer** alone hides what lies behind solid geometry. So above low walls and **through open areas** (the sky writes no depth), the **distant rooms** show (e.g. the E1M1 exit room seen across the courtyard).
+
+**Pitfall — this is NOT a visual fix.** PVS / portals only remove what is **really occluded** by solid geometry; they do **not** remove what is in **line of sight**. Distant rooms seen across an open courtyard **are** in line of sight, so even a perfect PVS **would still show them** (and in large open areas it "sees far", so it culls very little, precisely where culling is wanted).
+
+* **Goal = hide the distance (aesthetics)** → this is NOT this item, and it is **already in place**: distance darkening (`Engine3d.setDepthShading`, setting `display.distance_shading`) is the answer to the visual. Going further means a real fog towards the `background` in the same fragment shader — a few lines, no structural rework.
+* **Goal = performance** (the whole map drawn every frame becomes the bottleneck) → only then this item. **Profile FIRST**: the gain is not guaranteed (see the draw-call trade-off below).
+
+**What the solution requires** (rendering path only):
+
+1. **Break the single mesh.** Today the map is **one merged `Object3d`**, **with no notion of sector per face** (`WadStaticMapBuilder` → `loader.objects().loadFromData('map', …)`). It must be **partitioned by sector**: either one sub-mesh per sector, or a **sector tag per face** + the renderer's ability to skip groups. This is THE central structural change.
+2. **Batching / draw-call trade-off.** The WebGL renderer groups faces by `(animKey, alpha, clampV)` into large batches (few calls). Partitioned by sector → **many more draw calls**. On small levels it may be **slower**. The gain depends on the ratio of culled faces to call overhead → to measure.
+3. **New systems**:
+   * **Sector + portal graph**: the **two-sided linedefs** are the openings (portals) between sectors; build the adjacency + the opening geometry of each portal.
+   * **Camera sector tracking per frame** (the BSP locator `WadBspTree.findSector` already gives it).
+   * **Visibility pass**: runtime portal traversal (Doom BSP / segs style: recursive clipping of the openings projected on screen), **or** a precomputed PVS per sector (heavy precomputation during the in-browser conversion — probably to avoid). NB: Doom's `REJECT` lump is sector↔sector but **meant for the AI**, too coarse for rendering.
+
+**Technical catch — dynamic portals**: doors and lifts are **dynamic portals**: a **closed door must block the view**. The portal traversal must take the open / closed state into account (otherwise it goes through a closed door) — which is exactly what the solidity test of the automap reveal already does, through `DoomSectorHeights`. The z-buffer already occludes visually, but the visibility logic must account for it so as not to cull or keep wrongly.
+
+**What does NOT change** (reassuring scope):
+
+* **Collision**: independent from rendering (the player collides with invisible walls) → keeps the **full set** of faces; only its **source** changes if the mesh is split, not its logic.
+* **Geometry** (earcut triangulation, walls, flats, doors / lifts / switches), **billboards / pickups, interactions, physics, sky, textures / animations**: **logic unchanged** (regrouped, not rewritten). Billboards could *as a bonus* be culled by their sector (additive, not a rework).
+
+**Verdict**: a **focused** item (mesh partition by sector + visibility pass), **not** a global destabilisation of the engine. But: **start it for performance only, after profiling**, and **never** for the visual need "do not see far" (→ fog). In the current state (Doom levels, smooth rendering), **low priority**.
+
+## Finished
+
+* **Vanilla polish pass** (2026-10-08): a nightmare respawn rings its teleport fog, blood, smoke and late puff frames take their sector light, the light lines and switches turn rooms dark, light them up or set them strobing, shot lines painted as a switch flip their image, and every level is swept for converter anomalies by the bench.
+* **Multiplayer testing** (2026-10-07): cooperative and deathmatch played on real devices — iOS, Android, tablet, mixed browsers, four players, a sub sent to the background.
+* **Multiplayer hardening** (2026-10-01): a sub whose page goes to the background no longer holds the game, a lost player gets its seat back by joining again, and neither a missing image nor a stuck level build blocks a sub.
+* **Deathmatch** (2026-10-01): a new deathmatch from the Multiplayer screen, with frags, both item rules, frag and time limits, a frag table tally and the end of the match.
+* **Projectile and player-body smoothing** (2026-10-01): shots in flight drawn smoothly between their tics, and a player's body flowing over stair steps like its view.
+* **Cooperative** (2026-09-30): players joining the running game from the pause, or a new cooperative game from the Multiplayer screen, each with its own body and colour, respawning, weapons and keys left on the ground, and a tally per player.
+* **Screen sharing** (2026-09-29): devices paired by QR code over a direct peer-to-peer link, following the host's game with its pause, death, tally and finale texts.
+* **Doom 1 level testing** (2026-09-21): every level of Doom 1 played through and fixed.
+* **Liquid splashes** (2026-09-11): terrain splashes on the liquids of every game.
+* **Selectable renderer** (2026-09-10): the renderer switched live from the Display options.
+* **TNT and Plutonia** (2026-09-09): recognised as their own game profiles.
+* **Map compatibility patches** (2026-09-06): known defects of the original maps fixed at load time.
+* **Spipu3D and translations** (2026-08-31): the engine named Spipu3D, and the UI in English, French, Italian and Spanish.
+* **Sound and music** (2026-08-30): sound effects and OPL-synthesized music, both read from the WAD.
+* **Complete bestiaries** (2026-08-29): every Doom and Heretic monster attack, bosses and the Icon of Sin included.
+* **Automap** (2026-08-26): revealed as the player explores, like the original.
+* **Menus and saves** (2026-08-02): per-WAD menus, pause menu and save slots.
+* **Monsters** (2026-07-24): bestiary, damage, deaths and vanilla AI.
+* **Game profiles** (2026-07-19): Doom, Freedoom and Heretic data isolated per game, and persistent settings.
+* **Weapons** (2026-07-19): the vanilla weapon state machine, hitscan, projectiles and wall impact decals.
+* **Game HUD** (2026-07-12): health, armour, ammo, weapons, keys and secrets.
+* **Level progression** (2026-07-12): walk-over exits, secret levels and UMAPINFO.
+* **Vanilla sector machinery** (2026-07-11): doors, lifts, stairs, ceilings, crushers, dynamic lights, damaging floors and secrets.
+* **Items and keys** (2026-06-20): pickups, key-locked doors and equipment carried between levels.
+* **Gamepad and touch controls** (2026-06-13): physical gamepads and a virtual touch gamepad.
+* **On-the-fly WAD conversion** (2026-06-12): levels converted in the browser from the user's WAD, chained from one to the next.
+* **Installable webapp** (2026-06-11): stacked bootstrap definitions and offline service worker.
+* **Interaction system** (2026-06-06): switches driving lifts and doors.
+* **First Doom map** (2026-05-24): Freedoom E1M1 converted from its WAD and playable.
+* **FPS physics** (2026-05-21): collision, gravity, jump and platform riding.
+* **WebGL renderer** (2026-05-17): hardware rendering alongside the CPU renderers, chosen by default when available.
+* **Engine modernisation** (2026-05-13): the original 3D engine rewritten in ES6 classes, without jQuery nor eval.

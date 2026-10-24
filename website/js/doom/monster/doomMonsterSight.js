@@ -1,0 +1,146 @@
+/**
+ * Monster senses: P_CheckSight line of sight and P_NoiseAlert sound
+ * propagation, over the level data handed by the world builder (sector
+ * adjacency graph, REJECT table, sector polygons resolver).
+ *
+ * Sight is a 2-ray approximation of the vanilla slope window (deviation,
+ * same approach as the blast line of sight): eye at feet + 3/4 of
+ * the actor height (the vanilla sightzstart), first ray to the target's
+ * centre, fallback ray to its top — walls, floor/ceiling slabs and dynamic
+ * colliders block (a closed door panel blocks the view). The REJECT lump,
+ * when the WAD carries a valid one, is the vanilla trivial-rejection
+ * early-out between the two sectors.
+ *
+ * Sound floods the sector graph like P_RecursiveSound: through the two-sided
+ * openings whose CURRENT vertical gap is positive — the effective heights
+ * read the live door/lift offsets, so a closed door blocks sound. A first
+ * ML_SOUNDBLOCK line still crosses but dampens (soundblocks 1), a second one
+ * stops the flood. Every flooded sector remembers the emitter as its sound
+ * target (vanilla sector->soundtarget, the Doom-strict COMPATF_SOUNDTARGET
+ * behaviour), consumed by A_Look.
+ */
+class DoomMonsterSight {
+    /**
+     * @param {Collision}         collision
+     * @param {object}            levelData DoomMonsterSystem level data:
+     *                            {sectorGraph, reject, numSectors, findSector…}
+     * @param {DoomSectorHeights} heights   live sector heights
+     */
+    constructor(collision, levelData, heights) {
+        this._collision      = collision;
+        this._graph          = levelData.sectorGraph;
+        this._reject         = levelData.reject;
+        this._numSectors     = levelData.numSectors;
+        this._heights        = heights;
+        this._soundTarget    = new Array(levelData.numSectors).fill(null);
+        this._soundTraversed = new Array(levelData.numSectors).fill(0);
+        this._floodStamp     = new Array(levelData.numSectors).fill(0);
+        this._stamp          = 0;
+    }
+
+    // Sound target heard from a sector (null while nothing fired around).
+    getSoundTarget(si) {
+        return ((si === null) ? null : this._soundTarget[si]);
+    }
+
+    // The sectors that heard a body gone from the level fall silent.
+    forgetSoundTarget(actor) {
+        for (let si = 0; si < this._numSectors; si++) {
+            if (this._soundTarget[si] === actor) {
+                this._soundTarget[si] = null;
+            }
+        }
+    }
+
+    /**
+     * P_CheckSight between an eye point and a body — the player or another
+     * monster. The REJECT early-out needs both sector indexes (either may be
+     * null — an unknown sector skips it).
+     *
+     * @returns {boolean} true when at least one ray reaches the body
+     */
+    checkSight(eyeX, eyeY, eyeZ, fromSi, target, targetSi) {
+        if ((this._reject !== null) && (fromSi !== null) && (targetSi !== null)) {
+            const pnum = fromSi * this._numSectors + targetSi;
+            if ((this._reject[pnum >> 3] & (1 << (pnum & 7))) !== 0) {
+                return false;
+            }
+        }
+        const x    = DoomActorRef.x(target);
+        const z    = DoomActorRef.z(target);
+        const feet = DoomActorRef.feetY(target);
+        const h    = DoomActorRef.height(target);
+
+        return (this._rayClear(eyeX, eyeY, eyeZ, x, feet + h * 0.5, z)
+            || this._rayClear(eyeX, eyeY, eyeZ, x, feet + h, z));
+    }
+
+    /**
+     * P_NoiseAlert: flood the sector graph from the emitter's sector, marking
+     * the emitter as the sound target of every reached sector.
+     *
+     * @param {User}        emitter
+     * @param {number|null} startSi emitter's sector (null = no-op)
+     */
+    noiseAlert(emitter, startSi) {
+        if (startSi === null) {
+            return;
+        }
+        this._stamp++;
+        const sectorQ = [startSi];
+        const blocksQ = [0];
+        this._floodStamp[startSi]     = this._stamp;
+        this._soundTraversed[startSi] = 1;
+        let head = 0;
+        while (head < sectorQ.length) {
+            const si     = sectorQ[head];
+            const blocks = blocksQ[head];
+            head++;
+            this._soundTarget[si] = emitter;
+            for (const lineIdx of this._graph.bySector[si]) {
+                const line  = this._graph.lines[lineIdx];
+                const other = ((line.siR === si) ? line.siL : line.siR);
+                if (this._openingOf(line) <= 0) {
+                    continue;
+                }
+                let nextBlocks = blocks;
+                if (line.soundBlock) {
+                    if (blocks > 0) {
+                        continue;
+                    }
+                    nextBlocks = 1;
+                }
+                // Vanilla soundtraversed: revisit only when the new path
+                // carries fewer sound blocks than the recorded one.
+                if ((this._floodStamp[other] === this._stamp) && (this._soundTraversed[other] <= nextBlocks + 1)) {
+                    continue;
+                }
+                this._floodStamp[other]     = this._stamp;
+                this._soundTraversed[other] = nextBlocks + 1;
+                sectorQ.push(other);
+                blocksQ.push(nextBlocks);
+            }
+        }
+    }
+
+    // --- Internal ---
+
+    _rayClear(ox, oy, oz, tx, ty, tz) {
+        const dx = tx - ox;
+        const dy = ty - oy;
+        const dz = tz - oz;
+        const d  = Math.hypot(dx, dy, dz);
+        if (d < 1e-6) {
+            return true;
+        }
+        const hit = this._collision.raycast(ox, oy, oz, dx / d, dy / d, dz / d, d, {floors: true, ceilings: true, dynamic: true});
+        return (hit === null);
+    }
+
+    // Current vertical opening of a two-sided line, in map units.
+    _openingOf(line) {
+        const a = this._heights.effectiveHeights(line.siR);
+        const b = this._heights.effectiveHeights(line.siL);
+        return (Math.min(a.ch, b.ch) - Math.max(a.fh, b.fh));
+    }
+}
