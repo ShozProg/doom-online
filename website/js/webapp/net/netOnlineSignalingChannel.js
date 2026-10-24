@@ -226,9 +226,12 @@ class NetOnlineSignalingChannel {
             if (data && data.type === 'relay' && data.sender) {
                 let decoded = data.data;
                 if (data.isHex && typeof data.data === 'string') {
-                    decoded = NetHex.toBytes(data.data).buffer;
+                    const rawBytes = NetHex.toBytes(data.data);
+                    decoded = new Uint8Array(rawBytes).buffer;
                 }
-                this._emit('relay', { sender: data.sender, data: decoded });
+                if (decoded !== undefined) {
+                    this._emit('relay', { sender: data.sender, data: decoded });
+                }
             }
         } catch (_) {
             this._emit('message', { topic, data: payloadStr });
@@ -255,7 +258,7 @@ class NetOnlineSignalingChannel {
 
     onRelayFrom(remoteId, callback) {
         const handler = (event) => {
-            if (event.sender === remoteId) {
+            if (event.sender === remoteId && event.data !== undefined) {
                 callback(event.data);
             }
         };

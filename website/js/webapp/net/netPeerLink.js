@@ -30,9 +30,10 @@ class NetPeerLink extends NetLink {
         this._relaySend = sendFn;
         if (registerReceiveFn) {
             this._relayReceiveUnsub = registerReceiveFn((data) => {
+                if (!data) return;
+                this._usingRelay = true;
                 if (!this.isOpen() && !this.isClosed()) {
                     console.log('WebRTC signaling relay fallback active (incoming traffic)');
-                    this._usingRelay = true;
                     this._notifyOpen();
                 }
                 this._notifyMessage(data);
@@ -98,13 +99,31 @@ class NetPeerLink extends NetLink {
     // The channel enters 'closing' before its close event clears the open flag: a
     // send in between would throw out of the game loop.
     _send(message) {
-        if (!this._usingRelay && this._channel && this._channel.readyState === 'open') {
-            this._channel.send(message);
-            return true;
-        }
         if (this._usingRelay && this._relaySend) {
-            this._relaySend(message);
-            return true;
+            try {
+                this._relaySend(message);
+                return true;
+            } catch (err) {
+                console.error('Relay send failed:', err);
+                return false;
+            }
+        }
+        if (this._channel && this._channel.readyState === 'open') {
+            try {
+                this._channel.send(message);
+                return true;
+            } catch (err) {
+                console.warn('WebRTC channel send failed, falling back to relay:', err);
+            }
+        }
+        if (this._relaySend) {
+            try {
+                this._relaySend(message);
+                this._usingRelay = true;
+                return true;
+            } catch (err) {
+                console.error('Relay fallback send failed:', err);
+            }
         }
         return false;
     }
@@ -186,8 +205,9 @@ class NetPeerLink extends NetLink {
                 clearTimeout(this._relayTimer);
                 this._relayTimer = null;
             }
-            this._usingRelay = false;
-            this._notifyOpen();
+            if (!this._usingRelay) {
+                this._notifyOpen();
+            }
         });
         this._channel.addEventListener('message', (event) => this._notifyMessage(event.data));
         this._channel.addEventListener('close', () => this._notifyClose(NetLink.CLOSED));
@@ -198,7 +218,9 @@ class NetPeerLink extends NetLink {
             if (this._relaySend) {
                 console.log('WebRTC peer connection failed, engaging signaling relay fallback');
                 this._usingRelay = true;
-                this._notifyOpen();
+                if (!this.isOpen() && !this.isClosed()) {
+                    this._notifyOpen();
+                }
                 return;
             }
             this._notifyClose(NetLink.FAILED);

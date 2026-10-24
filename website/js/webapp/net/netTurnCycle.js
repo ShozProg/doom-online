@@ -331,7 +331,7 @@ NetTurnCycle.SYNCING = 'syncing';   // building the level, nobody waits for it
 NetTurnCycle.JOINING = 'joining';   // level built, joins with the next state sent
 NetTurnCycle.AWAITED = 'awaited';   // its command gates every turn
 
-NetTurnCycle.COMMAND_TIMEOUT_MS = 5000;
+NetTurnCycle.COMMAND_TIMEOUT_MS = 15000;
 NetTurnCycle.WAITING_NOTICE_MS  = 500;
 // Far beyond the build of the largest map on a slow device: only a build that never ends is caught.
 NetTurnCycle.BUILD_TIMEOUT_MS   = 60000;

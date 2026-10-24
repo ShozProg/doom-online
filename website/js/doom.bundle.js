@@ -15708,7 +15708,7 @@ NetConfig.CHANNEL_NAME              = 'net';
 NetConfig.LOOPBACK_PREFIX           = 'spipu-net-';
 NetConfig.PING_PERIOD_MS            = 1000;
 NetConfig.PING_AVERAGE_COUNT        = 10;
-NetConfig.LIVENESS_TIMEOUT_MS       = 5000;
+NetConfig.LIVENESS_TIMEOUT_MS       = 15000;
 // Well under the 64 KiB message size every browser accepts when none is negotiated (RFC 8841).
 NetConfig.CHUNK_SIZE                = 16384;
 
@@ -16611,9 +16611,10 @@ class NetPeerLink extends NetLink {
         this._relaySend = sendFn;
         if (registerReceiveFn) {
             this._relayReceiveUnsub = registerReceiveFn((data) => {
+                if (!data) return;
+                this._usingRelay = true;
                 if (!this.isOpen() && !this.isClosed()) {
                     console.log('WebRTC signaling relay fallback active (incoming traffic)');
-                    this._usingRelay = true;
                     this._notifyOpen();
                 }
                 this._notifyMessage(data);
@@ -16679,13 +16680,31 @@ class NetPeerLink extends NetLink {
     // The channel enters 'closing' before its close event clears the open flag: a
     // send in between would throw out of the game loop.
     _send(message) {
-        if (!this._usingRelay && this._channel && this._channel.readyState === 'open') {
-            this._channel.send(message);
-            return true;
-        }
         if (this._usingRelay && this._relaySend) {
-            this._relaySend(message);
-            return true;
+            try {
+                this._relaySend(message);
+                return true;
+            } catch (err) {
+                console.error('Relay send failed:', err);
+                return false;
+            }
+        }
+        if (this._channel && this._channel.readyState === 'open') {
+            try {
+                this._channel.send(message);
+                return true;
+            } catch (err) {
+                console.warn('WebRTC channel send failed, falling back to relay:', err);
+            }
+        }
+        if (this._relaySend) {
+            try {
+                this._relaySend(message);
+                this._usingRelay = true;
+                return true;
+            } catch (err) {
+                console.error('Relay fallback send failed:', err);
+            }
         }
         return false;
     }
@@ -16767,8 +16786,9 @@ class NetPeerLink extends NetLink {
                 clearTimeout(this._relayTimer);
                 this._relayTimer = null;
             }
-            this._usingRelay = false;
-            this._notifyOpen();
+            if (!this._usingRelay) {
+                this._notifyOpen();
+            }
         });
         this._channel.addEventListener('message', (event) => this._notifyMessage(event.data));
         this._channel.addEventListener('close', () => this._notifyClose(NetLink.CLOSED));
@@ -16779,7 +16799,9 @@ class NetPeerLink extends NetLink {
             if (this._relaySend) {
                 console.log('WebRTC peer connection failed, engaging signaling relay fallback');
                 this._usingRelay = true;
-                this._notifyOpen();
+                if (!this.isOpen() && !this.isClosed()) {
+                    this._notifyOpen();
+                }
                 return;
             }
             this._notifyClose(NetLink.FAILED);
@@ -18236,9 +18258,12 @@ class NetOnlineSignalingChannel {
             if (data && data.type === 'relay' && data.sender) {
                 let decoded = data.data;
                 if (data.isHex && typeof data.data === 'string') {
-                    decoded = NetHex.toBytes(data.data).buffer;
+                    const rawBytes = NetHex.toBytes(data.data);
+                    decoded = new Uint8Array(rawBytes).buffer;
                 }
-                this._emit('relay', { sender: data.sender, data: decoded });
+                if (decoded !== undefined) {
+                    this._emit('relay', { sender: data.sender, data: decoded });
+                }
             }
         } catch (_) {
             this._emit('message', { topic, data: payloadStr });
@@ -18265,7 +18290,7 @@ class NetOnlineSignalingChannel {
 
     onRelayFrom(remoteId, callback) {
         const handler = (event) => {
-            if (event.sender === remoteId) {
+            if (event.sender === remoteId && event.data !== undefined) {
                 callback(event.data);
             }
         };
@@ -23587,7 +23612,7 @@ NetTurnCycle.SYNCING = 'syncing';   // building the level, nobody waits for it
 NetTurnCycle.JOINING = 'joining';   // level built, joins with the next state sent
 NetTurnCycle.AWAITED = 'awaited';   // its command gates every turn
 
-NetTurnCycle.COMMAND_TIMEOUT_MS = 5000;
+NetTurnCycle.COMMAND_TIMEOUT_MS = 15000;
 NetTurnCycle.WAITING_NOTICE_MS  = 500;
 // Far beyond the build of the largest map on a slow device: only a build that never ends is caught.
 NetTurnCycle.BUILD_TIMEOUT_MS   = 60000;

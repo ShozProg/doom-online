@@ -22,6 +22,6 @@ NetConfig.CHANNEL_NAME              = 'net';
 NetConfig.LOOPBACK_PREFIX           = 'spipu-net-';
 NetConfig.PING_PERIOD_MS            = 1000;
 NetConfig.PING_AVERAGE_COUNT        = 10;
-NetConfig.LIVENESS_TIMEOUT_MS       = 5000;
+NetConfig.LIVENESS_TIMEOUT_MS       = 15000;
 // Well under the 64 KiB message size every browser accepts when none is negotiated (RFC 8841).
 NetConfig.CHUNK_SIZE                = 16384;
