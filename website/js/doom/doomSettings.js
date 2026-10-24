@@ -53,7 +53,7 @@ class DoomSettings extends AppSettings {
 
     static get DEFINITIONS() {
         return [
-            {key: 'display.language',             nameCode: 'settings.display.language',           type: 'list', default: 'en', values: [{code: 'en', label: 'English'}, {code: 'fr', label: 'Français'}, {code: 'it', label: 'Italiano'}, {code: 'es', label: 'Español'}]},
+            {key: 'display.language',             nameCode: 'settings.display.language',           type: 'list', default: 'ru', values: [{code: 'ru', label: 'Русский'}, {code: 'en', label: 'English'}, {code: 'fr', label: 'Français'}, {code: 'it', label: 'Italiano'}, {code: 'es', label: 'Español'}]},
             // Codes must match the keys of Object3dRendererList.
             {key: 'display.renderer',             nameCode: 'settings.display.renderer',           type: 'list', default: 'webgl', values: [{code: 'webgl', label: 'WebGL'}, {code: 'full', labelCode: 'value.renderer.softwareTextured'}, {code: 'flat', labelCode: 'value.renderer.softwareFlat'}, {code: 'fast', labelCode: 'value.renderer.softwareWireframe'}]},
             {key: 'display.crosshair',            nameCode: 'settings.display.crosshair',          type: 'bool', default: true},
@@ -201,7 +201,12 @@ class DoomSettings extends AppSettings {
     }
 
     getDisplayLanguage() {
-        return this.get('display.language');
+        const lang = this.get('display.language');
+        const isRuEnv = (typeof navigator !== 'undefined' && navigator.language && navigator.language.toLowerCase().startsWith('ru'));
+        if (isRuEnv) {
+            return (lang === 'ru' || !lang || lang === 'en') ? 'ru' : lang;
+        }
+        return (lang && ['ru', 'en', 'fr', 'it', 'es'].includes(lang)) ? lang : 'ru';
     }
 
     getDisplayRenderer() {

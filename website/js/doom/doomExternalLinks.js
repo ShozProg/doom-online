@@ -4,6 +4,6 @@
 class DoomExternalLinks {
 }
 
-DoomExternalLinks.PROJECT  = 'https://github.com/spipu/doom-js';
+DoomExternalLinks.PROJECT  = 'https://github.com/ShozProg/doom-online';
 DoomExternalLinks.ISSUES   = DoomExternalLinks.PROJECT + '/issues';
 DoomExternalLinks.FREEDOOM = 'https://freedoom.github.io/';

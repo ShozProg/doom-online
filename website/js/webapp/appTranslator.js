@@ -27,10 +27,11 @@ class AppTranslator {
      */
     addCatalog(catalog) {
         for (const code of Object.keys(catalog)) {
-            if (this._catalog[code] !== undefined) {
-                console.warn('AppTranslator - translation code [' + code + '] is declared twice');
+            if (this._catalog[code] === undefined) {
+                this._catalog[code] = Object.assign({}, catalog[code]);
+            } else {
+                Object.assign(this._catalog[code], catalog[code]);
             }
-            this._catalog[code] = catalog[code];
         }
 
         return this;
@@ -80,6 +81,9 @@ class AppTranslator {
         if (text === undefined) {
             this._warnOnce('code [' + code + '] has no [' + this._language + '] translation');
             text = entry[this._fallbackLanguage];
+        }
+        if (text === undefined) {
+            text = entry['ru'] ?? entry['en'] ?? Object.values(entry)[0];
         }
         if (text === undefined) {
             return code;

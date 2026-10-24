@@ -37,7 +37,11 @@
             "/lib/libadlmidi/libadlmidi.dosbox.slim.processor.js",
             "/lib/libadlmidi/libadlmidi.dosbox.slim.core.wasm",
             "/lib/zxing-wasm/zxing_full.wasm",
-            "/lib/oswald/oswald.woff2"
+            "/lib/oswald/oswald.woff2",
+            "/assets/m_doom.png",
+            "/assets/m_skull1.png",
+            "/assets/m_skull2.png",
+            "/assets/titlepic.png"
         ],
         "css": [
             "/css/webapp/appMenu.css",

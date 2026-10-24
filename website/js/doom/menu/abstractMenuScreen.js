@@ -16,16 +16,25 @@ class AbstractMenuScreen extends AppMenuAbstractScreen {
     }
 
     _titleText() {
-        return 'Spipu-Doom';
+        return '';
     }
 
     // Simple menu of a WAD over its title picture, once read: the WAD's title as the header of its own menu, the step
     // as the header of the next ones (the WAD then under it).
     _buildWadMenu(wadMeta, stepText = null, detailText = null) {
-        const wadTitle  = this._wadTitle(wadMeta);
-        const parts     = ((stepText === null)
-            ? this._buildSimpleMenu(wadTitle)
-            : this._buildSimpleMenu(stepText, [wadTitle, detailText].filter((part) => (part !== null)).join(' · ')));
+        let parts;
+        if (stepText === null) {
+            parts = this._buildSimpleMenu('');
+            parts.titleEl.innerHTML = '<img class="app-menu-doom-logo" src="./assets/m_doom.png" alt="DOOM" />';
+            parts.subtitleEl.textContent = '';
+        } else {
+            parts = this._buildSimpleMenu(stepText, detailText);
+            const logo = document.createElement('img');
+            logo.className = 'app-menu-doom-logo-small';
+            logo.src = './assets/m_doom.png';
+            logo.alt = 'DOOM';
+            parts.titleEl.parentNode.insertBefore(logo, parts.titleEl);
+        }
         const container = this._container;
         this._navigator.getTitlePictureUrl(wadMeta).then((url) => {
             if ((url !== null) && (this._container === container)) {

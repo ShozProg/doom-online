@@ -1,5 +1,5 @@
 /**
- * Every user-facing text of Spipu-Doom, served by AppTranslator.
+ * Every user-facing text of DOOM Online, served by AppTranslator.
  *
  * Proper nouns are not translated (the brand, WAD and level names, language
  * autonyms, BFG9000). Of the game data, only the weapon names reach a screen;
@@ -16,10 +16,10 @@ class DoomTranslations {
                 es: 'Almacenamiento del navegador no disponible — imposible gestionar los WAD.'
             },
             'menu.storageBlocked': {
-                fr: 'Mise à jour des données en attente : fermez les autres onglets ou fenêtres de Spipu-Doom.',
-                en: 'Data update waiting: close the other Spipu-Doom tabs or windows.',
-                it: 'Aggiornamento dei dati in attesa: chiudi le altre schede o finestre di Spipu-Doom.',
-                es: 'Actualización de datos en espera: cierra las demás pestañas o ventanas de Spipu-Doom.'
+                fr: 'Mise à jour des données en attente : fermez les autres onglets ou fenêtres de DOOM Online.',
+                en: 'Data update waiting: close the other DOOM Online tabs or windows.',
+                it: 'Aggiornamento dei dati in attesa: chiudi le altre schede o finestre di DOOM Online.',
+                es: 'Actualización de datos en espera: cierra las demás pestañas o ventanas de DOOM Online.'
             },
             'menu.storageFull': {
                 fr: 'Espace insuffisant pour mettre à jour les données : libérez de la place sur l\'appareil, puis rechargez.',
@@ -421,10 +421,10 @@ class DoomTranslations {
                 es: 'Ayuda'
             },
             'help.guide.wad': {
-                fr: 'Pour jouer, il faut un fichier de jeu, appelé un WAD : c\'est lui qui contient les niveaux, les monstres, les images et les sons. Spipu-Doom n\'en fournit aucun — vous en apportez un, et il le fait tourner.',
-                en: 'To play, you need a game file, called a WAD: it holds the levels, the monsters, the graphics and the sounds. Spipu-Doom comes with none — you bring one, and it runs it.',
-                it: 'Per giocare serve un file di gioco, chiamato WAD: è lui che contiene i livelli, i mostri, le immagini e i suoni. Spipu-Doom non ne fornisce nessuno — tu ne porti uno, e lui lo fa girare.',
-                es: 'Para jugar hace falta un archivo de juego, llamado WAD: es el que contiene los niveles, los monstruos, las imágenes y los sonidos. Spipu-Doom no incluye ninguno — tú traes uno, y él lo hace funcionar.'
+                fr: 'Pour jouer, il faut un fichier de jeu, appelé un WAD : c\'est lui qui contient les niveaux, les monstres, les images et les sons. DOOM Online n\'en fournit aucun — vous en apportez un, et il le fait tourner.',
+                en: 'To play, you need a game file, called a WAD: it holds the levels, the monsters, the graphics and the sounds. DOOM Online comes with none — you bring one, and it runs it.',
+                it: 'Per giocare serve un file di gioco, chiamato WAD: è lui che contiene i livelli, i mostri, le immagini e i suoni. DOOM Online non ne fornisce nessuno — tu ne porti uno, e lui lo fa girare.',
+                es: 'Para jugar hace falta un archivo de juego, llamado WAD: es el que contiene los niveles, los monstruos, las imágenes y los sonidos. DOOM Online no incluye ninguno — tú traes uno, y él lo hace funcionar.'
             },
             'help.guide.freedoom': {
                 fr: 'Le plus simple est Freedoom : un jeu complet, gratuit et légal, dans le style de Doom. Téléchargez-le sur le site ci-dessous, ouvrez le fichier ZIP obtenu, et vous y trouverez « freedoom1.wad ». Revenez ici, cliquez sur « {addFile} » et choisissez ce fichier.',
@@ -439,22 +439,22 @@ class DoomTranslations {
                 es: 'Si ya posees Doom, Doom II o Heretic, su archivo WAD funciona exactamente igual. «{addUrl}» sirve para traer un archivo directamente desde una dirección de internet, cuando el sitio que lo aloja lo permite.'
             },
             'help.guide.install': {
-                fr: 'Sur téléphone ou tablette, installez Spipu-Doom pour jouer en plein écran, sans la barre du navigateur : sur iPhone et iPad, avec Safari, touchez le bouton Partager puis « Sur l\'écran d\'accueil » ; sur Android, avec Chrome, ouvrez le menu ⋮ (les trois points) puis « Installer l\'application ». Une icône apparaît, et le jeu fonctionne ensuite même sans connexion internet.',
-                en: 'On a phone or a tablet, install Spipu-Doom to play fullscreen, without the browser bar: on iPhone and iPad, in Safari, tap the Share button then "Add to Home Screen"; on Android, in Chrome, open the ⋮ (three dots) menu then "Install app". An icon appears, and the game then works even with no internet connection.',
-                it: 'Su telefono o tablet, installa Spipu-Doom per giocare a schermo intero, senza la barra del browser: su iPhone e iPad, con Safari, tocca il pulsante Condividi e poi «Aggiungi a Home»; su Android, con Chrome, apri il menu ⋮ (i tre puntini) e poi «Installa app». Compare un\'icona, e il gioco funziona poi anche senza connessione internet.',
-                es: 'En un teléfono o una tableta, instala Spipu-Doom para jugar a pantalla completa, sin la barra del navegador: en iPhone y iPad, con Safari, toca el botón Compartir y luego «Añadir a pantalla de inicio»; en Android, con Chrome, abre el menú ⋮ (los tres puntos) y luego «Instalar aplicación». Aparece un icono, y el juego funciona después incluso sin conexión a internet.'
+                fr: 'Sur téléphone ou tablette, installez DOOM Online pour jouer en plein écran, sans la barre du navigateur : sur iPhone et iPad, avec Safari, touchez le bouton Partager puis « Sur l\'écran d\'accueil » ; sur Android, avec Chrome, ouvrez le menu ⋮ (les trois points) puis « Installer l\'application ». Une icône apparaît, et le jeu fonctionne ensuite même sans connexion internet.',
+                en: 'On a phone or a tablet, install DOOM Online to play fullscreen, without the browser bar: on iPhone and iPad, in Safari, tap the Share button then "Add to Home Screen"; on Android, in Chrome, open the ⋮ (three dots) menu then "Install app". An icon appears, and the game then works even with no internet connection.',
+                it: 'Su telefono o tablet, installa DOOM Online per giocare a schermo intero, senza la barra del browser: su iPhone e iPad, con Safari, tocca il pulsante Condividi e poi «Aggiungi a Home»; su Android, con Chrome, apri il menu ⋮ (i tre puntini) e poi «Installa app». Compare un\'icona, e il gioco funziona poi anche senza connessione internet.',
+                es: 'En un teléfono o una tableta, instala DOOM Online para jugar a pantalla completa, sin la barra del navegador: en iPhone y iPad, con Safari, toca el botón Compartir y luego «Añadir a pantalla de inicio»; en Android, con Chrome, abre el menú ⋮ (los tres puntos) y luego «Instalar aplicación». Aparece un icono, y el juego funciona después incluso sin conexión a internet.'
             },
             'help.guide.controls': {
-                fr: 'Jouez au clavier et à la souris, à la manette, ou avec les commandes tactiles qui s\'affichent à l\'écran : Spipu-Doom reconnaît tout seul l\'appareil que vous utilisez, sauf si vous en choisissez un dans les options. Chaque touche peut être changée dans les options, une fois un jeu choisi.',
-                en: 'Play with the keyboard and mouse, with a gamepad, or with the touch controls shown on screen: Spipu-Doom works out on its own which device you are using, unless you pick one in the options. Every key can be changed in the options, once you have picked a game.',
-                it: 'Gioca con tastiera e mouse, con un controller, o con i comandi touch che compaiono sullo schermo: Spipu-Doom riconosce da solo il dispositivo che stai usando, a meno che tu non ne scelga uno nelle opzioni. Ogni tasto può essere cambiato nelle opzioni, dopo aver scelto un gioco.',
-                es: 'Juega con teclado y ratón, con un mando, o con los controles táctiles que aparecen en pantalla: Spipu-Doom reconoce por sí solo el dispositivo que estás usando, salvo que elijas uno en las opciones. Cada tecla puede cambiarse en las opciones, una vez elegido un juego.'
+                fr: 'Jouez au clavier et à la souris, à la manette, ou avec les commandes tactiles qui s\'affichent à l\'écran : DOOM Online reconnaît tout seul l\'appareil que vous utilisez, sauf si vous en choisissez un dans les options. Chaque touche peut être changée dans les options, une fois un jeu choisi.',
+                en: 'Play with the keyboard and mouse, with a gamepad, or with the touch controls shown on screen: DOOM Online works out on its own which device you are using, unless you pick one in the options. Every key can be changed in the options, once you have picked a game.',
+                it: 'Gioca con tastiera e mouse, con un controller, o con i comandi touch che compaiono sullo schermo: DOOM Online riconosce da solo il dispositivo che stai usando, a meno che tu non ne scelga uno nelle opzioni. Ogni tasto può essere cambiato nelle opzioni, dopo aver scelto un gioco.',
+                es: 'Juega con teclado y ratón, con un mando, o con los controles táctiles que aparecen en pantalla: DOOM Online reconoce por sí solo el dispositivo que estás usando, salvo que elijas uno en las opciones. Cada tecla puede cambiarse en las opciones, una vez elegido un juego.'
             },
             'help.about.what': {
-                fr: 'Spipu-Doom convertit et fait tourner vos fichiers WAD Doom à la volée, entièrement dans le navigateur : rendu WebGL, physique FPS, éléments mouvants et armes fidèles au jeu original.',
-                en: 'Spipu-Doom converts and runs your Doom WAD files on the fly, entirely in the browser: WebGL rendering, FPS physics, moving elements and weapons faithful to the original game.',
-                it: 'Spipu-Doom converte e fa girare i tuoi file WAD di Doom al volo, interamente nel browser: rendering WebGL, fisica FPS, elementi mobili e armi fedeli al gioco originale.',
-                es: 'Spipu-Doom convierte y ejecuta tus archivos WAD de Doom al vuelo, completamente en el navegador: renderizado WebGL, físicas FPS, elementos móviles y armas fieles al juego original.'
+                fr: 'DOOM Online convertit et fait tourner vos fichiers WAD Doom à la volée, entièrement dans le navigateur : rendu WebGL, physique FPS, éléments mouvants et armes fidèles au jeu original.',
+                en: 'DOOM Online converts and runs your Doom WAD files on the fly, entirely in the browser: WebGL rendering, FPS physics, moving elements and weapons faithful to the original game.',
+                it: 'DOOM Online converte e fa girare i tuoi file WAD di Doom al volo, interamente nel browser: rendering WebGL, fisica FPS, elementi mobili e armi fedeli al gioco originale.',
+                es: 'DOOM Online convierte y ejecuta tus archivos WAD de Doom al vuelo, completamente en el navegador: renderizado WebGL, físicas FPS, elementos móviles y armas fieles al juego original.'
             },
             'help.about.author': {
                 fr: 'Développé par Spipu (Laurent Minguet).',
@@ -1049,6 +1049,30 @@ class DoomTranslations {
                 es: 'Objetos en deathmatch'
             },
             // --- Multiplayer ---
+            'multiplayer.screenTitle': {
+                fr: 'Multijoueur',
+                en: 'Multiplayer',
+                it: 'Multigiocatore',
+                es: 'Multijugador'
+            },
+            'multiplayer.join': {
+                fr: 'Rejoindre une partie (code / lien)',
+                en: 'Join game (code / link)',
+                it: 'Unisciti alla partita (codice / link)',
+                es: 'Unirse a la partida (código / enlace)'
+            },
+            'menu.game.multiplayer': {
+                fr: 'Multijoueur (P2P)',
+                en: 'Multiplayer (P2P)',
+                it: 'Multigiocatore (P2P)',
+                es: 'Multijugador (P2P)'
+            },
+            'menu.game.about': {
+                fr: 'À propos',
+                en: 'About',
+                it: 'Informazioni',
+                es: 'Acerca de'
+            },
             'multiplayer.newCooperative': {
                 fr: 'Nouvelle partie coopérative',
                 en: 'New cooperative game',

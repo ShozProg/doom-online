@@ -38,16 +38,16 @@ class WadMenuScreen extends AbstractMenuScreen {
         this._addListItem(listEl, appTranslator.get('menu.game.newGame'), () => {
             this._navigator.openEpisodes(this._wadMeta);
         });
+        this._addListItem(listEl, appTranslator.get('menu.game.multiplayer'), () => {
+            this._navigator.openMultiplayer(this._wadMeta);
+        });
         this._addListItem(listEl, appTranslator.get('menu.game.load'), () => {
             this._openLoadGame();
-        });
-        this._addListItem(listEl, appTranslator.get('help.multiplayer'), () => {
-            this._navigator.openMultiplayer(this._wadMeta);
         });
         this._addListItem(listEl, appTranslator.get('menu.game.options'), () => {
             this._openOptions();
         });
-        this._addListItem(listEl, appTranslator.get('help.about'), () => {
+        this._addListItem(listEl, appTranslator.get('menu.game.about'), () => {
             this._openAbout();
         });
         const quit = this._nav.addItemIn(listEl, appTranslator.get('menu.game.quit'), () => {

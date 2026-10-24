@@ -92,7 +92,10 @@ class AppMenuAbstractScreen {
 
     // List screen: brand, panel, subtitle and the empty selectable list.
     _buildPanel(subtitleText) {
-        this._addTitle(this._titleText());
+        const brandTitle = this._titleText();
+        if (brandTitle) {
+            this._addTitle(brandTitle);
+        }
 
         const panel      = this._addElement('div', 'app-menu-panel');
         const subtitleEl = AppMenuDom.addText(panel, 'app-menu-subtitle', subtitleText);
@@ -221,9 +224,7 @@ class AppMenuAbstractScreen {
         if (this._footerEl === null) {
             return;
         }
-        this._footerEl.textContent = this._footerPrefix() + ' ' + appBootstrap.getVersion()
-            + ' - ' + appBootstrap.getStatsText((bytes) => AppMenuDom.formatMegabytes(bytes))
-            + ' - © ' + new Date().getFullYear() + ' Spipu';
+        this._footerEl.textContent = 'DOOM ONLINE • DEATHMATCH • WebRTC P2P';
     }
 
     // --- DOM helpers (AppMenuDom wrappers defaulting to the screen container) ---

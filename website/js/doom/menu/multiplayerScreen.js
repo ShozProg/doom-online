@@ -26,7 +26,7 @@ class MultiplayerScreen extends AbstractMenuScreen {
     }
 
     _build() {
-        const {listEl} = this._buildWadMenu(this._wadMeta, appTranslator.get('help.multiplayer'));
+        const {listEl} = this._buildWadMenu(this._wadMeta, appTranslator.get('multiplayer.screenTitle'));
 
         const deathmatch = this._addNewGameItem(listEl, 'multiplayer.newDeathmatch', DoomDeathmatchRules);
         const join       = this._addListItem(listEl, appTranslator.get('multiplayer.join'), () => this._join.start());

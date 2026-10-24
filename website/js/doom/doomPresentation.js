@@ -174,7 +174,7 @@ class DoomPresentation {
             .bindRules(this._rules)
             .bindPingSource(this._pingSource)
             .setLevelInfo(this._levelInfo.wadName, this._levelInfo.levelCode, this._levelInfo.skill, this._levelInfo.levelName)
-            .addDescription('(c)2026 Spipu')
+            .addDescription('DOOM Online')
         ;
         this._hud.bindPlayerBodies(this._level.getBodyViews(), this._level.getPlayerColors());
         if (this._automap !== null) {
