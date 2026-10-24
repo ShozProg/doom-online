@@ -53,6 +53,13 @@
                     }
                 });
             }
+            if ('caches' in window) {
+                caches.keys().then(keys => {
+                    for (const k of keys) {
+                        try { caches.delete(k); } catch (_) {}
+                    }
+                });
+            }
             // Disable PWA service worker mode for GitHub Pages to load directly, stably and fast
             appBootstrap.disablePwaMode();
             appBootstrap.addBootstrapDefinition('./js/libBootstrap.json');

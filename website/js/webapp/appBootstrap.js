@@ -191,6 +191,12 @@ class AppBootstrap {
     }
 
     init() {
+        if (this._hasStarted || this._isInitialized) {
+            console.warn("AppBootstrap - duplicate init ignored");
+            return;
+        }
+        this._hasStarted = true;
+        this._isInitialized = true;
         if (this.definitionUrls.length === 0) {
             this.logError("No bootstrap definition added - use appBootstrap.addBootstrapDefinition(jsonUrl)");
             return;
@@ -340,15 +346,19 @@ class AppBootstrap {
             return;
         }
 
-        this.logDebug('Need update');
+        this.logDebug('Updated to latest version');
         this.trackVersionEvent('update', serverDefinition);
         this.appDefinition = serverDefinition;
         this.appDefinition.saveToLocalStorage();
-        if (!this.pwaMode) {
+        if (this.pwaMode) {
             this.clearServiceWorkerCache();
+            if (this.serviceWorker && this.serviceWorker.active) {
+                this.serviceWorker.active.postMessage("clearCache");
+            }
             return;
         }
-        this.serviceWorker.active.postMessage("clearCache");
+        this.loadApp();
+        return;
     }
 
     async clearServiceWorkerCache() {
@@ -364,6 +374,10 @@ class AppBootstrap {
     }
 
     async loadApp() {
+        if (this._isAppLoading) {
+            return;
+        }
+        this._isAppLoading = true;
         if (this.pwaMode) {
             this.serviceWorker.active.postMessage("resetStats");
         }
@@ -441,9 +455,15 @@ class AppBootstrap {
     }
 
     loadNextJsFile() {
+        const rawFile = this.appDefinition.getFile('js', this.currentFile);
+        if (document.querySelector('script[data-app-file="' + rawFile + '"]')) {
+            this.jsSuccess();
+            return;
+        }
         let htmlTag = document.createElement("script");
         htmlTag.setAttribute("type", "text/javascript");
-        htmlTag.setAttribute("src", this.buildUrl(this.appDefinition.getFile('js', this.currentFile)));
+        htmlTag.setAttribute("data-app-file", rawFile);
+        htmlTag.setAttribute("src", this.buildUrl(rawFile));
         htmlTag.onload  = this.jsSuccess.bind(this);
         htmlTag.onerror = this.jsFailed.bind(this);
         document.body.appendChild(htmlTag);
@@ -469,6 +489,10 @@ class AppBootstrap {
     }
 
     startApp() {
+        if (this._isAppStarted) {
+            return;
+        }
+        this._isAppStarted = true;
         let progressBarContainer = document.getElementById('progressBarContainer');
         if (progressBarContainer) {
             progressBarContainer.remove();
@@ -522,16 +546,3 @@ class AppBootstrap {
 }
 
 var appBootstrap = new AppBootstrap();
-
-function startBootstrap() {
-    if (!appBootstrap._hasStarted) {
-        appBootstrap._hasStarted = true;
-        appBootstrap.init();
-    }
-}
-
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", startBootstrap);
-} else {
-    setTimeout(startBootstrap, 0);
-}
