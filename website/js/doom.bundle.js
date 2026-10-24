@@ -15692,16 +15692,14 @@ class NetConfig {
 
 // Global public STUN servers for robust NAT traversal across different networks
 NetConfig.STUN_SERVERS              = [
-    'stun:stun.qq.com:3478',
-    'stun:stun.syncthing.net:3478',
-    'stun:stun.nextcloud.com:443',
-    'stun:stun.miwifi.com:3478',
-    'stun:stun.cloudflare.com:3478',
     'stun:stun.l.google.com:19302',
     'stun:stun1.l.google.com:19302',
-    'stun:stun2.l.google.com:19302'
+    'stun:stun2.l.google.com:19302',
+    'stun:stun3.l.google.com:19302',
+    'stun:stun4.l.google.com:19302',
+    'stun:stun.cloudflare.com:3478'
 ];
-NetConfig.GATHER_TIMEOUT_MS         = 4000;
+NetConfig.GATHER_TIMEOUT_MS         = 2000;
 NetConfig.CONNECT_TIMEOUT_MS        = 15000;
 NetConfig.ANSWER_CONNECT_TIMEOUT_MS = 35000;
 NetConfig.CHANNEL_NAME              = 'net';
@@ -16621,7 +16619,7 @@ class NetPeerLink extends NetLink {
             });
         }
 
-        // If WebRTC direct P2P takes longer than 5 seconds (symmetric NAT / strict firewall),
+        // If WebRTC direct P2P takes longer than 8 seconds (symmetric NAT / strict firewall),
         // seamlessly switch to signaling relay fallback so matchmaking never hangs.
         this._relayTimer = setTimeout(() => {
             if (!this.isOpen() && !this.isClosed()) {
@@ -16629,7 +16627,7 @@ class NetPeerLink extends NetLink {
                 this._usingRelay = true;
                 this._notifyOpen();
             }
-        }, 5000);
+        }, 8000);
     }
 
     async createOffer() {
@@ -16677,33 +16675,23 @@ class NetPeerLink extends NetLink {
         return NetPeerLink._describeCandidate(local) + ' → ' + NetPeerLink._describeCandidate(remote) + ' (' + local.protocol + ')';
     }
 
-    // The channel enters 'closing' before its close event clears the open flag: a
-    // send in between would throw out of the game loop.
+    // ALWAYS prefer direct WebRTC DataChannel (UDP P2P) when open for 60 FPS low-latency gaming.
+    // Fall back to relay only if WebRTC channel is closed or unavailable.
     _send(message) {
-        if (this._usingRelay && this._relaySend) {
-            try {
-                this._relaySend(message);
-                return true;
-            } catch (err) {
-                console.error('Relay send failed:', err);
-                return false;
-            }
-        }
         if (this._channel && this._channel.readyState === 'open') {
             try {
                 this._channel.send(message);
                 return true;
             } catch (err) {
-                console.warn('WebRTC channel send failed, falling back to relay:', err);
+                console.warn('WebRTC data channel send error, falling back to relay:', err);
             }
         }
         if (this._relaySend) {
             try {
                 this._relaySend(message);
-                this._usingRelay = true;
                 return true;
             } catch (err) {
-                console.error('Relay fallback send failed:', err);
+                console.error('Relay send failed:', err);
             }
         }
         return false;
@@ -16786,9 +16774,9 @@ class NetPeerLink extends NetLink {
                 clearTimeout(this._relayTimer);
                 this._relayTimer = null;
             }
-            if (!this._usingRelay) {
-                this._notifyOpen();
-            }
+            console.log('>>> WebRTC DIRECT P2P DATA CHANNEL OPEN (High Performance UDP) <<<');
+            this._usingRelay = false;
+            this._notifyOpen();
         });
         this._channel.addEventListener('message', (event) => this._notifyMessage(event.data));
         this._channel.addEventListener('close', () => this._notifyClose(NetLink.CLOSED));
@@ -18257,11 +18245,18 @@ class NetOnlineSignalingChannel {
             this._emit('message', { topic, data });
             if (data && data.type === 'relay' && data.sender) {
                 let decoded = data.data;
-                if (data.isHex && typeof data.data === 'string') {
+                if (data.isBin && typeof data.data === 'string') {
+                    const binary = atob(data.data);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    decoded = bytes.buffer;
+                } else if (data.isHex && typeof data.data === 'string') {
                     const rawBytes = NetHex.toBytes(data.data);
                     decoded = new Uint8Array(rawBytes).buffer;
                 }
-                if (decoded !== undefined) {
+                if (decoded !== undefined && decoded !== null) {
                     this._emit('relay', { sender: data.sender, data: decoded });
                 }
             }
@@ -18272,18 +18267,21 @@ class NetOnlineSignalingChannel {
 
     sendRelay(targetId, message) {
         let payloadData = message;
-        let isHex = false;
-        if (message instanceof ArrayBuffer) {
-            payloadData = NetHex.fromBytes(new Uint8Array(message));
-            isHex = true;
-        } else if (message instanceof Uint8Array) {
-            payloadData = NetHex.fromBytes(message);
-            isHex = true;
+        let isBin = false;
+        if (message instanceof ArrayBuffer || message instanceof Uint8Array) {
+            const bytes = (message instanceof ArrayBuffer) ? new Uint8Array(message) : message;
+            let binary = '';
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            payloadData = btoa(binary);
+            isBin = true;
         }
         this.publish(this.getRelayTopic(targetId), {
             type: 'relay',
             sender: this._clientId,
-            isHex: isHex,
+            isBin: isBin,
             data: payloadData
         });
     }

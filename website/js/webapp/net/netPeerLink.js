@@ -40,7 +40,7 @@ class NetPeerLink extends NetLink {
             });
         }
 
-        // If WebRTC direct P2P takes longer than 5 seconds (symmetric NAT / strict firewall),
+        // If WebRTC direct P2P takes longer than 8 seconds (symmetric NAT / strict firewall),
         // seamlessly switch to signaling relay fallback so matchmaking never hangs.
         this._relayTimer = setTimeout(() => {
             if (!this.isOpen() && !this.isClosed()) {
@@ -48,7 +48,7 @@ class NetPeerLink extends NetLink {
                 this._usingRelay = true;
                 this._notifyOpen();
             }
-        }, 5000);
+        }, 8000);
     }
 
     async createOffer() {
@@ -96,33 +96,23 @@ class NetPeerLink extends NetLink {
         return NetPeerLink._describeCandidate(local) + ' → ' + NetPeerLink._describeCandidate(remote) + ' (' + local.protocol + ')';
     }
 
-    // The channel enters 'closing' before its close event clears the open flag: a
-    // send in between would throw out of the game loop.
+    // ALWAYS prefer direct WebRTC DataChannel (UDP P2P) when open for 60 FPS low-latency gaming.
+    // Fall back to relay only if WebRTC channel is closed or unavailable.
     _send(message) {
-        if (this._usingRelay && this._relaySend) {
-            try {
-                this._relaySend(message);
-                return true;
-            } catch (err) {
-                console.error('Relay send failed:', err);
-                return false;
-            }
-        }
         if (this._channel && this._channel.readyState === 'open') {
             try {
                 this._channel.send(message);
                 return true;
             } catch (err) {
-                console.warn('WebRTC channel send failed, falling back to relay:', err);
+                console.warn('WebRTC data channel send error, falling back to relay:', err);
             }
         }
         if (this._relaySend) {
             try {
                 this._relaySend(message);
-                this._usingRelay = true;
                 return true;
             } catch (err) {
-                console.error('Relay fallback send failed:', err);
+                console.error('Relay send failed:', err);
             }
         }
         return false;
@@ -205,9 +195,9 @@ class NetPeerLink extends NetLink {
                 clearTimeout(this._relayTimer);
                 this._relayTimer = null;
             }
-            if (!this._usingRelay) {
-                this._notifyOpen();
-            }
+            console.log('>>> WebRTC DIRECT P2P DATA CHANNEL OPEN (High Performance UDP) <<<');
+            this._usingRelay = false;
+            this._notifyOpen();
         });
         this._channel.addEventListener('message', (event) => this._notifyMessage(event.data));
         this._channel.addEventListener('close', () => this._notifyClose(NetLink.CLOSED));

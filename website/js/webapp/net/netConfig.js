@@ -6,16 +6,14 @@ class NetConfig {
 
 // Global public STUN servers for robust NAT traversal across different networks
 NetConfig.STUN_SERVERS              = [
-    'stun:stun.qq.com:3478',
-    'stun:stun.syncthing.net:3478',
-    'stun:stun.nextcloud.com:443',
-    'stun:stun.miwifi.com:3478',
-    'stun:stun.cloudflare.com:3478',
     'stun:stun.l.google.com:19302',
     'stun:stun1.l.google.com:19302',
-    'stun:stun2.l.google.com:19302'
+    'stun:stun2.l.google.com:19302',
+    'stun:stun3.l.google.com:19302',
+    'stun:stun4.l.google.com:19302',
+    'stun:stun.cloudflare.com:3478'
 ];
-NetConfig.GATHER_TIMEOUT_MS         = 4000;
+NetConfig.GATHER_TIMEOUT_MS         = 2000;
 NetConfig.CONNECT_TIMEOUT_MS        = 15000;
 NetConfig.ANSWER_CONNECT_TIMEOUT_MS = 35000;
 NetConfig.CHANNEL_NAME              = 'net';

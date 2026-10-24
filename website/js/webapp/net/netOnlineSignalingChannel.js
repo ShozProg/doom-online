@@ -225,11 +225,18 @@ class NetOnlineSignalingChannel {
             this._emit('message', { topic, data });
             if (data && data.type === 'relay' && data.sender) {
                 let decoded = data.data;
-                if (data.isHex && typeof data.data === 'string') {
+                if (data.isBin && typeof data.data === 'string') {
+                    const binary = atob(data.data);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    decoded = bytes.buffer;
+                } else if (data.isHex && typeof data.data === 'string') {
                     const rawBytes = NetHex.toBytes(data.data);
                     decoded = new Uint8Array(rawBytes).buffer;
                 }
-                if (decoded !== undefined) {
+                if (decoded !== undefined && decoded !== null) {
                     this._emit('relay', { sender: data.sender, data: decoded });
                 }
             }
@@ -240,18 +247,21 @@ class NetOnlineSignalingChannel {
 
     sendRelay(targetId, message) {
         let payloadData = message;
-        let isHex = false;
-        if (message instanceof ArrayBuffer) {
-            payloadData = NetHex.fromBytes(new Uint8Array(message));
-            isHex = true;
-        } else if (message instanceof Uint8Array) {
-            payloadData = NetHex.fromBytes(message);
-            isHex = true;
+        let isBin = false;
+        if (message instanceof ArrayBuffer || message instanceof Uint8Array) {
+            const bytes = (message instanceof ArrayBuffer) ? new Uint8Array(message) : message;
+            let binary = '';
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            payloadData = btoa(binary);
+            isBin = true;
         }
         this.publish(this.getRelayTopic(targetId), {
             type: 'relay',
             sender: this._clientId,
-            isHex: isHex,
+            isBin: isBin,
             data: payloadData
         });
     }
