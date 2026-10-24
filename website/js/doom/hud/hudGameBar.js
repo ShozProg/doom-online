@@ -16,20 +16,20 @@
 class HudGameBar extends AbstractHud {
     constructor(engine) {
         super(engine);
-        this._profile     = null;
-        this._itemCatalog = null;
-        this._stats       = null;
-        this._rules       = null;
-        this._bodies      = null;
-        this._slotColors  = [];
-        this._pingSource  = null;
-        this._root        = null;
-        this._canvas      = null;
-        this._ctx         = null;
-        this._images      = {};
+        this._profile      = null;
+        this._itemCatalog  = null;
+        this._stats        = null;
+        this._rules        = null;
+        this._bodies       = null;
+        this._slotColors   = [];
+        this._pingSource   = null;
+        this._root         = null;
+        this._canvas       = null;
+        this._ctx          = null;
+        this._images       = {};
         this._imagesLoaded = false;
-        this._els         = {};
-        this._effectEls   = {};
+        this._els          = {};
+        this._effectEls    = {};
 
         // Animation state for Doomguy face
         this._faceLookTick = 0;
@@ -55,21 +55,56 @@ class HudGameBar extends AbstractHud {
         ];
 
         let loadedCount = 0;
+        const total = assetNames.length;
+
+        // Base URL fallback if embedded base64 is somehow absent
         let basePath = './assets/';
         try {
-            basePath = new URL('assets/', window.location.href).href;
+            if (typeof window !== 'undefined' && window.location) {
+                const u = new URL(window.location.href);
+                let p = u.pathname;
+                if (!p.endsWith('/')) {
+                    const lastSlash = p.lastIndexOf('/');
+                    const lastSeg = p.substring(lastSlash + 1);
+                    p = lastSeg.includes('.') ? p.substring(0, lastSlash + 1) : (p + '/');
+                }
+                basePath = u.origin + p + 'assets/';
+            }
         } catch (_) {}
 
         for (const name of assetNames) {
             const img = new Image();
             img.onload = () => {
                 loadedCount++;
-                if (loadedCount >= assetNames.length) {
+                if (loadedCount >= total) {
                     this._imagesLoaded = true;
                 }
             };
-            img.src = basePath + name + '.png';
+            img.onerror = () => {
+                // Ignore error safely: safeDraw checks naturalWidth > 0
+            };
+
+            // Use embedded Base64 Data URI if available (100% synchronous & instant)
+            if (typeof DOOM_STBAR_ASSETS !== 'undefined' && DOOM_STBAR_ASSETS[name]) {
+                img.src = DOOM_STBAR_ASSETS[name];
+            } else {
+                img.src = basePath + name + '.png';
+            }
             this._images[name] = img;
+        }
+    }
+
+    _safeDraw(ctx, img, dx, dy, dw, dh) {
+        if (!img || !img.complete || !img.naturalWidth) return false;
+        try {
+            if (dw !== undefined && dh !== undefined) {
+                ctx.drawImage(img, dx, dy, dw, dh);
+            } else {
+                ctx.drawImage(img, dx, dy);
+            }
+            return true;
+        } catch (_) {
+            return false;
         }
     }
 
@@ -172,10 +207,14 @@ class HudGameBar extends AbstractHud {
     update() {
         if (!this._user || !this._root || !this._ctx) return;
 
-        const user = this._user;
-        this._renderStatusBar(user);
-        this._updateEffects(user);
-        this._updateFps();
+        try {
+            const user = this._user;
+            this._renderStatusBar(user);
+            this._updateEffects(user);
+            this._updateFps();
+        } catch (err) {
+            console.error('Error in HudGameBar.update:', err);
+        }
     }
 
     _renderStatusBar(user) {
@@ -183,44 +222,42 @@ class HudGameBar extends AbstractHud {
         const imgs = this._images;
 
         // 1. Draw base STBAR background (320x32)
-        if (imgs.stbar && imgs.stbar.complete) {
-            ctx.drawImage(imgs.stbar, 0, 0, 320, 32);
-        } else {
+        if (!this._safeDraw(ctx, imgs.stbar, 0, 0, 320, 32)) {
+            // Metallic DOOM-grey fallback
             ctx.fillStyle = '#222222';
             ctx.fillRect(0, 0, 320, 32);
             ctx.fillStyle = '#3a3a3a';
             ctx.fillRect(0, 0, 320, 2);
+            ctx.fillStyle = '#111111';
+            ctx.fillRect(0, 30, 320, 2);
         }
 
-        const scoresFrags = (this._rules !== null && this._rules.scoresFrags());
+        const scoresFrags = Boolean(this._rules && typeof this._rules.scoresFrags === 'function' && this._rules.scoresFrags());
 
         // 2. Active Weapon AMMO (tall red numbers ending at X = 44, Y = 3)
-        const weaponCode = user.getActiveWeapon();
-        const weapon = this._itemCatalog ? this._itemCatalog.getWeapon(weaponCode) : null;
+        const weaponCode = (typeof user.getActiveWeapon === 'function') ? user.getActiveWeapon() : null;
+        const weapon = (this._itemCatalog && weaponCode) ? this._itemCatalog.getWeapon(weaponCode) : null;
         const ammoType = weapon ? weapon.getAmmoType() : null;
         if (ammoType !== null) {
-            const currentAmmo = user.getAmmo(ammoType);
+            const currentAmmo = (typeof user.getAmmo === 'function') ? user.getAmmo(ammoType) : 0;
             this._drawTallRedNumber(ctx, currentAmmo, 44, 3);
         }
 
         // 3. HEALTH (tall red numbers ending at X = 88, Y = 3, percent at 90, 3)
-        const energy = user.getEnergy();
+        const energy = (typeof user.getEnergy === 'function') ? user.getEnergy() : 100;
         this._drawTallRedNumber(ctx, Math.ceil(energy), 88, 3);
-        if (imgs.sttprcnt && imgs.sttprcnt.complete) {
-            ctx.drawImage(imgs.sttprcnt, 90, 3);
-        }
+        this._safeDraw(ctx, imgs.sttprcnt, 90, 3);
 
         // 4. ARMS or FRAGS (X = 104 to 143)
         if (scoresFrags) {
-            // Deathmatch: STBAR already has "FRAGS" header at (104..143).
+            // Deathmatch: STBAR has "FRAGS" header at (104..143).
             // Draw player frags ending at X = 138, Y = 3
-            const ownFrags = this._stats ? this._stats.fragScore(user.getPlayerId()) : 0;
+            const ownFrags = (this._stats && typeof this._stats.fragScore === 'function' && typeof user.getPlayerId === 'function')
+                ? this._stats.fragScore(user.getPlayerId()) : 0;
             this._drawTallRedNumber(ctx, ownFrags, 138, 3);
         } else {
             // Single-player / Coop: Draw STARMS background & weapon numbers 2..7
-            if (imgs.starms && imgs.starms.complete) {
-                ctx.drawImage(imgs.starms, 104, 0);
-            }
+            this._safeDraw(ctx, imgs.starms, 104, 0);
             this._drawArmsWeapons(ctx, user);
         }
 
@@ -228,11 +265,9 @@ class HudGameBar extends AbstractHud {
         this._drawDoomguyFace(ctx, user, energy);
 
         // 6. ARMOR (tall red numbers ending at X = 219, Y = 3, percent at 221, 3)
-        const armor = user.getArmor();
+        const armor = (typeof user.getArmor === 'function') ? user.getArmor() : 0;
         this._drawTallRedNumber(ctx, Math.ceil(armor), 219, 3);
-        if (imgs.sttprcnt && imgs.sttprcnt.complete) {
-            ctx.drawImage(imgs.sttprcnt, 221, 3);
-        }
+        this._safeDraw(ctx, imgs.sttprcnt, 221, 3);
 
         // 7. KEYS (X = 239)
         this._drawKeys(ctx, user);
@@ -257,7 +292,6 @@ class HudGameBar extends AbstractHud {
         this._faceLookTick++;
         if (this._faceLookTick > 80) {
             this._faceLookTick = 0;
-            // 70% straight, 15% left, 15% right
             const r = Math.random();
             this._faceLookDir = (r < 0.7) ? 0 : (r < 0.85 ? 1 : 2);
         }
@@ -265,7 +299,7 @@ class HudGameBar extends AbstractHud {
         let faceKey = 'stfst00';
         if (energy <= 0) {
             faceKey = 'stfdead0';
-        } else if (user.isEffectVisible && user.isEffectVisible('invulnerability')) {
+        } else if (typeof user.isEffectVisible === 'function' && user.isEffectVisible('invulnerability')) {
             faceKey = 'stfgod0';
         } else if (this._ouchTicks > 0 && imgs.stfouch0) {
             faceKey = 'stfouch0';
@@ -284,17 +318,15 @@ class HudGameBar extends AbstractHud {
             }
         }
 
-        const faceImg = imgs[faceKey];
-        if (faceImg && faceImg.complete) {
-            ctx.drawImage(faceImg, 143, 1);
-        }
+        this._safeDraw(ctx, imgs[faceKey], 143, 1);
     }
 
     _drawArmsWeapons(ctx, user) {
-        const slots = this._profile ? this._profile.weaponSlots() : null;
+        const slots = (this._profile && typeof this._profile.weaponSlots === 'function')
+            ? this._profile.weaponSlots() : null;
         if (!slots) return;
-        const slotByWeapon = slots.byWeapon;
-        const ownedCodes = new Set(user.getOwnedWeaponCodes());
+        const slotByWeapon = slots.byWeapon || {};
+        const ownedCodes = (typeof user.getOwnedWeaponCodes === 'function') ? user.getOwnedWeaponCodes() : [];
         const ownedSlots = new Set();
         for (const owned of ownedCodes) {
             const slot = slotByWeapon[owned];
@@ -302,8 +334,6 @@ class HudGameBar extends AbstractHud {
         }
 
         // Slot positions on starms.png (offset 104, 0)
-        // Row 1 (weapons 2, 3, 4): Y = 4. X = 111, 123, 135
-        // Row 2 (weapons 5, 6, 7): Y = 13. X = 111, 123, 135
         const pos = {
             2: { x: 111, y: 4 },
             3: { x: 123, y: 4 },
@@ -315,35 +345,33 @@ class HudGameBar extends AbstractHud {
 
         for (let s = 2; s <= 7; s++) {
             if (ownedSlots.has(s)) {
-                const img = this._images['stysnum' + s];
-                if (img && img.complete) {
-                    ctx.drawImage(img, pos[s].x, pos[s].y);
-                }
+                this._safeDraw(ctx, this._images['stysnum' + s], pos[s].x, pos[s].y);
             }
         }
     }
 
     _drawKeys(ctx, user) {
         const imgs = this._images;
+        const has = (code) => (typeof user.hasItem === 'function' && user.hasItem(code));
+
         // Blue: Row 1 (Y = 3)
-        if (user.hasItem('blueKey')) {
+        if (has('blueKey') || has('blueCard') || has('blueSkull')) {
             const img = imgs.stkeys0 || imgs.stkeys3;
-            if (img && img.complete) ctx.drawImage(img, 239, 3);
+            this._safeDraw(ctx, img, 239, 3);
         }
         // Yellow: Row 2 (Y = 13)
-        if (user.hasItem('yellowKey')) {
+        if (has('yellowKey') || has('yellowCard') || has('yellowSkull')) {
             const img = imgs.stkeys1 || imgs.stkeys4;
-            if (img && img.complete) ctx.drawImage(img, 239, 13);
+            this._safeDraw(ctx, img, 239, 13);
         }
         // Red: Row 3 (Y = 23)
-        if (user.hasItem('redKey')) {
+        if (has('redKey') || has('redCard') || has('redSkull')) {
             const img = imgs.stkeys2 || imgs.stkeys5;
-            if (img && img.complete) ctx.drawImage(img, 239, 23);
+            this._safeDraw(ctx, img, 239, 23);
         }
     }
 
     _drawAmmoTable(ctx, user) {
-        // Types: bullets, shells, rockets, cells
         const ammoRows = [
             { type: 'bullets', y: 5 },
             { type: 'shells',  y: 11 },
@@ -352,56 +380,54 @@ class HudGameBar extends AbstractHud {
         ];
 
         for (const row of ammoRows) {
-            const cur = user.getAmmo(row.type);
-            const max = user.getAmmoMax(row.type);
+            const cur = (typeof user.getAmmo === 'function') ? user.getAmmo(row.type) : 0;
+            const max = (typeof user.getAmmoMax === 'function') ? user.getAmmoMax(row.type) : 0;
             this._drawYellowNumber(ctx, cur, 286, row.y);
             this._drawYellowNumber(ctx, max, 312, row.y);
         }
     }
 
     _drawTallRedNumber(ctx, value, rightX, y) {
-        const str = String(Math.max(0, Math.floor(value)));
+        const num = Math.max(0, Math.floor(Number(value) || 0));
+        const str = String(num);
         let curX = rightX;
         for (let i = str.length - 1; i >= 0; i--) {
             const ch = str[i];
             const img = this._images['sttnum' + ch];
-            const w = (ch === '1' && img && img.width) ? img.width : 14;
+            const w = (ch === '1' && img && img.naturalWidth) ? img.naturalWidth : 14;
             curX -= w;
-            if (img && img.complete) {
-                ctx.drawImage(img, curX, y);
-            }
+            this._safeDraw(ctx, img, curX, y);
         }
         return curX;
     }
 
     _drawYellowNumber(ctx, value, rightX, y) {
-        const str = String(Math.max(0, Math.floor(value)));
+        const num = Math.max(0, Math.floor(Number(value) || 0));
+        const str = String(num);
         let curX = rightX;
         for (let i = str.length - 1; i >= 0; i--) {
             const ch = str[i];
             const img = this._images['stysnum' + ch];
             const w = 4;
             curX -= w;
-            if (img && img.complete) {
-                ctx.drawImage(img, curX, y);
-            }
+            this._safeDraw(ctx, img, curX, y);
         }
         return curX;
     }
 
     _updateEffects(user) {
-        const effects = user.getEffects();
+        const effects = (typeof user.getEffects === 'function') ? user.getEffects() : {};
         for (const effectLine of HudGameBar.EFFECT_LINES) {
             const el = this._effectEls[effectLine.code];
             if (!el) continue;
             const remainingMs = effects[effectLine.code];
-            const active = (effectLine.timed ? (remainingMs !== undefined) : user.hasItem(effectLine.code));
+            const active = (effectLine.timed ? (remainingMs !== undefined) : (typeof user.hasItem === 'function' && user.hasItem(effectLine.code)));
             el.style.display = (active ? 'block' : 'none');
             if (!active) continue;
 
             if (effectLine.timed) {
                 el.innerText = appTranslator.get(effectLine.labelCode) + ' ' + AppMenuDom.formatClock(Math.ceil(remainingMs / 1000), 1);
-                el.style.visibility = (user.isEffectVisible(effectLine.code) ? 'visible' : 'hidden');
+                el.style.visibility = ((typeof user.isEffectVisible === 'function' && user.isEffectVisible(effectLine.code)) ? 'visible' : 'hidden');
             } else {
                 el.innerText = appTranslator.get(effectLine.labelCode);
             }
@@ -409,11 +435,11 @@ class HudGameBar extends AbstractHud {
     }
 
     _updateFps() {
-        const visible = doomSettings.getDisplayShowFps();
+        const visible = (typeof doomSettings !== 'undefined' && typeof doomSettings.getDisplayShowFps === 'function' && doomSettings.getDisplayShowFps());
         this._els.fpsBlock.style.display = (visible ? 'block' : 'none');
         if (!visible) return;
 
-        const fps  = this._engine.getFps();
+        const fps  = (this._engine && typeof this._engine.getFps === 'function') ? this._engine.getFps() : 60;
         const ping = (this._pingSource !== null ? this._pingSource() : null);
         this._els.fpsValue.innerText = (ping !== null
             ? appTranslator.get('hud.fpsPing', { value: fps, ping: Math.round(ping) })

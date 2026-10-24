@@ -57162,6 +57162,53 @@ class HudDoomDebug extends HudDebug {
 }
 
 ;
+// === /js/doom/hud/hudGameBarAssets.js ===
+// Embedded authentic DOOM status bar (STBAR) graphics (base64 Data URIs)
+// Pre-loaded synchronously to guarantee zero network latency, no 404s, and no canvas crashes
+const DOOM_STBAR_ASSETS = {
+  "stbar": "data:image/png;base64,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",
+  "starms": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAgCAYAAACg7Il/AAADkklEQVR4nL2Yq3IqQRRF+YfISERkJAKJQCCQCCQSgYxEICMRkfkAPiCfN7dWV62pPZ2ewKQqV5yafuw+vfv0eTTMXl9fu7e3t+7r66v7+Pjozudz6SOn06k7Ho8DORwO5cscAr7GMVbj1Jk69vv9Nxx9cJ+fn4XPTIJ0drtdAfNF1ut1kcVi0a1Wq2673RZBiRja9vmCte161kAGoe24c3zhwZd9wMFpNpt1s5eXl9J5f3/vLpdLfxq/WpI5rbtcLguJKXg2nYLvCc7n8wLGgnzTalorrUabQ/Gdgvd2HsUPCGrBVABYH/E6vf7WhvfwzE3BY9VCUB+8Xq+TFID5ywP1BOkwgQU1dzqwizIYvOLE2x7D239U/4AgQAgy2FJAZJlC0iJT8FhrDK/1mhY0SLxinJcoUkGmEK+CNRkkj+BrH7yHH1iQjgQ5vQpos1CLeEVJ8FG8VmrhnUv8IA/qg5ySoHl+fu4FMAKOr+M6+V/hv12xQZKm5jRWkKwktLOPNYzIvEL6jGc1sWpYOawwttU9IIiirCRK1lrmzPwGiaSUuu6yFj1PT0+TK8mAIJuZqD2Bp0bSR2hzBTq4QYUk3qDYbDaF4NRK0rQgCtzMDeskKkFJcBiuCzxtMQpjWvDXido8mGlGH8sUYB+C+gz4FsH0Vw/0a4Ja0CtDaVowU0HmQaMSHfWTLElCsK4kNanRSsIGdKwkWoJx81QudsNMG/euGHxdSWqCo5UE5bUPJkEdmLm8MseTYPpsXrUE04XywduqJGB7gq0oToIZIC2C4tOnWhbPSqKuscozIEgOspIwyZjfFEyPeKj/Vkl8sNaVZBe/SzJwMkem85t2MoJt5/VrRX+j+NjIOt1bsH4P1j+a3CSTa/7Yyc29uixtSVCcbiRWgvnKaVaSJKhCrl8XaI3Z1mLooJ9+SN+DWvJyrfgkOfoeTIKMIWBsS1LfqedsI+jJPhvb1v/SH/PxMSDIqVRoNPHDuSU4eWtcsmPrEJ2/Hm9ddbMWZ+K83W5FjObsZzv7KK5xOU9N9t8Fo9m5DJ5BkGjBmiB/hSCaPvu2LXnZzzYHzzEI2k7xipMga38kqJ+lb6jIfImYLuxLyuBLn7Um177nHhkkAwu2rrhekCknndlcWKcesJmWzJemq8x7ph3L7CjBOoqTZD5ipybq/HFkX6L5vMt9+itmUpBvO79jYrlzg3oeXa11Yi2ZrVSTAsF/GkbPDaA9rRUAAAAASUVORE298hw=",
+  "stfst00": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAdCAYAAACg7Il/AAAC1ElEQVR4nI2WoXIbQQyG7w0KAgoKCgwKDAIMAgoMAgwCAgwMDAIMCgwKAgoMDAwKCgoCDxgYBhoG+AEKCgMLCwsLt/Np8u3IvUucndHsWif9v1a70rppesbVxbtyczmospx8KF+uhx1Brw0+fVhHYzQ8C+Pp+H1ZT8/L95uLcv/5shxWV+XnZlqF3+jbxccg0ocZjBfBccjAP9bXFXR/OwlQBTvEHUHCTnpJUGL0dTaqJIAAig5CdLvluJMqdwAGMhy8OSZAMT5/W3fALIFRKkTIbN6dBc7SIcDQXALCGhIOE0HHjJ2zgYHhDtB1CDBGcj4l8RZlIoX0IZmQuZcAMPMvCTnPen572KwzmSTPEpgaDhQQAATsk/zdS+BN6iUgSiLjWnI9EYEAyCKwdvjg66GfJPizuy2/22WtgZwO1hYfNthKAMaLBESFU3m4C2Et0eO3eYjACKCkpWmaOOAOAYAeDh8xQjzgX3eLICLiv/erENboAM/AFqnXGOxKMBkNatWSR4kQQNCZf9boFGsBf1IIViXwen2ajkJBBOv1umy327JcLiuI19hbgm42mx3ZmWKwrJfGlkvkRkCUHByz39HbTW0VfMu26HMW+N74g9lDtB1LBiizZ5B1ufPqnzEbozFCDpWImLnf3qj/b5YzNtkn7zBSxJDNgjIanMp+E478LvtVKY8PsY7btd+ETd41GO6g1oFt2v6CcYAf2nD29dpuFiGs0QXpoQ1bizG/ckdvgjcAg3B8SkFudnbO3AhNFz4+UHzvvGgwkk+McLKgPBcjdIfm2wK0qsHoRM8gInNINLk9AGC6TAu63DZYe4ZPraM7fHuJAgffhXZ+1iu+Edjig29czeeGr1huw5JFrnfzECPONhbps9E7qD5btrVgQfFfKf9fsgZs1VG5rxkYks9MYtFZXBkc21eD53TZn2qKDm2IKbLvnEzLqd34imWxC5/y/wce8gIibbMwmgAAAABJRU5ETb3yHA==",
+  "stfst01": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAdCAYAAACg7Il/AAAC3ElEQVR4nJ2WoXcTQRCH8x8gKhAIRAUioiKiIiKiIqKiIiIioiICcQJRgYioqKhAICoqTiAiEJUnIyIRCGQFAolAIJHL+zb5lgl3aXjce/N2Mzvz+83Ozs6m1+v4zk9fpMuz4yLV+FV6e9FvCXpt8OnC2vkG/aNsPBm9TNeTk/T+8jQ9vDlL68V5+nIzKcJv9PV8mIn0YQTjSXAcIvDn64sC2lyNM6iCHeKOIGEnnSQoMbqdDgoJIICigxDdshq1UuUOwED6x892CVCMTp6XHTBKYJQKETKad0eBo7QIMDSXgDCHhMNE0DFi52hgYLgDdC0CjJGYT0msokikkD4kEjJ2EgBm/iUh51HPbw+beSSTZC+BqeFAAQFAwC6J6xaBldRJQJRERllSnohAAEQRWDt88PXQDxL8XF6l73VV7kBMB3MvHzbYSgDGkwREhVNa3WVhLtHju1kWgf+2w7dFgNLDiZXiAX+7mxdHc++cNYtAPwmYY1MIxoM/B0weKTfF8jNFUafg40GDVQgsr9eTQYmuqiq2l8fhcJjnRGmKmLvu2DRN2RlY3peeLZfLwqK7+HF/n1bTaWnJ6M29rYI1bLA1enuX6z1/MH5dLHKEtmPJKEP0aTlLqdnYoIs2+KAHI2L2jMYIOTjKjhGQDLqtEglK9Sw3RNEHjIiZK0k2L5TRZMBPH7Nj/t0sUnpc5Tk61rCJuwbDHZR7YJu2v2BMRL8eNunw9fpwM8/CHB1r2GDrZYyv3M6bYAVgkKPdpgVHm52d00bImunCxweK9daLBiP5xAgnIvMNNgU2N1PoOrb44AtGK3o+IjKHOMf2AEBa1znvOffruqTP0mXuGW7vSfvz7bUsfRfq2VGn+EbEss2lue/zFYttWLJSpstZiTjaeEn3Ru/H7SMS70S8UPxXiv+XvAPY8jvf3H/5ukgQW7S//ws8psv+VFK0rrOYIvvOwbQc2o2vWBS78CH/30rTClzCtSbnAAAAAElFTkRNvfIc",
+  "stfst02": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAdCAYAAACg7Il/AAACzUlEQVR4nI2WoXIbQQyG7w0KAgoKCgIKDAIMAgoMAgwCAgwMDAIMCgwKAgoMDAICCgoCDxgYBhoG+AEKCgMLCwsLt/Op+Xbk3jnOzmh2T5b+X6tdad00PePy/F25vjitshh/KF+uBh1Brw0+fVh7Yzg4CePJ6H1ZTc7Kt+vz8vD5ouyWl+XH7aQK3+jb+ccg0ocZjBfBccjA31dXFXR7Mw5QBTvEHUHCTnpJUGJ0Nx1WEkAARQchus1i1EmVOwADGZy+2SdAMTp7W3fALIFRKkTIbN6dBc7SIcDQXALCGhIOE0HHjJ2zgYHhDtB1CDBGcj4l8RZlIoX0IZmQuZcAMPMvCTnPer49bNaZTJKDBKaGAwUEAAH7JP/uJfAm9RIQJZFxLbmeiEAAZBFYO3zw9dCPEvze3JRf7aLWQE4Ha4sPG2wlAONFAg6paZp6gwCQ6OnrLERgpDzeh7BmRx0ClB5OLjSJIAGAiP88LENYo/t5P6+XAHtEAjDBrgTj4b8D5ps8SqCgM/+s0QlqLRAc/mBVAq/Xp8mwblHQ9XpdptNprL3G3pJMjt1qtQpfMMCyXhpbruxeUw6O2d/R201tFfyWbc0AWP7e+MHsIdqOJQOU2TPIutx59c+YjdEYIQdHRMzcb2/K/zfGGZvsk3cYKWLIZkEZDU5lexuOfJftspSnx1ij4zds8q7BcAe1DmzT9heMA3zXhrOv1/p2HsIaXZDu2rC1GPMrt/cmeAMwCMfnFORmZ+fMjdB04eMD9XwT9weM5NPqtaA8FyN0h+bbAsQHXzA60TOIyBwSTW4PAJgu04Iutw3WniFYHQKGby9R4OC70M5OesU3Alt88I2reWj4iuU2LFnkejMLMeJsY5EejN5B9dmyrQULiv9K+f+SNWCrjsp9zcCQfGYSi87iyuDYvho8p8v+VFO0a0NMkX3naFqO7cZXLItd+Jj/X+Mg/5Gw3wCZAAAAAElFTkRNvfIc",
+  "stfst10": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAdCAYAAACg7Il/AAAC8ElEQVR4nI2WoXNaQRDG+Q8qIioqEIgKBCIiogKBQEQgEAhEBBJREVERgUBURFREIBAIREUkMgJZgaisrKyoqKy8zm9nfm/2wSP0zezccbf7fXff7d7RajV8tzfvyt2gEzYfvi+fRt1GY04/Ypqwat9196oIDsBi3Ctf7m7Kdt4vzx8HYbv7YbTr2YfwwXfcb4fRB+NV8CZgWoAB1ZjH8m6I7/feNpMwyCpwJhAQQD9ProNEwmOZlDFL1e28qRMwgCkPYJAJDEAmEMhWicRgFzUSVu8OsqbsAnADJMpy4M+c8Up9QsAAq0MSHAFiB4AZiPGbnWSyvANIG3dg5ghMwP7hNgDYicSZJMundC62RpC1NxUBNIsAgYx5SZnDchLkQz4hYAVmjkawZlri4+qzX66LE4nUn5V8X47Ln+19+bWeR58VC2gmMfbjcRo++OKXi6+RgFWwmp9PswgsL09h/AYUQMw+PgByLgCqAFbLonznmH4YfbfOiv8+P4TRZ8zEoO/qlc94+q1cgabfMQnz3kVqTDuZTFhlGQ6HlY8ZxUKIre2AycViUQaDQQRiknmAtIwDfjgcymazid+ZwMQAsyIwK3D6vVqVl8mkumOY4yAx05E5fPHDXx8J9KkIDotRHBwHaM6bVbToz3wey3VDHBllbYBZk0gngiHLhDmr7NPiQ5YBjJlx7pK2yiQrMtdC2S2r9CzfvoZVv3fL8HHHxrqDClwCDs+HJcD36wg2BTfLWZiyBMl+Hb6mrmZC1N4EBi19JYDQR8jMeOx0qntIuSCzXnwzTl40DxoCCwqp0NVAbNlux5jXiIefCU5Wz+cL5qECQB8A5cJ2o1GMmRAmgndUVO+5DwnYBQFW5Hp6VbNVrxetbwe+xHjIkZrnPnaBRKapZKH1dhrmirMPMd62YJwl4LMi0dmVxRUy7lV/ZxizBvA1e6JyL31cZOiYSSw6iyuD4/vf4MckVndItF+HKRFzgl+U5TW58hOazQf/EsY/8iP78N73g6UAAAAASUVORE298hw=",
+  "stfst20": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAeCAYAAACg7Il/AAAC40lEQVR4nJ2WLXdTQRCG8w8QCERERAQiIqKiAhFREVFxRUQEoiICcQWiAhEREVFRgYhARFYgKhCREZEVFUgkEolEXs6z9FnmfiT0sOfM2c3uzPvOzsfe9Hod4/K8X11dDJOU09fVh2LUKZyph00XVgt4NhnUgD9enVfbxZuasBcJtEHORi+7iTiIoHflJMn9+4skh+VltbueprUkN/Oz2m0QnOwk4aAJDiACeBT2OEdXopMEo+GLfMUYFsAeV0X1dT3LhM1QxXABLgGYLQIUvbYkgLJHaLxdM9kx/oK3CKwcDQAjeQLjITN6k/GrXDnOiMBHCWIVMSPcAq8ARc9QOEuGTrzJUQLDBLi3AIzZEPCbUEWyZql2EqBk/AkNv0m0N5E4khi+Zi6O5kBwk6unzJIxu4egh13s6hYBscQLK0eRRBCrS+/VY89yNV8JHMZer1cjoO5/3l1XP7ZlWuNxbCxvwxk66HLrSGDVJQI2uBaeYFDtN39kt84kNpqg3zeLtEfIcFByQ+StawQqM6MACEQA/7pfJnDW7lk9eL6ajWsEPh89EyORM4eC6BFiWTabStsoLQIUV/1+tSuKdBPF2yFP735LD1u8RsTLIfKHJbpcLap3ZZHfe2af7biHDro+J7HyLPlcSWx+u32bxIrBkLgzkwMk7llR2iESZHAJSBRGGlSHba6oWFm1vcM2O6St/fBU/n+HTwT1DYCG7CfCh89JWLOXHdlvkk1sQs5bXzSbDCNCYZisHjxGWN8Oh/kMXWzs7qMEJiUCEWsbygR+mU6r9WCQm099bPn6QdAKD8Pmwhu7dz+fVw+LRY418liWqTxZ29UxD6k0jw0U8AID1nhKvdOllvOn8TiJZZtIV8W/wRnWMgYI3iPE2Soy5uog2PhxOklA8/iaEnv/B2HMLXxv/F6ggy426Vl4zvBDEhOMlyaTtQ+hiX42uMOE46VJJ9E2nx0bnuv/G/F9aUrtKTgxfgMK3Pi02Vxa4QAAAABJRU5ETb3yHA==",
+  "stfst30": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAfCAYAAACg7Il/AAADGElEQVR4nI2WL3QaQRCHzyERFQgEAlFxAoGIQCAiEBEIBCICgURURFQgEBEVERERFUhERERFZERlRURlRUVlZWXl9X1Dv+3C8af33rzb2535/WZmZ/a2KI48s8tupSxGb6v72UW8HSPvx2V8o3MMZ+fpl29CeTLsJHBAkKd3lwmYsd+sfZj2Q7A7CY4CHmG0ng9CANkshjEW+OvtJOT5ZpQIeBvlUYKri3YC11vAAQXs8/IqRCKJjVKSWiRlt1lJQFoE3/ce8B8P8xAiME2mCO+NpkaAGAFKOTjAAAL8a3OTCEyT+tjiPd/g1QhYRGk16aUI8AoSgCQRGAcYC256GJ8lsCRNj6C+iYo3oMzlBNjVCNiDYa+VFBhb8wBIZHWZOqOzX9zHgwSSuOGmSmBTxltCdBjrGHbYHyVQ3HBArBLAcEBQ9gBvWUNfcHRqBC5igEJesubXNTscEmwYa19LkWHnoBjkQKbFImBNAnR0TDIJ4owiPDbJEDXMSUwDAKTMYmCO75xE26IotgR237e76x0CS88zCmGMngRERSUxh7j5uXOFxy0bBgFKKP9cL6rq5SF5J4ElajokoAGxkSgR4L0psOX3JSdAmCOtlq/pRcd9UQqVc4L4JzQa1brfr+668TMJEcRqYQ69204n6ehsIrCSBLf9SR3GEt2X5c7fzNSyjhMv0+lWdz5IBKkPLEc3jRPT40HQ19U48vv7aRl7w5i5/Fdqd1uqNQKEzca4+vIYAhmgbiDgCN8Ia+ioj06NgMcI/A8IBoBpY04wxh7fRgWhEdR+mRIAbqoAAoA51iGyHPfnIOF9lMDO9Owhn3r5sderZo1GzNtUjK8bjVhDx/mTtwu7Ot9YqiNuD61WAKa7UrMZwho66HrLoMkOEnimS4Thp9Go2gwGUYKjv3WOrNrtENbQSY4cSk/+2OIeZBgi9AJAr4tFCGPmXLerT16+9kkw8JpCMyEefKQLYc1j46z3+ySkimoBAG+fx+Pq+3K5Ld3xOIQNRufoje4cCd4CQL4fh8N/R3NZhrD2X2k5R2RKPBT9Pmf7B4uG7OEuOXPqAAAAAElFTkRNvfIc",
+  "stfst40": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAfCAYAAACg7Il/AAADQUlEQVR4nJWWL1QbQRCHz52MQCAQiIiKiIgIREQEIgJxIiICgYiMqIhAIBCICgQiogIZgUBUIBGVCERFRWVlZWXllm/It2/DJY827827vZ2Z32/+7V6qasvv5OggnR13s8zHH9LN2VE8XSPnTS/escFnG9bGb9DbC+PJ6DCDA4LcfzzOwKx9R/dpOgjBD4yd4BgQEU63s2EIIKv5KNYCf7uahDwsxpmAp1luJWGTNAU3WsABBezrxUmIRBKbpSQEugHe63aSBJRF8LfRA/5zOQshA8tkiYjebMDcIEDMAKMSHGAAAf69WmQCy6Q9vkTP+1YClBhdTvo5A6KCBCBJBCYA1oJbnp0ZlASOpOUR1CdZ8QSUvZIAvxYBPRj197MBa2ceAImcLktndp4X+7iVQBIbbqkEtmQ8JcSGtYHhh/9OAsWGA+KUAEYAgtIDokWHveDYtAhU4oBBObLWV50nHBJ8WOvfKpFpC0p0RiqQZfEKQScB7wbG87SuAwcC9irSo0mmqGNTVZnEMgDgvvNegvO8PHjF0bfy9P24Pt1I/ayuA8w7yousJCAr9hZ7e+mm1wvddbfbJmBBwzyRkOEAidFJ4Pmw9uhvB4NX+xfbh6bZ6FWUyBJIgJAqYpQSIOxRVsc3AqnrsLEvSqVxSWAkyKSumYYQUpdo/YFJT7NZujo8zDYGmwmcJME9/lG6us4lKb9sWb/eMwOvFgnyObC5OHL8uTG5HiiRoM+XTfTmz/1FSo/LWLOHjgwQT7e9aREgNBvn9HSXvi8WQQbor9v56/7jMoR3BB12lAofbFoE/MovUpTqZRq4mgGwbDhDKJDXt/0yCHBan8wyg7gh1wQCoIOId4Cwi72mSXejUQg6S9Qi8GT6JaMX1JUoP/f70UQcidAouRbQcQ4Q9vFtfZOr9X8hT7XTBMHjdJrmnU46398PwPxfqdPJwiFDLGULvMxCEoyZoi/jcQjnYbyec+8cZDUchp5MPE87Cfj5JaMPAJABdaYEAD3P5yGs2QMYmyjVbPj+v7uSBAIbLRil4ELj3cYSObqtzX2PhKYJQCbMPOJoMgTYoP9n8JKEvgBA5IA4kmazc2r+l4gJojSlUML3fP8CoY/ShBMAezEAAAAASUVORE298hw=",
+  "stfdead0": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAfCAYAAACg7Il/AAADNUlEQVR4nJ2VIVgbQRCF151ARCAiEBGIihMREYiICEQE4gQCEYGIQERUnEAgIhAREQhEBRKBQFQgEUgEoqICWVlZWXnt/3Jvu0dyFNjvm2/3Zmffm5md2QthwzjY26mO93cls/Gn6rTINwp7tuPMJqzGGOTbMj4c9TQb6Go6XJOL470Gic+A0QqOkT02yPVsVN1+3pfclWMJa+8vjgaNiIhkIwlKNjeBA/pwdhAFHXuOxiQmyHc7TQIUjgBgg3PYBE/zQmKClxEAnhI0SKyAgAMfJXB6kFaC+WE/RuEUpClqu4M3EVzkeStBKh8iUIlmmQhSkjRVBk4l7RPn/1WCkxCqUb8bG8iRmNBiz7H50u9HAlfjRgIE8P2axES+eGYDA3re60kmWRabrJUA5cnWlsAtve6WSE673ZgKZsCXu6sIAS9CWHVyTdQg4NJMwCbA84Sg28lEgudOm8CzTGeKOlo8X4bQIABbBCGE2MV4exdCVdYkRT0LvPZQc5YJtEzS+RxCvAswhU1u2TQBOb1iMwR55GicAhcD3ykBxA8JATqwA6GbQBWS5yJwuIAQxXxnJz4H6FxBpIvz3AsEYKB3WkP6pqskBwOBuxz9RrlC0BG6++B6+K+EvU7/JcHvuAnuikKN9rycqMkQvonQRKzRsWc7A7uc/Y9QJbnWAX+azcTsjnaEzPbUOtvYbllfrAliH5iAxwwCqsH5BpBXFE9/355V1f2l1uhMFsH/XjgYvp8GAUpCJYrvZSn5dV0K9OfVTAK45GKob/Z+LBbVw2RSVY83OgvGGgEDpVPwOJ1W90dHK4DLqcLGa0AQ1ujYww5gCG9Go/ivXvtlOgIqA0MOCbwodABAR2Iv2cMWITWUqvfWCPy7FMlgIONv54eaaSwO4TnCmjeIPWwRCOghMGL1vBx+NWkeOprwZ52OGs8vpiqq1iECzVcR0oxqrrbhfzKGyNfxOD4bzJCW9do6bIjEBK3ee2BUbm/L2BcIAECUMGJQCMi/1tOhzrwKnpIgtL7ffj/RCJGgVzGUKzI9bO8ZENhzANP+YI1QBBQFdu8Cf0niX6NL0hcL+H9z/pZBBaUpcgrfcvYPNrinNY7dWOMAAAAASUVORE298hw=",
+  "stfevl0": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAeCAYAAACg7Il/AAACv0lEQVR4nJ2WLXcTURCG9x8gEAgEogIRgaioiIioqKiIqIhAVERGICpWVEREICoQlRERFYjISkQlAoFERCCRSOTlPAPPntnNDad0z5neu/PxvjNzZ2/aNJXn/ORluTw9ClmcvS7tdFQVbPoRU8PqPcej5+F8MXnVA/9weVLW83FP0GUSY8A4CE4WOeP3s+Mq+JAkVwRGlSQTAKw8hWB09KxPgML2HGoJZDWCTJIJeiQqbEsmGVZzt5jsHfbwDJAqgRWwSmCWChmyOjmutthu7BHoYCaAsIeE0hF0tsF18uZF+ItxsAIJLBtwSZysTKTYPvT4grV30BLgAND23WlHQs/Vewb3V2dRGftMZnurBPYTRwgAASADZhnaifFsaFuVgAwI/rq66AQAdE6YU2YF2Ve/XgWwN02zR/Dz7qr8WC9i/3B93htP9uiw4YPvkADMwOYPJTl+vBNUPt3+kftVR2RLBMamH+/EOspgBgEKCVBwoApg32/nAYANYEDZo8PmECjYJAC78Tb0S8WgYCPAmbcCvwNtOcbR9TZufKF/lEkPl8tlaZpV9HE2m3VnZJb2WBu+xBALBlgm3ThaX5bT8mt7HQ6MHAfHqjPZ8I5YNbbsSywYYDnyMUmZQBKF9283bwNAO3t0Nd9M0H0HlMLYEZRH0+oELJ8/hkholnlksfEe7ckEBMCMEwc5Ho+7Vjj7Zuo3Yevw1Q4GWD0CHvqJ0ewMNMP8u2DF2EzEKsEAa+8nEycJdJrP52U6nZa2bWNKNptNSExM24YNn5wca4xn7aFMHZlxVgCQ7XZbdrtdCHv12ZdYMKrgVuFZeENKYhVmL7g3r70/mH2NBPF+iin6e++YNTb9HgWeSRg77hpJvOf9iRQcH3wfDT6sRBJHL480tv/KvEZCpn6A5WEd4gflPwFPAs+PLaHv9r53Ffzj+Q0gp/nbibQKmQAAAABJRU5ETb3yHA==",
+  "stfgod0": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAdCAYAAACg7Il/AAAC60lEQVR4nJ2WIXdTQRBG8w8QFQgEogJRURFRgYioqKioiEBEVFQgIhAViIiKiAoEIvIJRASiAhFZEYGoQCAjKpBIJHI5d5K7TPpeWg57zpzdtzvzfbOzs7Ov1+top0cvyvnxfpXxyavy/uygJcyrg00X1lbrH+yF8nDwsgJ/PD8qy8lpWVyelO/TYQjjm3fHpbl4HUTZBoxHwTEAFGOAv12dBeh8PAhg5hX0EHcECTvpJGESpes3/S0SQJnDY+YgehgqdwAGcrD/bJuAicHh87oDegn0UsFDeuNuL3CWFgGKxhIQxpBwFp4HPXr2OgaGO2CuRYAykuMpiVmUiRTCh2RC+k4CwIy/JMQ8z+fDZpzJJNlJYGg4UEAAELBL8rpJYCZ1EuAlnpGWpCciEABZBFYPG2w99CcJfs0vy89mHGPuQw4HY+ZYQwddCcB4lACvMCr3d6UspjGWaPVhFCJw6C2mocsY2xYBkx5OzhQP+Mfsohoae8esmQTaScAYnUpw0v97wNYZb/XD9Mxg6KCrHetgVQIN3g771buvzWEpZVVoq9vj+G5GezVEjJljbd1W8e3OwNKhniUXT1h0FwLQf5msL52xZ8xc1tF7a5fVuOcH/f1kEh6SIRrQk4bMl/molMVah7msgw3zYGTMnoVLDzk40o4ekAC9na0zZkMQ49tZfKOTbcDImJFJsnmh9CYA7z6HYXwvJhxKjJljDZ28azDcQb0HlmnrC8p49PtmHQ6z6tP0IsSsYQ0ddL2M+ZXbehPMABTC201YMLTYWTkthKwZrsiuzQPFeutFg5F4ooQRnvkGGwKLmyF0HV1ssAWj5T0Nj4whxrk8AFCWTcQ9Yr9savhMXcaeIVgtAppvr2npu8DF6hLfiJy2kZq7mq9YLsOS1TSdj6rHWcdLutN7G7cPT7wT+UJdDQ9D8gU09/mOm/svrYsEsUT7/V/gOVzWpxqiZRNiiKw7T4ZlV+PRsCqaoopVuPWT9aD9AdwbIlwF1mE5AAAAAElFTkRNvfIc",
+  "stfouch0": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAfCAYAAACg7Il/AAAC/UlEQVR4nJWWoXcaQRCHz0VWVFQgKiIqTiAQERWICEREBKICgUAiKiJOIBCIiIqISERFBCISGZE/oCIysrKysnL7vk2+fcNxkPbem7ezw+zvNzszu0tVdXwXZ700PT8tMh99Ss1lvSfY9WFNF9bON6jfZ+fx8GMBvpmepcfFRdpejdLTapwF/f7reVrPPmeiuAaMo+AsAJTFAP9YXmbQu/kwA2NX8EPcESTspJMEI07XXwY7JIBiI2JsELVT5Q7AQOrTd7sEGIb9D2UHjBIYpUKEjObdUeAoewQ4mktA0CGhFtaDET9HAwPDHWDbI8AZifmUxC6KRArpQyIhYycBYOZfEnIe7bHY6JFMkoMEpoaCAgKAgM/fJunXep4FXZu/2wR2UicBURIZbUl7IgIBEEUSW5Y1jBb9TYLfd1c5WnTOA5G6C3Rs+DLHVwIwjhIQFYvSw22WdkribtLTNoPrh88eAUaLY6EQOoOo0naVgSTxysD283ZWmiB2mG2MbyEYDV4OGYssGC0nGXZTZrT8ho+NgQ8YYBUCo7aXmVdVlZqmSZvNpvQ1dgDIvVHym36s6cTyyvXA5J5vGq/fstgz8ed+kXWDYMQXP+zieBtXTsw522I+mUyyYAPUa5v0oGPjN/1YY30iZuXFxRjzG0npEor8UvRF1rFFMLsPW8TMneTECIkOAYQ2RM+g20VKzw9Z18c2RWetNQKznAMJEI99jMbX6/tqlgXdTnPXzAXvJKCAy3E/C7q5LoV/fYx8kCwoPp7uuH6HgC9ev14L9jJ6fBfQPXjMvfRcW3IfP5kd2bpXhzWIgs2rwTebtaSJsfPhh5kfffCNlPy232Fv1OhrcJ3gfGwRJ0YXEWW/38+9zsFC0LF5XRu1aw8SEFkslN3Dae0Su8l/GqxjPEhgLXweiew1ojQ9OSnA6u7UJ/Zg7tu7sCUtHim5qeu07PWyoGOzGWzdN6Nvpyq+te0axLf7n1LTRSKIJNanbf9v8EhCIXn8853zuM6Cjs03+BjGX8kfMIgwwrH3AAAAAElFTkRNvfIc",
+  "sttnum0": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAYAAACg7Il/AAAAvUlEQVR4nIWSAQ3FIAxE6wgRCJiACUDABCAACQiYAARMwBfFQnJdbjfIJ2lWRl+vpZjJimZdTWOmQDbr1aw3s17gLxOMnzuCDgJ27E/4Hzji8IRigSXYRcohhP5AWcCEoA1KDmZWjVROocOROYpiYVXvT0FO2kTxBVbqTcFrUs1fcAT/VqV6j20BLnvMAvrV+15v9TOSRnPk8VzwHXqBG67+wLcSmOnlPJC+1YSgQn6cqfHyoas5MIU0gZrG3ILJBqQ8WGYwAAAAAElFTkRNvfIc",
+  "sttnum1": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAQCAYAAACg7Il/AAAAe0lEQVR4nMWR0Q3AIAgF30YO4UgdoAM4QgdwAAZwAAfoODQkaIhF619JLjFwEgiAiQjwDIxiBpgArsqtOamFELiLSQsXwEUhzXe5iU3OpnPxZAutZAl5CHHoXD15XLLsynZBd4x/5PNLJsOWvNU56Yd21WMlz3jJ9poeD0agz/nZdparAAAAAElFTkRNvfIc",
+  "sttnum2": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAYAAACg7Il/AAAAw0lEQVR4nJWSAQ2EMAxFvyNEIAYBCJgAJCBgAiZgAk7ACUDASRjp5ffuAx0JS36ylb6y/hUAMALtTugt+7gALQPtDbQXVRibegUsmAQ2YKU8niLYAjMTZiYl7r1AjeC7/hJvUVnAYsMw/GE79MDCnkPQkyxhE5MqVeSqP9ChVRLcpHrqz6AvqJAnT+KmG3aA/G9n+6NeD5CCmeqBlykaBfICn0AlMibLW2UxpNLdLXqKUSYlyQQtYljm+QI+0WVqnsiYHatqHozTnh0fAAAAAElFTkRNvfIc",
+  "sttnum3": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAYAAACg7Il/AAAAtUlEQVR4nI2TAQ3EIAxFvyNETAwCTsAJmAQETMAEVMAEIAABJ6FLkx7544Bjyc8I5P12nw4boP+E3mMHO6AZ0EK6ABVAXyMD23gDegB6uoTWtp8AjS28uetI4koOhhC0gjOJt52o7VrVXEwz8PAsHlW57asTUPb3FJQmnGWQg9kdLitg7xuLGzzAlVS/FWMLmtuHlD0YDofvsYJpMDUnXX7sDcBscnhWa7WVyWHgJ00+GKn9q276QB0gVOiRAgAAAABJRU5ETb3yHA==",
+  "sttnum4": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAYAAACg7Il/AAAAp0lEQVR4nJXQUQ3DMAwE0PsrnIAYhH4OQAAEgAEEQgAUQAAMxgAMwCB4anWR3Mxptkj3UZ1e3Bg3QL0AwFV3lBnQF6BvQGsHN0CfTGEXQtCjFILKSywU4mK6E9wYcWAZwTyBmREPtlulW0Qy2IX2jdX8QTJx4YOxixCmwTiC1bwzMnbaF7xKHMF29o8+PUwe9M5PE2cw/ztxXRa9e1udQS9TiMHS9nwA3hoEOAWYG5EAAAAASUVORE298hw=",
+  "sttnum5": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAYAAACg7Il/AAAAu0lEQVR4nJWSAQ3EIAxFvyNETNIJqAAkIAABCEAAAk7ACTgJXUja5Q/IuCP5IZC9Uh7DAeg/gY++eAFaAc2AFkAboG9K348GhhB0AgXQZBH72CFZgWJgsiJisyfaPIGJTtzdcQLbBuyA59ZqsVNdzMdm7gQ8WE61ApnEFJK1fA6XEElOpEJL2Htf3Y2fqLCgnUWxE/MK7BvfIe3hnheYBouV2suD2etJDqrsEkZJE+RWf/lbbtBo9SkYxgnMKSxgR4OUQQAAAABJRU5ETb3yHA==",
+  "sttnum6": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAYAAACg7Il/AAAAuklEQVR4nI2SYQ3FIAyEzxEinhgETAACkIAABEwAAibgCZiQLk0KubE+3kjuD+lXrkeB6XwA+ScX2ABpgByAfEl6l60mhCADioAUQCogu6maFEimB1isa7NXf2mA3V4xe+3FjAPMZmkFajFrgI1C0AYnWa9eoh7Yw+lhFQppwAyeBmQKIzngzepO9ub5ssEPMNKLr0H+Rw7noPk2g5abw+EkmjXOC+DtKhd3zf95W3S9WG2LC80NPHHNBXcLJEpUdi7CAAAAAElFTkRNvfIc",
+  "sttnum7": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAYAAACg7Il/AAAAeklEQVR4nGNwZmD4TwgzYAMgiXoGhv+zGRj+70fCy6FixbgMAAl0QxXNhrKXo+FuJANQNBbjwZuRDAap1dfX/w/XiA/DXLEZm60gU7BhdI0YtuIC6Bq7SdG4nBoaSXJqN7k21pOrMR1JYz1dNKKnJKI1YsMENTLgSVUA0DfLp7LtLVcAAAAASUVORE298hw=",
+  "sttnum8": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAYAAACg7Il/AAAAvUlEQVR4nI2SAQ0DIQxFvyNEnIwJQAACJgAJCEAAAhCAgAk4ISwsv0uvB2xNfrhSXo+2AMoOoK+EmY3AA+gB6AnoJ1XoB8YvCYbjgR6pRKDyO6mY1/Ch/hTN+jR+IOic6zewmdrqDhxXyAuwcT+rq35AW6c056XqjAb6ggJLZqu4gzyzZ9Yiytz3q3HIGGY1thl8mPnNwEJF29WoXkni4ZNrZpOmoDevpJpExVz1Mo7wh5ad/aUbJCaBneTsGz8TJGI8WGYwAAAAAElFTkRNvfIc",
+  "sttnum9": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAYAAACg7Il/AAAAuElEQVR4nJWTAQ3EIAxF6wgRiEEAAiZgEhAwAQiYgBOAgBNwEli4/C4/P4zLkfw06fr4pQwzWdGsq7RmChxm/QWdZj2vNhjJHVBBrJDnksIRSQY3OGXAJ/KjNoTQb7AA9Mjnq2i7UNt/gQd9+7pyq65R/KYBNcR91m6mDSppCfJ1JCijcIP7IzjWSOjlO1hnZ1yJHZOCPrmGoo/8PU3u8QaLDESHU9SNJ7pSVLen16ByYDrNX9KHcQFXwBySPEuxyAAAAABJRU5ETb3yHA==",
+  "sttprcnt": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAYAAACg7Il/AAAAoklEQVR4nJWSAQ3AIAwE3xEiEDYBk4AABCAAAQhAwISwkLSk61YYJCTQcvAtDwDwQOOJyXic6YsItAq0MIF7vGjwIOikhHOuaeikB0Z+BbKiIBSNvKyxBznR95nASA+8FDEgoUJgsqCvRiSC8g50kbRtqO7KqwL8DUUBaujTWV50rhgQX1q1c9Lkn9ggURuA7WTVJJ31Av2iEZaz8NgYQzvrBmE/1xFpgBzsAAAAAElFTkRNvfIc",
+  "stysnum0": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAGCAYAAACg7Il/AAAAIUlEQVR4nGP4/7/4PwwzgACI4QyioDSRAjAMFgABEAOGAcUvNdXqZr6uAAAAAElFTkRNvfIc",
+  "stysnum1": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAGCAYAAACg7Il/AAAAJklEQVR4nGNgYGBg+P+/+D8DDIA4IOzMwIAqiFsApgXFHJAsDAMA54QjDRwwPucAAAAASUVORE298hw=",
+  "stysnum2": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAGCAYAAACg7Il/AAAAJUlEQVR4nGP4/7/4PwwzwIAzAwNYAESDBWCyYAEUDkwWqxkwDAC0cye/4xF7jgAAAABJRU5ETb3yHA==",
+  "stysnum3": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAGCAYAAACg7Il/AAAAKUlEQVR4nGP4/7/4PwwzwIAzAwNYAESDBWAq4AIwQbAAshlwFSAGDAMAcVUsceOGB9wAAAAASUVORE298hw=",
+  "stysnum4": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAGCAYAAACg7Il/AAAAJ0lEQVR4nGP4/7/4PwMDAwOMBjOcQRSUBgvAMFgABFBUwACGAEwlAH5oJ7+OGB9zAAAAAElFTkRNvfIc",
+  "stysnum5": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAGCAYAAACg7Il/AAAAJ0lEQVR4nGP4/7/4PwwzgACI4czAAMcMGCpAACQDU4miAiwAUwHDAL+bMSOOGB9zAAAAAElFTkRNvfIc",
+  "stysnum6": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAGCAYAAACg7Il/AAAAJElEQVR4nGP4/7/4PwwzgACI4czAAMcMOFXAaBQVYAEQQDYDAGaoNJPGIvcdAAAAAElFTkRNvfIc",
+  "stysnum7": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAGCAYAAACg7Il/AAAAJ0lEQVR4nGP4/7/4PwwzwIAzAwNYAESDBWCyYAEUDkwWzkE2A8YGABz2H52OGB9zAAAAAElFTkRNvfIc",
+  "stysnum8": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAGCAYAAACg7Il/AAAAJ0lEQVR4nGP4/7/4PwwzgACI4QyioDRcEESDBZBVwGVhGK4FxIBhAHhiL+GOGB9zAAAAAElFTkRNvfIc",
+  "stysnum9": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAGCAYAAACg7Il/AAAAIUlEQVR4nGP4/7/4PwwzgACI4QyioDQDsgqwAAgQpwKGAaWeNJPqZr6uAAAAAElFTkRNvfIc",
+  "stkeys0": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAFCAYAAACg7Il/AAAANElEQVR4nGNgYGBgMDf//x+GGRiQMETg9H8GBgYsNFjVZqgAOmYI/g/BzVBFyBgOYIoQGAB7jjYwnWzffgAAAABJRU5ETb3yHA==",
+  "stkeys1": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAFCAYAAACg7Il/AAAAMklEQVR4nGNgYGBgeH07/D82DJY4PFv/PwMDAwYNl8SGGdqd2f+D8PpqeUxJGIApQsYAKQRL8q7Ce7oAAAAASUVORE298hw=",
+  "stkeys2": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAFCAYAAACg7Il/AAAANklEQVR4nG3KgQkAIAhE0b+ZQzVOIzVA41ycIEQmPE9RABQhQZOH7QFauufywwDZBK0HVfV0O5PKN1CRh3ZPAAAAAElFTkRNvfIc",
+  "stkeys3": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAACg7Il/AAAAYUlEQVR4nGWOUQ3AMAhE738SKqQfEzABlVFJyEBGZVTILUdps2Qk5PK4gwBEGf99jEFgEmDq2AFjrWQpMjxUnKaSLWAFLHkSre0tdQ8Vaw7gIXDFyRXw5Ftmz8H4PONx5QXqvFM9FmYtEwAAAABJRU5ETb3yHA==",
+  "stkeys4": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAACg7Il/AAAAd0lEQVR4nGNgYGBgWO/M8P90ODscg/gMMInX+fz///db//+/OBpMg/hgBSCV13c7gyU+F4uDaRAfJM4AUtmuzABWCWKDaBAfxGaA6YJJwIwHiTOAVDEwcP+/Hs8NtgtEg/hg8fnmDP8P+zP8v5/OD5YE0SA+SBwAQF1r3Pr6YHwAAAAASUVORE298hw=",
+  "stkeys5": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAACg7Il/AAAAY0lEQVR4nF2NQQ2AQAwE54+Ik9IHYhBwMpCAAAQgoDIQgAAkLGnTSy48ms1sJy0AO+icJpixcNALUmuZPoTjVw4peh5QL1OVvSRklqYmIdlMrPl80QW6ITM4+w3yvtfSi6P/ALMmUdXFmYtEAAAAAElFTkRNvfIc"
+};
+
+;
 // === /js/doom/hud/hudGameBar.js ===
 /**
  * Authentic Classic DOOM Status Bar (STBAR) HUD.
@@ -57181,20 +57228,20 @@ class HudDoomDebug extends HudDebug {
 class HudGameBar extends AbstractHud {
     constructor(engine) {
         super(engine);
-        this._profile     = null;
-        this._itemCatalog = null;
-        this._stats       = null;
-        this._rules       = null;
-        this._bodies      = null;
-        this._slotColors  = [];
-        this._pingSource  = null;
-        this._root        = null;
-        this._canvas      = null;
-        this._ctx         = null;
-        this._images      = {};
+        this._profile      = null;
+        this._itemCatalog  = null;
+        this._stats        = null;
+        this._rules        = null;
+        this._bodies       = null;
+        this._slotColors   = [];
+        this._pingSource   = null;
+        this._root         = null;
+        this._canvas       = null;
+        this._ctx          = null;
+        this._images       = {};
         this._imagesLoaded = false;
-        this._els         = {};
-        this._effectEls   = {};
+        this._els          = {};
+        this._effectEls    = {};
 
         // Animation state for Doomguy face
         this._faceLookTick = 0;
@@ -57220,21 +57267,56 @@ class HudGameBar extends AbstractHud {
         ];
 
         let loadedCount = 0;
+        const total = assetNames.length;
+
+        // Base URL fallback if embedded base64 is somehow absent
         let basePath = './assets/';
         try {
-            basePath = new URL('assets/', window.location.href).href;
+            if (typeof window !== 'undefined' && window.location) {
+                const u = new URL(window.location.href);
+                let p = u.pathname;
+                if (!p.endsWith('/')) {
+                    const lastSlash = p.lastIndexOf('/');
+                    const lastSeg = p.substring(lastSlash + 1);
+                    p = lastSeg.includes('.') ? p.substring(0, lastSlash + 1) : (p + '/');
+                }
+                basePath = u.origin + p + 'assets/';
+            }
         } catch (_) {}
 
         for (const name of assetNames) {
             const img = new Image();
             img.onload = () => {
                 loadedCount++;
-                if (loadedCount >= assetNames.length) {
+                if (loadedCount >= total) {
                     this._imagesLoaded = true;
                 }
             };
-            img.src = basePath + name + '.png';
+            img.onerror = () => {
+                // Ignore error safely: safeDraw checks naturalWidth > 0
+            };
+
+            // Use embedded Base64 Data URI if available (100% synchronous & instant)
+            if (typeof DOOM_STBAR_ASSETS !== 'undefined' && DOOM_STBAR_ASSETS[name]) {
+                img.src = DOOM_STBAR_ASSETS[name];
+            } else {
+                img.src = basePath + name + '.png';
+            }
             this._images[name] = img;
+        }
+    }
+
+    _safeDraw(ctx, img, dx, dy, dw, dh) {
+        if (!img || !img.complete || !img.naturalWidth) return false;
+        try {
+            if (dw !== undefined && dh !== undefined) {
+                ctx.drawImage(img, dx, dy, dw, dh);
+            } else {
+                ctx.drawImage(img, dx, dy);
+            }
+            return true;
+        } catch (_) {
+            return false;
         }
     }
 
@@ -57337,10 +57419,14 @@ class HudGameBar extends AbstractHud {
     update() {
         if (!this._user || !this._root || !this._ctx) return;
 
-        const user = this._user;
-        this._renderStatusBar(user);
-        this._updateEffects(user);
-        this._updateFps();
+        try {
+            const user = this._user;
+            this._renderStatusBar(user);
+            this._updateEffects(user);
+            this._updateFps();
+        } catch (err) {
+            console.error('Error in HudGameBar.update:', err);
+        }
     }
 
     _renderStatusBar(user) {
@@ -57348,44 +57434,42 @@ class HudGameBar extends AbstractHud {
         const imgs = this._images;
 
         // 1. Draw base STBAR background (320x32)
-        if (imgs.stbar && imgs.stbar.complete) {
-            ctx.drawImage(imgs.stbar, 0, 0, 320, 32);
-        } else {
+        if (!this._safeDraw(ctx, imgs.stbar, 0, 0, 320, 32)) {
+            // Metallic DOOM-grey fallback
             ctx.fillStyle = '#222222';
             ctx.fillRect(0, 0, 320, 32);
             ctx.fillStyle = '#3a3a3a';
             ctx.fillRect(0, 0, 320, 2);
+            ctx.fillStyle = '#111111';
+            ctx.fillRect(0, 30, 320, 2);
         }
 
-        const scoresFrags = (this._rules !== null && this._rules.scoresFrags());
+        const scoresFrags = Boolean(this._rules && typeof this._rules.scoresFrags === 'function' && this._rules.scoresFrags());
 
         // 2. Active Weapon AMMO (tall red numbers ending at X = 44, Y = 3)
-        const weaponCode = user.getActiveWeapon();
-        const weapon = this._itemCatalog ? this._itemCatalog.getWeapon(weaponCode) : null;
+        const weaponCode = (typeof user.getActiveWeapon === 'function') ? user.getActiveWeapon() : null;
+        const weapon = (this._itemCatalog && weaponCode) ? this._itemCatalog.getWeapon(weaponCode) : null;
         const ammoType = weapon ? weapon.getAmmoType() : null;
         if (ammoType !== null) {
-            const currentAmmo = user.getAmmo(ammoType);
+            const currentAmmo = (typeof user.getAmmo === 'function') ? user.getAmmo(ammoType) : 0;
             this._drawTallRedNumber(ctx, currentAmmo, 44, 3);
         }
 
         // 3. HEALTH (tall red numbers ending at X = 88, Y = 3, percent at 90, 3)
-        const energy = user.getEnergy();
+        const energy = (typeof user.getEnergy === 'function') ? user.getEnergy() : 100;
         this._drawTallRedNumber(ctx, Math.ceil(energy), 88, 3);
-        if (imgs.sttprcnt && imgs.sttprcnt.complete) {
-            ctx.drawImage(imgs.sttprcnt, 90, 3);
-        }
+        this._safeDraw(ctx, imgs.sttprcnt, 90, 3);
 
         // 4. ARMS or FRAGS (X = 104 to 143)
         if (scoresFrags) {
-            // Deathmatch: STBAR already has "FRAGS" header at (104..143).
+            // Deathmatch: STBAR has "FRAGS" header at (104..143).
             // Draw player frags ending at X = 138, Y = 3
-            const ownFrags = this._stats ? this._stats.fragScore(user.getPlayerId()) : 0;
+            const ownFrags = (this._stats && typeof this._stats.fragScore === 'function' && typeof user.getPlayerId === 'function')
+                ? this._stats.fragScore(user.getPlayerId()) : 0;
             this._drawTallRedNumber(ctx, ownFrags, 138, 3);
         } else {
             // Single-player / Coop: Draw STARMS background & weapon numbers 2..7
-            if (imgs.starms && imgs.starms.complete) {
-                ctx.drawImage(imgs.starms, 104, 0);
-            }
+            this._safeDraw(ctx, imgs.starms, 104, 0);
             this._drawArmsWeapons(ctx, user);
         }
 
@@ -57393,11 +57477,9 @@ class HudGameBar extends AbstractHud {
         this._drawDoomguyFace(ctx, user, energy);
 
         // 6. ARMOR (tall red numbers ending at X = 219, Y = 3, percent at 221, 3)
-        const armor = user.getArmor();
+        const armor = (typeof user.getArmor === 'function') ? user.getArmor() : 0;
         this._drawTallRedNumber(ctx, Math.ceil(armor), 219, 3);
-        if (imgs.sttprcnt && imgs.sttprcnt.complete) {
-            ctx.drawImage(imgs.sttprcnt, 221, 3);
-        }
+        this._safeDraw(ctx, imgs.sttprcnt, 221, 3);
 
         // 7. KEYS (X = 239)
         this._drawKeys(ctx, user);
@@ -57422,7 +57504,6 @@ class HudGameBar extends AbstractHud {
         this._faceLookTick++;
         if (this._faceLookTick > 80) {
             this._faceLookTick = 0;
-            // 70% straight, 15% left, 15% right
             const r = Math.random();
             this._faceLookDir = (r < 0.7) ? 0 : (r < 0.85 ? 1 : 2);
         }
@@ -57430,7 +57511,7 @@ class HudGameBar extends AbstractHud {
         let faceKey = 'stfst00';
         if (energy <= 0) {
             faceKey = 'stfdead0';
-        } else if (user.isEffectVisible && user.isEffectVisible('invulnerability')) {
+        } else if (typeof user.isEffectVisible === 'function' && user.isEffectVisible('invulnerability')) {
             faceKey = 'stfgod0';
         } else if (this._ouchTicks > 0 && imgs.stfouch0) {
             faceKey = 'stfouch0';
@@ -57449,17 +57530,15 @@ class HudGameBar extends AbstractHud {
             }
         }
 
-        const faceImg = imgs[faceKey];
-        if (faceImg && faceImg.complete) {
-            ctx.drawImage(faceImg, 143, 1);
-        }
+        this._safeDraw(ctx, imgs[faceKey], 143, 1);
     }
 
     _drawArmsWeapons(ctx, user) {
-        const slots = this._profile ? this._profile.weaponSlots() : null;
+        const slots = (this._profile && typeof this._profile.weaponSlots === 'function')
+            ? this._profile.weaponSlots() : null;
         if (!slots) return;
-        const slotByWeapon = slots.byWeapon;
-        const ownedCodes = new Set(user.getOwnedWeaponCodes());
+        const slotByWeapon = slots.byWeapon || {};
+        const ownedCodes = (typeof user.getOwnedWeaponCodes === 'function') ? user.getOwnedWeaponCodes() : [];
         const ownedSlots = new Set();
         for (const owned of ownedCodes) {
             const slot = slotByWeapon[owned];
@@ -57467,8 +57546,6 @@ class HudGameBar extends AbstractHud {
         }
 
         // Slot positions on starms.png (offset 104, 0)
-        // Row 1 (weapons 2, 3, 4): Y = 4. X = 111, 123, 135
-        // Row 2 (weapons 5, 6, 7): Y = 13. X = 111, 123, 135
         const pos = {
             2: { x: 111, y: 4 },
             3: { x: 123, y: 4 },
@@ -57480,35 +57557,33 @@ class HudGameBar extends AbstractHud {
 
         for (let s = 2; s <= 7; s++) {
             if (ownedSlots.has(s)) {
-                const img = this._images['stysnum' + s];
-                if (img && img.complete) {
-                    ctx.drawImage(img, pos[s].x, pos[s].y);
-                }
+                this._safeDraw(ctx, this._images['stysnum' + s], pos[s].x, pos[s].y);
             }
         }
     }
 
     _drawKeys(ctx, user) {
         const imgs = this._images;
+        const has = (code) => (typeof user.hasItem === 'function' && user.hasItem(code));
+
         // Blue: Row 1 (Y = 3)
-        if (user.hasItem('blueKey')) {
+        if (has('blueKey') || has('blueCard') || has('blueSkull')) {
             const img = imgs.stkeys0 || imgs.stkeys3;
-            if (img && img.complete) ctx.drawImage(img, 239, 3);
+            this._safeDraw(ctx, img, 239, 3);
         }
         // Yellow: Row 2 (Y = 13)
-        if (user.hasItem('yellowKey')) {
+        if (has('yellowKey') || has('yellowCard') || has('yellowSkull')) {
             const img = imgs.stkeys1 || imgs.stkeys4;
-            if (img && img.complete) ctx.drawImage(img, 239, 13);
+            this._safeDraw(ctx, img, 239, 13);
         }
         // Red: Row 3 (Y = 23)
-        if (user.hasItem('redKey')) {
+        if (has('redKey') || has('redCard') || has('redSkull')) {
             const img = imgs.stkeys2 || imgs.stkeys5;
-            if (img && img.complete) ctx.drawImage(img, 239, 23);
+            this._safeDraw(ctx, img, 239, 23);
         }
     }
 
     _drawAmmoTable(ctx, user) {
-        // Types: bullets, shells, rockets, cells
         const ammoRows = [
             { type: 'bullets', y: 5 },
             { type: 'shells',  y: 11 },
@@ -57517,56 +57592,54 @@ class HudGameBar extends AbstractHud {
         ];
 
         for (const row of ammoRows) {
-            const cur = user.getAmmo(row.type);
-            const max = user.getAmmoMax(row.type);
+            const cur = (typeof user.getAmmo === 'function') ? user.getAmmo(row.type) : 0;
+            const max = (typeof user.getAmmoMax === 'function') ? user.getAmmoMax(row.type) : 0;
             this._drawYellowNumber(ctx, cur, 286, row.y);
             this._drawYellowNumber(ctx, max, 312, row.y);
         }
     }
 
     _drawTallRedNumber(ctx, value, rightX, y) {
-        const str = String(Math.max(0, Math.floor(value)));
+        const num = Math.max(0, Math.floor(Number(value) || 0));
+        const str = String(num);
         let curX = rightX;
         for (let i = str.length - 1; i >= 0; i--) {
             const ch = str[i];
             const img = this._images['sttnum' + ch];
-            const w = (ch === '1' && img && img.width) ? img.width : 14;
+            const w = (ch === '1' && img && img.naturalWidth) ? img.naturalWidth : 14;
             curX -= w;
-            if (img && img.complete) {
-                ctx.drawImage(img, curX, y);
-            }
+            this._safeDraw(ctx, img, curX, y);
         }
         return curX;
     }
 
     _drawYellowNumber(ctx, value, rightX, y) {
-        const str = String(Math.max(0, Math.floor(value)));
+        const num = Math.max(0, Math.floor(Number(value) || 0));
+        const str = String(num);
         let curX = rightX;
         for (let i = str.length - 1; i >= 0; i--) {
             const ch = str[i];
             const img = this._images['stysnum' + ch];
             const w = 4;
             curX -= w;
-            if (img && img.complete) {
-                ctx.drawImage(img, curX, y);
-            }
+            this._safeDraw(ctx, img, curX, y);
         }
         return curX;
     }
 
     _updateEffects(user) {
-        const effects = user.getEffects();
+        const effects = (typeof user.getEffects === 'function') ? user.getEffects() : {};
         for (const effectLine of HudGameBar.EFFECT_LINES) {
             const el = this._effectEls[effectLine.code];
             if (!el) continue;
             const remainingMs = effects[effectLine.code];
-            const active = (effectLine.timed ? (remainingMs !== undefined) : user.hasItem(effectLine.code));
+            const active = (effectLine.timed ? (remainingMs !== undefined) : (typeof user.hasItem === 'function' && user.hasItem(effectLine.code)));
             el.style.display = (active ? 'block' : 'none');
             if (!active) continue;
 
             if (effectLine.timed) {
                 el.innerText = appTranslator.get(effectLine.labelCode) + ' ' + AppMenuDom.formatClock(Math.ceil(remainingMs / 1000), 1);
-                el.style.visibility = (user.isEffectVisible(effectLine.code) ? 'visible' : 'hidden');
+                el.style.visibility = ((typeof user.isEffectVisible === 'function' && user.isEffectVisible(effectLine.code)) ? 'visible' : 'hidden');
             } else {
                 el.innerText = appTranslator.get(effectLine.labelCode);
             }
@@ -57574,11 +57647,11 @@ class HudGameBar extends AbstractHud {
     }
 
     _updateFps() {
-        const visible = doomSettings.getDisplayShowFps();
+        const visible = (typeof doomSettings !== 'undefined' && typeof doomSettings.getDisplayShowFps === 'function' && doomSettings.getDisplayShowFps());
         this._els.fpsBlock.style.display = (visible ? 'block' : 'none');
         if (!visible) return;
 
-        const fps  = this._engine.getFps();
+        const fps  = (this._engine && typeof this._engine.getFps === 'function') ? this._engine.getFps() : 60;
         const ping = (this._pingSource !== null ? this._pingSource() : null);
         this._els.fpsValue.innerText = (ping !== null
             ? appTranslator.get('hud.fpsPing', { value: fps, ping: Math.round(ping) })
@@ -57599,6 +57672,7 @@ HudGameBar.EFFECT_LINES = [
     { code: 'invisibility',    labelCode: 'effect.invisibility',    timed: true },
     { code: 'berserk',         labelCode: 'effect.berserk',         timed: false }
 ];
+
 ;
 // === /js/doom/hud/hudAutomap.js ===
 /**
@@ -66757,6 +66831,20 @@ class DoomGame {
     }
 
     _animate(timestamp) {
+        if (!this._running) {
+            return;
+        }
+        try {
+            this._stepAnimate(timestamp);
+        } catch (err) {
+            console.error("Error during game frame animation:", err);
+            if (this._running) {
+                requestAnimationFrame(this._animateCallback);
+            }
+        }
+    }
+
+    _stepAnimate(timestamp) {
         if (!this._running) {
             return;
         }

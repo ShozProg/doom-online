@@ -271,6 +271,7 @@
   "/js/doom/save/doomGameSnapshot.js",
   "/js/doom/doomUser.js",
   "/js/doom/hud/hudDoomDebug.js",
+  "/js/doom/hud/hudGameBarAssets.js",
   "/js/doom/hud/hudGameBar.js",
   "/js/doom/hud/hudAutomap.js",
   "/js/doom/hud/hudDoom.js",

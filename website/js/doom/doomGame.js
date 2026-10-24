@@ -291,6 +291,20 @@ class DoomGame {
         if (!this._running) {
             return;
         }
+        try {
+            this._stepAnimate(timestamp);
+        } catch (err) {
+            console.error("Error during game frame animation:", err);
+            if (this._running) {
+                requestAnimationFrame(this._animateCallback);
+            }
+        }
+    }
+
+    _stepAnimate(timestamp) {
+        if (!this._running) {
+            return;
+        }
         if (this._hosted.isOver()) {
             this._hosted.leaveAlone();
             return;
