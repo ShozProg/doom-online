@@ -1,8 +1,9 @@
 /**
  * Lightweight, zero-dependency MQTT 3.1.1 WebSocket client and signaling channel
  * for WebRTC peer-to-peer matchmaking.
- * Connects directly through public WebSocket MQTT brokers (HiveMQ, EMQX)
+ * Connects directly through public WebSocket MQTT brokers (EMQX, Mosquitto, HiveMQ)
  * without needing any custom backend server.
+ * Enhanced with automatic retransmission, packet buffering, and data relay fallback.
  */
 class NetOnlineSignalingChannel {
     constructor() {
@@ -13,34 +14,50 @@ class NetOnlineSignalingChannel {
         this._connected = false;
         this._listeners = new Map();
         this._packetId = 1;
-        this._brokerUrls = [
-            'wss://broker.hivemq.com:8884/mqtt',
-            'wss://broker.emqx.io:8084/mqtt'
+        this._brokers = [
+            { key: 'emqx',      url: 'wss://broker.emqx.io:8084/mqtt',      timeout: 5000 },
+            { key: 'mosquitto', url: 'wss://test.mosquitto.org:8081/mqtt',  timeout: 5000 },
+            { key: 'hivemq',    url: 'wss://broker.hivemq.com:8884/mqtt',   timeout: 3500 }
         ];
-        this._currentBrokerIndex = 0;
+        this._activeBroker = null;
         this._pingInterval = null;
+    }
+
+    getActiveBrokerKey() {
+        return this._activeBroker ? this._activeBroker.key : 'emqx';
     }
 
     /**
      * @param {string} roomId
      * @param {string} clientId
      * @param {boolean} isHost
+     * @param {string|null} preferredBrokerKey
      * @returns {Promise<NetOnlineSignalingChannel>}
      */
-    async connect(roomId, clientId, isHost = false) {
+    async connect(roomId, clientId, isHost = false, preferredBrokerKey = null) {
         this._roomId = roomId;
         this._clientId = clientId || ('p-' + Math.random().toString(36).substring(2, 9));
         this._isHost = isHost;
 
+        // If a specific broker was specified in room URL, prioritize it
+        let brokerList = [...this._brokers];
+        if (preferredBrokerKey) {
+            const preferred = brokerList.find(b => b.key === preferredBrokerKey);
+            if (preferred) {
+                brokerList = [preferred, ...brokerList.filter(b => b.key !== preferredBrokerKey)];
+            }
+        }
+
         let lastError = null;
-        for (let i = 0; i < this._brokerUrls.length; i++) {
-            const url = this._brokerUrls[i];
+        for (let i = 0; i < brokerList.length; i++) {
+            const broker = brokerList[i];
             try {
-                await this._connectToUrl(url);
-                this._currentBrokerIndex = i;
+                await this._connectToUrl(broker.url, broker.timeout);
+                this._activeBroker = broker;
+                console.log('Connected to signaling broker (' + broker.key + '): ' + broker.url);
                 break;
             } catch (err) {
-                console.warn('Signaling broker connection failed (' + url + '):', err);
+                console.warn('Signaling broker connection failed (' + broker.url + '):', err);
                 lastError = err;
             }
         }
@@ -56,10 +73,13 @@ class NetOnlineSignalingChannel {
             }
         }, 15000);
 
+        // Always subscribe to client's relay topic for fallback communication
+        this.subscribe(this.getRelayTopic(this._clientId));
+
         return this;
     }
 
-    _connectToUrl(brokerUrl) {
+    _connectToUrl(brokerUrl, timeoutMs = 5000) {
         return new Promise((resolve, reject) => {
             let resolved = false;
             const ws = new WebSocket(brokerUrl, ['mqtt']);
@@ -71,7 +91,7 @@ class NetOnlineSignalingChannel {
                     try { ws.close(); } catch (_) {}
                     reject(new Error('Connection timeout to ' + brokerUrl));
                 }
-            }, 6000);
+            }, timeoutMs);
 
             ws.onopen = () => {
                 this._sendConnect(ws, this._clientId);
@@ -203,9 +223,48 @@ class NetOnlineSignalingChannel {
         try {
             const data = JSON.parse(payloadStr);
             this._emit('message', { topic, data });
+            if (data && data.type === 'relay' && data.sender) {
+                let decoded = data.data;
+                if (data.isHex && typeof data.data === 'string') {
+                    decoded = NetHex.toBytes(data.data).buffer;
+                }
+                this._emit('relay', { sender: data.sender, data: decoded });
+            }
         } catch (_) {
             this._emit('message', { topic, data: payloadStr });
         }
+    }
+
+    sendRelay(targetId, message) {
+        let payloadData = message;
+        let isHex = false;
+        if (message instanceof ArrayBuffer) {
+            payloadData = NetHex.fromBytes(new Uint8Array(message));
+            isHex = true;
+        } else if (message instanceof Uint8Array) {
+            payloadData = NetHex.fromBytes(message);
+            isHex = true;
+        }
+        this.publish(this.getRelayTopic(targetId), {
+            type: 'relay',
+            sender: this._clientId,
+            isHex: isHex,
+            data: payloadData
+        });
+    }
+
+    onRelayFrom(remoteId, callback) {
+        const handler = (event) => {
+            if (event.sender === remoteId) {
+                callback(event.data);
+            }
+        };
+        this.on('relay', handler);
+        return () => {
+            const list = this._listeners.get('relay') || [];
+            const idx = list.indexOf(handler);
+            if (idx >= 0) list.splice(idx, 1);
+        };
     }
 
     on(event, handler) {
@@ -256,6 +315,10 @@ class NetOnlineSignalingChannel {
         return 'doom/v1/' + this._roomId + '/guest/' + (guestId || this._clientId);
     }
 
+    getRelayTopic(clientId) {
+        return 'doom/v1/' + this._roomId + '/relay/' + (clientId || this._clientId);
+    }
+
     /**
      * Creates a CodeChannel adapter for host pairing with a specific guest.
      */
@@ -274,6 +337,7 @@ class NetOnlineSignalingChannel {
 /**
  * Adapter implementing the CodeChannel interface expected by QrPairingView
  * and NetPairing: publish(bytes), read(accept), cancelRead(), close().
+ * Enhanced with packet buffering, retransmission, and relay fallback binding.
  */
 class NetOnlineCodeChannelAdapter {
     constructor(signaling, sendTopic, listenTopic, remoteId) {
@@ -282,15 +346,32 @@ class NetOnlineCodeChannelAdapter {
         this._listenTopic = listenTopic;
         this._remoteId = remoteId;
         this._endRead = null;
+        this._acceptCallback = null;
+        this._bufferedCodes = [];
+        this._publishTimer = null;
+        this._codeToPublish = null;
 
         this._onMessage = (event) => {
             if (event.topic === this._listenTopic) {
                 const data = event.data;
                 if (data && data.code) {
-                    const bytes = NetHex.toBytes(data.code);
-                    if (this._acceptCallback && this._acceptCallback(bytes)) {
-                        this._resolveRead(bytes);
+                    if (data.sender && data.sender !== this._remoteId && this._remoteId !== 'host') {
+                        return; // message intended for another peer
                     }
+                    const bytes = NetHex.toBytes(data.code);
+                    if (this._acceptCallback) {
+                        try {
+                            if (this._acceptCallback(bytes)) {
+                                this._resolveRead(bytes);
+                                return;
+                            }
+                        } catch (err) {
+                            if (this._endRead) this._endRead(null, err);
+                            return;
+                        }
+                    }
+                    // Buffer code if read is not yet active or hasn't accepted
+                    this._bufferedCodes.push(bytes);
                 }
             }
         };
@@ -298,8 +379,29 @@ class NetOnlineCodeChannelAdapter {
         this._signaling.on('message', this._onMessage);
     }
 
+    bindLink(link) {
+        if (link && typeof link.bindSignalingRelay === 'function') {
+            link.bindSignalingRelay(
+                (message) => this._signaling.sendRelay(this._remoteId, message),
+                (callback) => this._signaling.onRelayFrom(this._remoteId, callback)
+            );
+        }
+    }
+
     publish(codeBytes) {
-        const hex = NetHex.fromBytes(codeBytes);
+        this._codeToPublish = codeBytes;
+        this._sendCurrentCode();
+
+        // Periodically retransmit until connection is established or read cancelled
+        if (this._publishTimer) clearInterval(this._publishTimer);
+        this._publishTimer = setInterval(() => {
+            this._sendCurrentCode();
+        }, 1500);
+    }
+
+    _sendCurrentCode() {
+        if (!this._codeToPublish) return;
+        const hex = NetHex.fromBytes(this._codeToPublish);
         this._signaling.publish(this._sendTopic, {
             type: 'pairing_code',
             sender: this._signaling.getClientId(),
@@ -310,6 +412,21 @@ class NetOnlineCodeChannelAdapter {
 
     read(accept) {
         this.cancelRead();
+
+        // Check if any previously buffered code matches
+        for (let i = 0; i < this._bufferedCodes.length; i++) {
+            const bytes = this._bufferedCodes[i];
+            try {
+                if (accept(bytes)) {
+                    this._bufferedCodes.splice(i, 1);
+                    return Promise.resolve(bytes);
+                }
+            } catch (err) {
+                this._bufferedCodes.splice(i, 1);
+                return Promise.reject(err);
+            }
+        }
+
         this._acceptCallback = accept;
         return new Promise((resolve, reject) => {
             this._endRead = (code, error) => {
@@ -331,12 +448,21 @@ class NetOnlineCodeChannelAdapter {
     }
 
     cancelRead() {
+        if (this._publishTimer) {
+            clearInterval(this._publishTimer);
+            this._publishTimer = null;
+        }
         if (this._endRead) {
             this._endRead(null, null);
         }
     }
 
     close() {
+        if (this._publishTimer) {
+            clearInterval(this._publishTimer);
+            this._publishTimer = null;
+        }
+        this._codeToPublish = null;
         this.cancelRead();
     }
 }

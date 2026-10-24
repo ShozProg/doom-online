@@ -27,6 +27,13 @@ class AppMenuLobbyModal extends AppMenuAbstractListModal {
         this._roomCode = null;
         this._signaling = null;
         this._signalingStatusEl = null;
+        this._pairingGuestId = null;
+        this._linkPreviewEl = null;
+    }
+
+    _getLobbyUrl() {
+        const brokerKey = this._signaling ? this._signaling.getActiveBrokerKey() : 'emqx';
+        return window.location.origin + window.location.pathname + '?room=' + this._roomCode + '&b=' + brokerKey;
     }
 
     /**
@@ -95,12 +102,13 @@ class AppMenuLobbyModal extends AppMenuAbstractListModal {
 
             const linkPreview = AppMenuDom.addElement(banner, 'div', 'doom-lobby-link-preview');
             linkPreview.style.cssText = 'font-size: 0.8rem; color: #aaa; margin-top: 4px; word-break: break-all;';
-            const lobbyUrl = window.location.origin + window.location.pathname + '?room=' + this._roomCode;
-            linkPreview.textContent = lobbyUrl;
+            this._linkPreviewEl = linkPreview;
+            linkPreview.textContent = this._getLobbyUrl();
 
             copyBtn.onclick = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                const lobbyUrl = this._getLobbyUrl();
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     navigator.clipboard.writeText(lobbyUrl).then(() => {
                         copyBtn.textContent = '✓ Ссылка скопирована!';
@@ -129,19 +137,27 @@ class AppMenuLobbyModal extends AppMenuAbstractListModal {
 
         this._signaling = new NetOnlineSignalingChannel();
         this._signaling.connect(this._roomCode, 'host', true).then(() => {
+            if (this._linkPreviewEl) {
+                this._linkPreviewEl.textContent = this._getLobbyUrl();
+            }
             this._signaling.subscribe(this._signaling.getHostTopic());
             this._signaling.on('message', async (event) => {
                 if (event.topic === this._signaling.getHostTopic()) {
                     const data = event.data;
                     if (data && data.type === 'hello' && data.guestId) {
+                        if (this._pairingGuestId === data.guestId) {
+                            return; // Already actively pairing this guest
+                        }
                         if (this._session && !this._session.getLobby().isFull()) {
                             try {
+                                this._pairingGuestId = data.guestId;
                                 if (this._signalingStatusEl) {
                                     this._signalingStatusEl.textContent = 'Игрок подключается: ' + (data.nickname || 'Гость') + '...';
                                 }
                                 const adapter = this._signaling.createHostCodeChannel(data.guestId);
                                 const view = new OnlinePairingView(adapter);
                                 await this._session.addPlayer(view);
+                                this._pairingGuestId = null;
                                 if (this._signalingStatusEl) {
                                     this._signalingStatusEl.textContent = '✓ Игрок ' + (data.nickname || '') + ' успешно подключился!';
                                     setTimeout(() => {
@@ -151,6 +167,7 @@ class AppMenuLobbyModal extends AppMenuAbstractListModal {
                                     }, 2000);
                                 }
                             } catch (err) {
+                                this._pairingGuestId = null;
                                 console.warn('Auto-pairing guest ' + data.guestId + ' failed:', err);
                             }
                         }

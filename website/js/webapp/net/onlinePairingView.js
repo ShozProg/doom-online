@@ -21,6 +21,9 @@ class OnlinePairingView {
      */
     async showCode(bytes, link) {
         this._codeChannel.publish(bytes);
+        if (link && typeof this._codeChannel.bindLink === 'function') {
+            this._codeChannel.bindLink(link);
+        }
     }
 
     /**

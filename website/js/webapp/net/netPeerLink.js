@@ -2,6 +2,7 @@
  * NetLink over one RTCPeerConnection with a single reliable, ordered data channel: control
  * and stream messages share it, so none can overtake another. Candidates are gathered in
  * full (with a short timeout for public address discovery) and travel inside the signal.
+ * Enhanced with automatic signaling relay fallback if direct WebRTC P2P is blocked by NAT/firewalls.
  */
 class NetPeerLink extends NetLink {
     /** @type {RTCPeerConnection}   */ _peer;
@@ -14,11 +15,39 @@ class NetPeerLink extends NetLink {
     constructor(stunServers = NetConfig.STUN_SERVERS) {
         super();
 
-        this._channel          = null;
-        this._remoteCandidates = [];
-        this._peer             = new RTCPeerConnection({iceServers: [{urls: stunServers}]});
+        this._channel           = null;
+        this._remoteCandidates  = [];
+        this._relaySend         = null;
+        this._relayReceiveUnsub = null;
+        this._relayTimer        = null;
+        this._usingRelay        = false;
+        this._peer              = new RTCPeerConnection({iceServers: [{urls: stunServers}]});
         this._peer.addEventListener('connectionstatechange', () => this._onConnectionState());
         this._peer.addEventListener('datachannel', (event) => this._bindChannel(event.channel));
+    }
+
+    bindSignalingRelay(sendFn, registerReceiveFn) {
+        this._relaySend = sendFn;
+        if (registerReceiveFn) {
+            this._relayReceiveUnsub = registerReceiveFn((data) => {
+                if (!this.isOpen() && !this.isClosed()) {
+                    console.log('WebRTC signaling relay fallback active (incoming traffic)');
+                    this._usingRelay = true;
+                    this._notifyOpen();
+                }
+                this._notifyMessage(data);
+            });
+        }
+
+        // If WebRTC direct P2P takes longer than 5 seconds (symmetric NAT / strict firewall),
+        // seamlessly switch to signaling relay fallback so matchmaking never hangs.
+        this._relayTimer = setTimeout(() => {
+            if (!this.isOpen() && !this.isClosed()) {
+                console.log('WebRTC direct P2P delay, activating signaling relay fallback...');
+                this._usingRelay = true;
+                this._notifyOpen();
+            }
+        }, 5000);
     }
 
     async createOffer() {
@@ -53,6 +82,9 @@ class NetPeerLink extends NetLink {
         if (this.isClosed()) {
             return '';
         }
+        if (this._usingRelay) {
+            return 'P2P Relay (MQTT)';
+        }
         const stats = await this._peer.getStats();
         const pair  = NetPeerLink._selectedPair(stats);
         if (pair === null) {
@@ -66,14 +98,26 @@ class NetPeerLink extends NetLink {
     // The channel enters 'closing' before its close event clears the open flag: a
     // send in between would throw out of the game loop.
     _send(message) {
-        if (this._channel.readyState !== 'open') {
-            return false;
+        if (!this._usingRelay && this._channel && this._channel.readyState === 'open') {
+            this._channel.send(message);
+            return true;
         }
-        this._channel.send(message);
-        return true;
+        if (this._usingRelay && this._relaySend) {
+            this._relaySend(message);
+            return true;
+        }
+        return false;
     }
 
     _closeTransport() {
+        if (this._relayTimer) {
+            clearTimeout(this._relayTimer);
+            this._relayTimer = null;
+        }
+        if (this._relayReceiveUnsub) {
+            try { this._relayReceiveUnsub(); } catch (_) {}
+            this._relayReceiveUnsub = null;
+        }
         this._channel?.close();
         this._peer.close();
     }
@@ -137,13 +181,26 @@ class NetPeerLink extends NetLink {
     _bindChannel(channel) {
         this._channel            = channel;
         this._channel.binaryType = 'arraybuffer';
-        this._channel.addEventListener('open', () => this._notifyOpen());
+        this._channel.addEventListener('open', () => {
+            if (this._relayTimer) {
+                clearTimeout(this._relayTimer);
+                this._relayTimer = null;
+            }
+            this._usingRelay = false;
+            this._notifyOpen();
+        });
         this._channel.addEventListener('message', (event) => this._notifyMessage(event.data));
         this._channel.addEventListener('close', () => this._notifyClose(NetLink.CLOSED));
     }
 
     _onConnectionState() {
         if (this._peer.connectionState === 'failed') {
+            if (this._relaySend) {
+                console.log('WebRTC peer connection failed, engaging signaling relay fallback');
+                this._usingRelay = true;
+                this._notifyOpen();
+                return;
+            }
             this._notifyClose(NetLink.FAILED);
         }
         if (this._peer.connectionState === 'closed') {

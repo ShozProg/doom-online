@@ -85,16 +85,24 @@ class MenuJoinFlow {
             }
             // Parse room code from URL or direct code
             let roomCode = val;
+            let brokerParam = null;
             if (val.includes('room=')) {
                 try {
                     const parsedUrl = new URL(val);
                     roomCode = parsedUrl.searchParams.get('room') || roomCode;
+                    brokerParam = parsedUrl.searchParams.get('b') || null;
                 } catch (_) {
                     const match = val.match(/room=([A-Za-z0-9_-]+)/);
                     if (match) roomCode = match[1];
+                    const bMatch = val.match(/b=([A-Za-z0-9_-]+)/);
+                    if (bMatch) brokerParam = bMatch[1];
                 }
             } else if (val.includes('#')) {
                 roomCode = val.split('#').pop().replace('room=', '');
+            }
+
+            if (brokerParam) {
+                window._doomCurrentBrokerKey = brokerParam;
             }
 
             modal.closest('.app-menu-overlay')?.remove();
@@ -133,24 +141,42 @@ class MenuJoinFlow {
         try {
             const guestId = 'g-' + Math.random().toString(36).substring(2, 8);
             const signaling = new NetOnlineSignalingChannel();
-            await signaling.connect(roomCode, guestId, false);
+
+            let preferredBroker = window._doomCurrentBrokerKey || null;
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                preferredBroker = urlParams.get('b') || preferredBroker;
+            } catch (_) {}
+
+            await signaling.connect(roomCode, guestId, false, preferredBroker);
             signaling.subscribe(signaling.getGuestTopic(guestId));
 
             // Setup online pairing adapter
             const codeChannel = signaling.createGuestCodeChannel();
             const view = new OnlinePairingView(codeChannel);
 
-            // Announce presence to host
-            setTimeout(() => {
+            // Announce presence to host repeatedly until joined
+            let helloInterval = null;
+            const sendHello = () => {
                 signaling.publish(signaling.getHostTopic(), {
                     type: 'hello',
                     guestId: guestId,
                     nickname: nickname
                 });
-            }, 300);
+            };
+
+            setTimeout(sendHello, 200);
+            helloInterval = setInterval(sendHello, 1500);
 
             // Join session through online pairing
-            await session.join(view);
+            try {
+                await session.join(view);
+            } finally {
+                if (helloInterval) {
+                    clearInterval(helloInterval);
+                    helloInterval = null;
+                }
+            }
 
             loadingModal.close();
             this._showLobby(session);
