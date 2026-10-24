@@ -5,10 +5,10 @@ class AppServiceWorker {
     /** @type {boolean}           */ debugEnabled = false;
     /** @type {string}            */ version = "v1";
     /** @type {string[]}          */ files = [
-        "/",
-        "/js/webapp/appBootstrap.js",
-        "/css/main.css",
-        "/manifest.webmanifest"
+        "./",
+        "./js/webapp/appBootstrap.js",
+        "./css/main.css",
+        "./manifest.webmanifest"
     ];
 
     /**
@@ -121,12 +121,15 @@ class AppServiceWorker {
 
     async loadNewVersion() {
         this.logDebug(`Loading Version`);
+        try {
+            let cache = await caches.open(this.version);
+            let urls = this.files;
 
-        let cache = await caches.open(this.version);
-        let urls = this.files;
-
-        const requests = urls.map((url) => new Request(url, {cache: 'no-store'}));
-        await cache.addAll(requests);
+            const requests = urls.map((url) => new Request(url, {cache: 'no-store'}));
+            await Promise.allSettled(requests.map(req => cache.add(req)));
+        } catch (e) {
+            this.logDebug(`Error caching version: ` + e.message);
+        }
     }
 
     async deleteOldVersions() {

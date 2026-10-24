@@ -4,13 +4,16 @@
 class NetConfig {
 }
 
-// Two recognised public operators at most: each extra server slows address discovery.
-NetConfig.STUN_SERVERS              = ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'];
-NetConfig.GATHER_TIMEOUT_MS         = 2000;
-// The link opens within a second once both sides hold each other's addresses; a sub's wait
-// also covers the time the inviting side takes to scan its answer.
-NetConfig.CONNECT_TIMEOUT_MS        = 5000;
-NetConfig.ANSWER_CONNECT_TIMEOUT_MS = 30000;
+// Global public STUN servers for NAT traversal across different networks
+NetConfig.STUN_SERVERS              = [
+    'stun:stun.l.google.com:19302',
+    'stun:stun1.l.google.com:19302',
+    'stun:stun2.l.google.com:19302',
+    'stun:stun.cloudflare.com:3478'
+];
+NetConfig.GATHER_TIMEOUT_MS         = 3000;
+NetConfig.CONNECT_TIMEOUT_MS        = 15000;
+NetConfig.ANSWER_CONNECT_TIMEOUT_MS = 35000;
 NetConfig.CHANNEL_NAME              = 'net';
 NetConfig.LOOPBACK_PREFIX           = 'spipu-net-';
 NetConfig.PING_PERIOD_MS            = 1000;

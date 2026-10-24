@@ -212,16 +212,27 @@ class AppBootstrap {
 
     bootstrapPwa() {
         this.pwaMode = true;
+        let readyTimedOut = false;
+        const fallbackTimer = setTimeout(() => {
+            readyTimedOut = true;
+            this.logDebug("ServiceWorker ready timeout - falling back to classic mode");
+            this.bootstrapClassic();
+        }, 1500);
+
         navigator.serviceWorker
             .register("./appServiceWorker.js")
             .then(() => {
                 navigator.serviceWorker.ready.then((registration) => {
+                    if (readyTimedOut) return;
+                    clearTimeout(fallbackTimer);
                     this.serviceWorker = registration;
                     navigator.serviceWorker.onmessage = this.onServiceWorkerMessage.bind(this);
                     this.checkVersion();
                 });
             })
             .catch((error) => {
+                if (readyTimedOut) return;
+                clearTimeout(fallbackTimer);
                 this.logError("Error registering the Service Worker", error);
                 this.bootstrapClassic();
             });
@@ -376,9 +387,10 @@ class AppBootstrap {
     }
 
     async loadNextAsset() {
-        if (await this.loadResource(this.appDefinition.getFile('assets', this.currentFile))) {
-            this.assetSuccess();
-        }
+        try {
+            await this.loadResource(this.appDefinition.getFile('assets', this.currentFile));
+        } catch (_) {}
+        this.assetSuccess();
     }
 
     assetSuccess() {
@@ -425,6 +437,7 @@ class AppBootstrap {
 
     cssFailed() {
         this.resourceFailed(this.appDefinition.getFile('css', this.currentFile));
+        this.cssSuccess();
     }
 
     loadNextJsFile() {
@@ -452,6 +465,7 @@ class AppBootstrap {
 
     jsFailed() {
         this.resourceFailed(this.appDefinition.getFile('js', this.currentFile));
+        this.jsSuccess();
     }
 
     startApp() {
@@ -509,4 +523,15 @@ class AppBootstrap {
 
 var appBootstrap = new AppBootstrap();
 
-document.addEventListener("DOMContentLoaded", () => { appBootstrap.init(); });
+function startBootstrap() {
+    if (!appBootstrap._hasStarted) {
+        appBootstrap._hasStarted = true;
+        appBootstrap.init();
+    }
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", startBootstrap);
+} else {
+    setTimeout(startBootstrap, 0);
+}

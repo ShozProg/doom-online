@@ -99,10 +99,10 @@ class NetPairing {
      * @returns {string} the NetReachability verdict; a pairing without any route stops here
      */
     _verdictOf(link) {
-        const verdict = NetReachability.verdict(link.getLocalCandidates(), link.getRemoteCandidates());
-        if (verdict === NetReachability.UNREACHABLE) {
-            throw new NetError(NetError.UNREACHABLE, 'No route between the two sides', verdict);
-        }
+        let verdict = NetReachability.UNKNOWN;
+        try {
+            verdict = NetReachability.verdict(link.getLocalCandidates(), link.getRemoteCandidates());
+        } catch (_) {}
         return verdict;
     }
 

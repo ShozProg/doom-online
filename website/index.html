@@ -45,8 +45,18 @@
         </div>
         <script src="./js/webapp/appBootstrap.js"></script>
         <script>
-            // Ensure relative paths for bootstrap
+            // Unregister any broken/stale service workers from previous visits
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    for (const r of registrations) {
+                        try { r.unregister(); } catch (_) {}
+                    }
+                });
+            }
+            // Disable PWA service worker mode for GitHub Pages to load directly, stably and fast
+            appBootstrap.disablePwaMode();
             appBootstrap.addBootstrapDefinition('./js/libBootstrap.json');
+            appBootstrap.init();
         </script>
     </body>
 </html>
