@@ -136,6 +136,7 @@ class AppMenuLobbyModal extends AppMenuAbstractListModal {
         if (!this._isMain || !this._roomCode) return;
 
         this._signaling = new NetOnlineSignalingChannel();
+        window._doomActiveSignaling = this._signaling;
         this._signaling.connect(this._roomCode, 'host', true).then(() => {
             if (this._linkPreviewEl) {
                 this._linkPreviewEl.textContent = this._getLobbyUrl();
@@ -192,18 +193,24 @@ class AppMenuLobbyModal extends AppMenuAbstractListModal {
         if (this._session !== null) {
             this._session.setOnChange(null);
         }
-        if (this._signaling !== null) {
-            this._signaling.close();
-            this._signaling = null;
-        }
+        // Keep signaling alive for active session relay & peer traffic!
+        this._signaling = null;
     }
 
     _onBack() {
         if (this._isMain && (this._actions.back !== null)) {
+            if (window._doomActiveSignaling) {
+                try { window._doomActiveSignaling.close(); } catch (_) {}
+                window._doomActiveSignaling = null;
+            }
             this._actions.back();
             return;
         }
         if (!this._isMain) {
+            if (window._doomActiveSignaling) {
+                try { window._doomActiveSignaling.close(); } catch (_) {}
+                window._doomActiveSignaling = null;
+            }
             this._actions.leave();
         }
         this.close();

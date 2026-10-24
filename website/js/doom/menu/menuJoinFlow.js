@@ -141,6 +141,7 @@ class MenuJoinFlow {
         try {
             const guestId = 'g-' + Math.random().toString(36).substring(2, 8);
             const signaling = new NetOnlineSignalingChannel();
+            window._doomActiveSignaling = signaling;
 
             let preferredBroker = window._doomCurrentBrokerKey || null;
             try {

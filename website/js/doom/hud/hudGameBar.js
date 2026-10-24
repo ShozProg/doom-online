@@ -4,14 +4,14 @@
  *   - AMMO: Tall red numbers (STTNUM*)
  *   - HEALTH: Tall red numbers + percent (STTPRMNT)
  *   - ARMS: Authentic STARMS panel with yellow weapon slots (STYSNUM*) in coop/singleplayer
- *   - FRAGS: Tall red frags counter in Deathmatch mode
+ *   - FRAGS: Tall red frags counter in Deathmatch mode directly inside status bar
  *   - DOOMGUY FACE: Animated center face (STFST*, damage stages, god mode, ouch, dead)
  *   - ARMOR: Tall red numbers + percent
  *   - KEYS: Authentic keycards / skulls (STKEYS*)
  *   - AMMO TABLE: Bull, Shel, Rokt, Cell with current/max in yellow numbers
  *
- * Rendered on a native 320x32 pixel canvas with pixelated scaling, plus
- * lightweight retro floating overlays for FPS/ping, power-up timers, and Deathmatch match stats.
+ * Full-width solid metallic status bar pinned to the bottom (16% screen height).
+ * No floating bars/boxes in the top-left for 100% authentic classic Doom visual experience.
  */
 class HudGameBar extends AbstractHud {
     constructor(engine) {
@@ -30,13 +30,12 @@ class HudGameBar extends AbstractHud {
         this._imagesLoaded = false;
         this._els         = {};
         this._effectEls   = {};
-        this._fragRows    = [];
 
         // Animation state for Doomguy face
-        this._faceLookTick   = 0;
-        this._faceLookDir    = 0; // 0 = straight, 1 = right, 2 = left
-        this._lastEnergy     = 100;
-        this._ouchTicks      = 0;
+        this._faceLookTick = 0;
+        this._faceLookDir  = 0; // 0 = straight, 1 = right, 2 = left
+        this._lastEnergy   = 100;
+        this._ouchTicks    = 0;
 
         this._preloadAssets();
     }
@@ -56,9 +55,10 @@ class HudGameBar extends AbstractHud {
         ];
 
         let loadedCount = 0;
-        const basePath = window.location.pathname.endsWith('/')
-            ? window.location.pathname
-            : window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+        let basePath = './assets/';
+        try {
+            basePath = new URL('assets/', window.location.href).href;
+        } catch (_) {}
 
         for (const name of assetNames) {
             const img = new Image();
@@ -68,7 +68,7 @@ class HudGameBar extends AbstractHud {
                     this._imagesLoaded = true;
                 }
             };
-            img.src = basePath + 'assets/' + name + '.png';
+            img.src = basePath + name + '.png';
             this._images[name] = img;
         }
     }
@@ -110,80 +110,26 @@ class HudGameBar extends AbstractHud {
         this._root = this._createEl('div', {
             position: 'absolute', top: '0', left: '0', width: '100%', height: '100%',
             pointerEvents: 'none', fontFamily: 'system-ui, sans-serif', color: '#fff',
-            containerType: 'size', overflow: 'hidden'
+            overflow: 'hidden'
         });
         container.appendChild(this._root);
 
-        // Native 320x32 authentic Doom status bar canvas
+        // Native 320x32 authentic Doom status bar canvas at bottom (16% of screen height)
         this._canvas = document.createElement('canvas');
         this._canvas.width  = 320;
         this._canvas.height = 32;
-        this._canvas.style.cssText = 'position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); '
-            + 'width: min(100%, calc(100vh * (320 / 200))); aspect-ratio: 320 / 32; '
-            + 'image-rendering: pixelated; image-rendering: crisp-edges; pointer-events: none; z-index: 10;';
+        this._canvas.style.cssText = 'position: absolute; bottom: 0; left: 0; width: 100%; height: 16%; '
+            + 'image-rendering: pixelated; image-rendering: crisp-edges; pointer-events: none; z-index: 10; display: block; background: #000;';
         this._ctx = this._canvas.getContext('2d');
         if (this._ctx) {
             this._ctx.imageSmoothingEnabled = false;
         }
         this._root.appendChild(this._canvas);
 
-        // Top overlays (clean retro translucent containers)
-        this._buildTopLeftOverlay();
+        // Top center power-up effects overlay
         this._buildTopCenterEffects();
+        // Top right FPS/ping readout (toggleable in settings)
         this._buildFps();
-    }
-
-    _buildTopLeftOverlay() {
-        const block = this._createEl('div', {
-            position: 'absolute', top: '0.6em', left: '0.8em',
-            padding: '0.4em 0.7em', borderRadius: '4px',
-            backgroundColor: 'rgba(0, 0, 0, 0.65)', border: '1px solid rgba(255, 204, 0, 0.3)',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.5)', zIndex: '5'
-        });
-
-        // Single-player / coop stats (secrets / kills)
-        const scores = this._createEl('div', {
-            display: 'grid', gridTemplateColumns: 'auto auto auto auto', justifyContent: 'start', alignItems: 'center',
-            columnGap: '0.4em', rowGap: '0.25em', fontSize: '0.85em', fontWeight: 'bold'
-        });
-        this._els.scores = scores;
-
-        const secrets = this._buildScoreRow(scores, 'star', '#ffd23d');
-        this._els.secretsFound = secrets.found;
-        this._els.secretsTotal = secrets.total;
-
-        const kills = this._buildScoreRow(scores, 'skull', '#e05f5f');
-        this._els.killsFound = kills.found;
-        this._els.killsTotal = kills.total;
-
-        block.appendChild(scores);
-
-        // Deathmatch match clock & frags
-        const frags = this._createEl('div', { display: 'none' });
-        this._els.frags = frags;
-        this._els.matchClock = this._createEl('div', {
-            textAlign: 'center', fontSize: '1rem', fontWeight: 'bold', color: '#ffcc00', letterSpacing: '1px'
-        });
-        frags.appendChild(this._els.matchClock);
-        block.appendChild(frags);
-
-        this._root.appendChild(block);
-    }
-
-    _buildScoreRow(grid, iconName, color) {
-        const icon = this._createEl('div', { width: '1em', height: '1em', color: color, justifySelf: 'center' });
-        icon.innerHTML = this._iconSvg(iconName);
-        const found = this._createEl('div', { textAlign: 'right', color: '#fff' });
-        found.innerText = '0';
-        const slash = this._createEl('div', { color: '#888' });
-        slash.innerText = '/';
-        const total = this._createEl('div', { textAlign: 'left', color: '#aaa' });
-        total.innerText = '0';
-        grid.appendChild(icon);
-        grid.appendChild(found);
-        grid.appendChild(slash);
-        grid.appendChild(total);
-        return { found, total };
     }
 
     _buildTopCenterEffects() {
@@ -229,17 +175,22 @@ class HudGameBar extends AbstractHud {
         const user = this._user;
         this._renderStatusBar(user);
         this._updateEffects(user);
-        this._updateScores(user);
         this._updateFps();
     }
 
     _renderStatusBar(user) {
         const ctx = this._ctx;
         const imgs = this._images;
-        if (!imgs.stbar || !imgs.stbar.complete) return;
 
         // 1. Draw base STBAR background (320x32)
-        ctx.drawImage(imgs.stbar, 0, 0);
+        if (imgs.stbar && imgs.stbar.complete) {
+            ctx.drawImage(imgs.stbar, 0, 0, 320, 32);
+        } else {
+            ctx.fillStyle = '#222222';
+            ctx.fillRect(0, 0, 320, 32);
+            ctx.fillStyle = '#3a3a3a';
+            ctx.fillRect(0, 0, 320, 2);
+        }
 
         const scoresFrags = (this._rules !== null && this._rules.scoresFrags());
 
@@ -457,67 +408,6 @@ class HudGameBar extends AbstractHud {
         }
     }
 
-    _updateScores(user) {
-        const scoresFrags = (this._rules !== null && this._rules.scoresFrags());
-        this._els.scores.style.display = (scoresFrags ? 'none' : 'grid');
-        this._els.frags.style.display  = (scoresFrags ? 'block' : 'none');
-
-        if (scoresFrags) {
-            this._updateMatchClock();
-            this._updateFragRows(user.getPlayerId());
-            return;
-        }
-
-        if (this._stats) {
-            this._els.secretsFound.innerText = String(this._stats.getSecretsFound());
-            this._els.secretsTotal.innerText = String(this._stats.getSecretsTotal());
-            this._els.killsFound.innerText   = String(this._stats.getKillsCount());
-            this._els.killsTotal.innerText   = String(this._stats.getKillsTotal());
-        }
-    }
-
-    _updateMatchClock() {
-        if (!this._rules || !this._stats) return;
-        const limit   = this._rules.timeLimitMs();
-        const matchMs = this._stats.getMatchTimeMs();
-        const seconds = (limit !== null ? Math.ceil(Math.max(0, limit - matchMs) / 1000) : Math.floor(matchMs / 1000));
-        this._els.matchClock.innerText = 'MATCH: ' + AppMenuDom.formatClock(seconds, 2);
-    }
-
-    _updateFragRows(ownId) {
-        const ids = [];
-        for (const view of (this._bodies ?? [])) {
-            const id = view.getPlayerId();
-            if (id !== null) ids.push(id);
-        }
-        ids.sort((a, b) => a - b);
-        while (this._fragRows.length < ids.length) {
-            this._fragRows.push(this._buildFragRow());
-        }
-        this._fragRows.forEach((entry, i) => {
-            const id = (ids[i] ?? null);
-            entry.row.style.display = (id !== null ? 'flex' : 'none');
-            if (id !== null) {
-                entry.row.style.fontWeight = (id === ownId ? 'bold' : 'normal');
-                entry.swatch.style.backgroundColor = (this._slotColors[id - 1] ?? '#888');
-                entry.value.innerText = String(this._stats ? this._stats.fragScore(id) : 0);
-            }
-        });
-    }
-
-    _buildFragRow() {
-        const row = this._createEl('div', {
-            display: 'none', alignItems: 'center', gap: '0.4em', marginTop: '0.2em', fontSize: '0.9em'
-        });
-        const swatch = this._createEl('div', { width: '0.65em', height: '0.65em', border: '1px solid #fff' });
-        const value  = this._createEl('div', { marginLeft: 'auto', minWidth: '2em', textAlign: 'right', color: '#ffcc00' });
-        value.innerText = '0';
-        row.appendChild(swatch);
-        row.appendChild(value);
-        this._els.frags.appendChild(row);
-        return { row, swatch, value };
-    }
-
     _updateFps() {
         const visible = doomSettings.getDisplayShowFps();
         this._els.fpsBlock.style.display = (visible ? 'block' : 'none');
@@ -528,11 +418,6 @@ class HudGameBar extends AbstractHud {
         this._els.fpsValue.innerText = (ping !== null
             ? appTranslator.get('hud.fpsPing', { value: fps, ping: Math.round(ping) })
             : appTranslator.get('hud.fps', { value: fps }));
-    }
-
-    _iconSvg(name) {
-        return '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="currentColor" aria-hidden="true">'
-            + HudGameBar.ICONS[name] + '</svg>';
     }
 
     _createEl(tag, style) {
@@ -549,11 +434,3 @@ HudGameBar.EFFECT_LINES = [
     { code: 'invisibility',    labelCode: 'effect.invisibility',    timed: true },
     { code: 'berserk',         labelCode: 'effect.berserk',         timed: false }
 ];
-
-HudGameBar.ICONS = {
-    star:  '<path d="M12 2 L14.9 8.6 L22 9.3 L16.6 14 L18.2 21 L12 17.3 L5.8 21 L7.4 14 L2 9.3 L9.1 8.6 Z"/>',
-    skull: '<path fill-rule="evenodd" d="M12 2 C6.8 2 3.2 5.6 3.2 10.3 C3.2 13.2 4.6 15.4 6.8 16.6 V20.2'
-          + ' C6.8 21.2 7.6 22 8.6 22 H15.4 C16.4 22 17.2 21.2 17.2 20.2 V16.6 C19.4 15.4 20.8 13.2 20.8 10.3'
-          + ' C20.8 5.6 17.2 2 12 2 Z M8.6 9.2 A2.2 2.2 0 1 0 8.6 13.6 A2.2 2.2 0 1 0 8.6 9.2 Z'
-          + ' M15.4 9.2 A2.2 2.2 0 1 0 15.4 13.6 A2.2 2.2 0 1 0 15.4 9.2 Z M12 14.2 L10.6 17 H13.4 Z"/>'
-};

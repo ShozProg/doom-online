@@ -246,6 +246,10 @@ class NetGameMainSession {
         this._onAway    = null;
         this._onRelease = null;
         setTimeout(() => this._host.close(), NetGameProtocol.END_GRACE_MS);
+        if (window._doomActiveSignaling) {
+            try { window._doomActiveSignaling.close(); } catch (_) {}
+            window._doomActiveSignaling = null;
+        }
     }
 
     // The answer payload comes from the scanned code: a malformed one loses the

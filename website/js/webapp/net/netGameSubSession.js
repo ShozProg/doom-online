@@ -221,6 +221,10 @@ class NetGameSubSession {
         this._unwatchVisibility();
         this._guest.sendControl({type: NetGameProtocol.SESSION_END, reason: NetGameProtocol.END_LEFT});
         setTimeout(() => this._guest.close(), NetGameProtocol.END_GRACE_MS);
+        if (window._doomActiveSignaling) {
+            try { window._doomActiveSignaling.close(); } catch (_) {}
+            window._doomActiveSignaling = null;
+        }
     }
 
     // A session whose pairing failed or was cancelled: nothing of it may stay alive.
@@ -231,6 +235,10 @@ class NetGameSubSession {
         this._ended = true;
         this._unwatchVisibility();
         this._guest.close();
+        if (window._doomActiveSignaling) {
+            try { window._doomActiveSignaling.close(); } catch (_) {}
+            window._doomActiveSignaling = null;
+        }
     }
 
     // Watched once linked: a page already in the background says so at once.

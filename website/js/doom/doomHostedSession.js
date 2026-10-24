@@ -245,6 +245,10 @@ class DoomHostedSession {
         this._closeStartLobby();
         doomSound.setPaused(false);
         this._game.teardownLevel();
+        if (window._doomActiveSignaling) {
+            try { window._doomActiveSignaling.close(); } catch (_) {}
+            window._doomActiveSignaling = null;
+        }
         this._game.leaveLevelTo((navigator, meta) => start.onCancel(navigator, meta, this._game.getSkill(), noIdentity));
     }
 
