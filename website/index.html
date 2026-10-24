@@ -3,6 +3,9 @@
     <head>
         <title>DOOM Online - P2P Multiplayer Deathmatch</title>
         <meta charset="UTF-8" />
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta http-equiv="Pragma" content="no-cache" />
+        <meta http-equiv="Expires" content="0" />
         <meta name="apple-mobile-web-app-title"            content="DOOM Online" />
         <meta name="apple-mobile-web-app-capable"          content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black" />
@@ -43,9 +46,8 @@
                 <div class="loading-label">Loading DOOM assets...</div>
             </div>
         </div>
-        <script src="./js/webapp/appBootstrap.js"></script>
         <script>
-            // Unregister any broken/stale service workers from previous visits
+            // Unregister any stale service workers from old visits
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(registrations => {
                     for (const r of registrations) {
@@ -53,6 +55,7 @@
                     }
                 });
             }
+            // Clear any old CacheStorage caches from old visits
             if ('caches' in window) {
                 caches.keys().then(keys => {
                     for (const k of keys) {
@@ -60,9 +63,12 @@
                     }
                 });
             }
-            // Disable PWA service worker mode for GitHub Pages to load directly, stably and fast
+        </script>
+        <script src="./js/webapp/appBootstrap.js?v=20261024_04"></script>
+        <script>
+            // Direct classic mode: single bundle, no service worker deadlock
             appBootstrap.disablePwaMode();
-            appBootstrap.addBootstrapDefinition('./js/libBootstrap.json');
+            appBootstrap.addBootstrapDefinition('./js/libBootstrap.json?_=' + Date.now());
             appBootstrap.init();
         </script>
     </body>
